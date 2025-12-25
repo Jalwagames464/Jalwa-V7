@@ -2,38 +2,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Pro Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jalwa V7 - Login & Wallet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
-        :root { --bg: #0d131f; --card: #1f293a; --gold: #ff9800; --blue: #2196f3; --glass: rgba(255, 255, 255, 0.05); }
-        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 480px; margin: auto; background: var(--bg); min-height: 100vh; padding-bottom: 80px; }
-        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: var(--card); border-radius: 0 0 20px 20px; }
-        .user-pill { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 40px; height: 40px; background: var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; }
-        .wallet-box { margin: 15px; padding: 25px; background: linear-gradient(135deg, #1e3a8a, #1e40af); border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .bonus-card { margin: 0 15px 15px; background: linear-gradient(90deg, #ff416c, #ff4b2b); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(255,65,108,0.3); }
-        .game-launch-banner { margin: 10px 15px; background: linear-gradient(45deg, #1a1a1a, #2d3a4f); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #3d4b5f; cursor: pointer; position: relative; }
-        .game-icon { width: 60px; height: 60px; background: var(--gold); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #000; }
-        .play-tag { position: absolute; right: 20px; background: var(--gold); color: #000; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .menu-list { margin: 20px 15px; }
-        .menu-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; cursor: pointer; border: 1px solid #2d3a4f; transition: 0.3s; }
-        .menu-item:active { transform: scale(0.96); }
-        .menu-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        .issue-box { background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 15px; padding: 10px; margin-top: 5px; }
-        .issue-btn { background: var(--card); padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; font-size: 13px; border: 1px solid #2d3a4f; cursor: pointer; }
-        .page-view { display: none; }
-        .page-view.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #161e2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2d3a4f; z-index: 1000; }
-        .nav-item { text-align: center; color: #64748b; cursor: pointer; flex: 1; font-size: 11px; }
-        .nav-item.active { color: var(--gold); }
-        .nav-item i { font-size: 22px; margin-bottom: 4px; display: block; }
+        :root { --blue: #3b82f6; --green: #22c55e; --red: #ef4444; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
+        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; background: var(--blue); margin-top: 10px; }
+        .wallet-ui { display: none; } /* Shuru me chhupa rahega */
     </style>
 </head>
+<body>
+
+<div id="loginSection" class="card">
+    <h2 style="text-align:center">Jalwa V7 Login</h2>
+    <div id="phoneBox">
+        <input type="tel" id="phoneNumber" placeholder="+91 0000000000">
+        <div id="recaptcha-container"></div>
+        <button class="btn-main" onclick="sendOTP()">Send OTP</button>
+    </div>
+    <div id="otpBox" style="display:none">
+        <input type="number" id="otpCode" placeholder="6 Digit OTP">
+        <button class="btn-main" onclick="verifyOTP()" style="background:var(--green)">Verify & Play</button>
+    </div>
+</div>
+
+<div id="walletSection" class="card wallet-ui">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <div style="color: #64748b;">Total Balance</div>
+        <div style="font-size: 32px; font-weight: bold;">₹<span id="headerBal">0</span></div>
+    </div>
+    <button class="btn-main" onclick="location.href='dashboard.html'">Go to Dashboard</button>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // Check Login
+    const userId = localStorage.getItem('jalwa_id');
+    if(userId) {
+        showWallet(userId);
+    }
+
+    function showWallet(id) {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('walletSection').style.display = 'block';
+        db.ref('users/' + id + '/balance').on('value', snap => {
+            document.getElementById('headerBal').innerText = snap.val() || 0;
+        });
+    }
+
+    // OTP Logic
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { 'size': 'invisible' });
+
+    function sendOTP() {
+        const phone = document.getElementById('phoneNumber').value;
+        auth.signInWithPhoneNumber(phone, window.recaptchaVerifier).then(res => {
+            window.confirmationResult = res;
+            document.getElementById('phoneBox').style.display = 'none';
+            document.getElementById('otpBox').style.display = 'block';
+            alert("OTP Bheja gaya hai!");
+        });
+    }
+
+    function verifyOTP() {
+        const code = document.getElementById('otpCode').value;
+        confirmationResult.confirm(code).then(result => {
+            const user = result.user;
+            
+            // Check if New User or Old
+            db.ref('users').orderByChild('phone').equalTo(user.phoneNumber).once('value', snap => {
+                if(snap.exists()) {
+                    let key = Object.keys(snap.val())[0];
+                    localStorage.setItem('jalwa_id', key);
+                    location.reload();
+                } else {
+                    // NAYA USER: ₹100 BONUS MILEGA
+                    const newId = "JW-" + Math.floor(1000 + Math.random() * 9000);
+                    db.ref('users/' + newId).set({
+                        phone: user.phoneNumber,
+                        balance: 100, // ₹100 BONUS ADDED
+                        joined: Date.now()
+                    }).then(() => {
+                        localStorage.setItem('jalwa_id', newId);
+                        alert("Congrats! ₹100 Welcome Bonus Mila.");
+                        location.reload();
+                    });
+                }
+            });
+        }).catch(() => alert("Galat OTP!"));
+    }
+</script>
+</body>
+</html>
 <body>
 
 <div class="app-container">
