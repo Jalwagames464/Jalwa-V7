@@ -46,5 +46,25 @@
         });
     }
 </script>
+<script>
+    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+
+    function handleLogin() {
+        const phone = document.getElementById('logPhone').value;
+        const pass = document.getElementById('logPass').value;
+
+        firebase.database().ref('users').orderByChild('phone').equalTo(phone).once('value', (snap) => {
+            if(snap.exists()) {
+                const userId = Object.keys(snap.val())[0];
+                const userData = snap.val()[userId];
+                if(userData.password === pass) {
+                    localStorage.setItem('jalwa_id', userId);
+                    window.location.replace("index.html");
+                } else { alert("Password galat hai!"); }
+            } else { alert("User nahi mila!"); }
+        });
+    }
+</script>
 </body>
 </html>
