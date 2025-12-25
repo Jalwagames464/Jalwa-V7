@@ -3,37 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jalwa V7 - Wallet & Home</title>
+    <title>Jalwa Pro - Wallet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
-        :root { --blue: #3b82f6; --green: #22c55e; --red: #ef4444; --orange: #f59e0b; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 450px; margin: auto; position: relative; }
-        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .back-link { text-decoration: none; color: #64748b; font-weight: bold; font-size: 14px; }
-        .close-btn { color: #64748b; font-size: 20px; cursor: pointer; border: none; background: none; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 10px; }
-        .tab { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .tab.active { background: white; color: var(--blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .upi-box { background: #eff6ff; padding: 15px; border-radius: 10px; border: 2px dashed var(--blue); text-align: center; margin: 15px 0; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; margin-bottom: 5px; color: #64748b; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-        .btn-action { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; color: white; margin-top: 10px; }
-        .btn-deposit { background: var(--green); }
-        .btn-withdraw { background: var(--blue); }
-        .history-sec { margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 15px; }
-        .hist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
-        .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 5px; font-weight: bold; text-transform: uppercase; }
-        .panding { background: #fef3c7; color: var(--orange); }
-        .approve { background: #dcfce7; color: var(--green); }
-        .rejected { background: #fee2e2; color: var(--red); }
+        :root { --orange: #ff9800; --green: #22c55e; --red: #ef4444; --bg: #0d131f; --card: #1f293a; }
+        body { margin: 0; background: var(--bg); font-family: sans-serif; color: white; padding: 15px; }
+        .back-btn { color: white; text-decoration: none; font-size: 18px; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .balance-card { background: var(--card); padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #2d3a4f; margin-bottom: 20px; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 30px; }
+        .btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-dep { background: #2196f3; color: white; }
+        .btn-wit { background: #334155; color: white; }
+        
+        .recharge-box { background: white; color: #333; padding: 20px; border-radius: 15px; }
+        .upi-copy { border: 2px dashed #2196f3; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 15px; cursor: pointer; color: #2196f3; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .sub-btn { width: 100%; background: var(--green); color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; margin-top: 10px; }
+
+        /* Status Styles (Fixed) */
+        .status-tag { padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+        .pending { background: #fef3c7; color: #92400e; }
+        .approve { background: #dcfce7; color: #166534; }
+        .rejected { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
+
+    <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i> Wallet</a>
+
+    <div class="balance-card">
+        <div style="font-size: 14px; opacity: 0.7;">Total Balance</div>
+        <div style="font-size: 36px; font-weight: bold; margin: 5px 0;">₹ <span id="balDisplay">0</span></div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-dep">Deposit</button>
+        <button class="btn btn-wit">Withdraw</button>
+    </div>
+
+    <div class="recharge-box">
+        <p style="margin: 0; font-weight: bold; font-size: 14px;">Add Cash</p>
+        <div class="upi-copy" onclick="copyUPI()">
+            <small style="color: #666; display: block;">Transfer to UPI ID</small>
+            <span id="upiId">deepakdeepaksingh103@oksbi</span><br>
+            <small style="font-size: 10px;">COPY UPI</small>
+        </div>
+
+        <input type="number" id="depAmount" placeholder="Amount (Min. ₹500)">
+        <input type="text" id="depUTR" placeholder="12 Digit UTR / Transaction ID">
+        <button class="sub-btn" onclick="submitDeposit()">Submit Deposit</button>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <p style="font-weight: bold;">Recent Deposits</p>
+        <div id="rechargeHistory"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userId = localStorage.getItem('jalwa_id');
+
+        // Real-time Balance Update
+        db.ref('users/' + userId).on('value', (snap) => {
+            const data = snap.val();
+            if(data) document.getElementById('balDisplay').innerText = (data.balance || 0).toFixed(2);
+        });
+
+        function copyUPI() {
+            const upi = document.getElementById('upiId').innerText;
+            navigator.clipboard.writeText(upi).then(() => alert("UPI ID Copied!"));
+        }
+
+        function submitDeposit() {
+            const amt = document.getElementById('depAmount').value;
+            const utr = document.getElementById('depUTR').value;
+
+            if(!amt || amt < 500) return alert("Minimum deposit is ₹500");
+            if(utr.length < 10) return alert("Enter valid UTR ID");
+
+            db.ref('deposits').push({
+                uid: userId,
+                amount: Number(amt),
+                utr: utr,
+                status: 'pending',
+                time: new Date().toLocaleString()
+            }).then(() => {
+                alert("Deposit Request Sent!");
+                document.getElementById('depAmount').value = '';
+                document.getElementById('depUTR').value = '';
+            });
+        }
+    </script>
+</body>
+</html>
 
 <div class="card">
     <div class="top-nav">
