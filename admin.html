@@ -58,9 +58,12 @@
     const db = firebase.database();
 
     let currentPeriod = "";
+
+    // PERIOD ID MUST MATCH GAME (Changed 100 to 30)
     setInterval(() => {
         const now = new Date();
-        let pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + "100" + Math.floor((now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/30);
+        let pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + "30" + Math.floor((now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/30);
+        
         if(currentPeriod !== pId) {
             currentPeriod = pId;
             document.getElementById('curPeriod').innerText = "Period: " + currentPeriod;
@@ -81,15 +84,20 @@
                 else if(sums.hasOwnProperty(sel)) sums[sel] += amt;
             });
 
+            // Update Color Load
+            document.getElementById('sumG').innerText = sums.Green;
+            document.getElementById('sumV').innerText = sums.Violet;
+            document.getElementById('sumR').innerText = sums.Red;
+
             const colors = ['Green', 'Violet', 'Red'];
             let maxAmt = Math.max(sums.Green, sums.Violet, sums.Red);
             colors.forEach(col => {
                 let el = document.getElementById('box-' + col);
-                document.getElementById('sum' + col.charAt(0)).innerText = sums[col];
                 el.classList.remove('high-load');
                 if(sums[col] === maxAmt && maxAmt > 0) el.classList.add('high-load');
             });
 
+            // Update Number Load
             let nHtml = "";
             let maxNumAmt = Math.max(...numSums);
             for(let i=0; i<=9; i++) {
@@ -100,21 +108,15 @@
         });
     }
 
-    // --- PERMANENT CONNECTION FIX ---
     function forceResult(val) {
-        // 'gameControl/nextResult' Address par data bhej rahe hain
         db.ref('gameControl/nextResult').set(val)
         .then(() => {
-            alert("🚀 Result Fixed: " + val + "\nAb game hamesha isi number par rukega jab tak timer khatam nahi hota.");
-        })
-        .catch((e) => {
-            alert("❌ Connection Error: " + e.message);
+            alert("🚀 Result Fixed: " + val);
         });
-        
-        // Backup ke liye purana path bhi update rakhte hain
         db.ref('nextResult').set(val); 
     }
 
+    // Requests logic same
     db.ref('requests/withdrawals').on('value', snap => {
         let html = "";
         snap.forEach(child => {
@@ -158,4 +160,6 @@
 </script>
 </body>
 </html>
+
+
 >
