@@ -2,38 +2,224 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jalwa V7 - Login & Wallet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jalwa Pro Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
-        :root { --blue: #3b82f6; --green: #22c55e; --red: #ef4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 15px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
-        .btn-main { width: 100%; padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; color: white; background: var(--blue); margin-top: 10px; }
-        .wallet-ui { display: none; } /* Shuru me chhupa rahega */
+        :root { --bg: #0d131f; --card: #1f293a; --gold: #ff9800; --blue: #2196f3; --glass: rgba(255, 255, 255, 0.05); }
+        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 480px; margin: auto; background: var(--bg); min-height: 100vh; padding-bottom: 80px; }
+        
+        /* Auth Screen Styling */
+        #auth-page { padding: 30px; display: flex; flex-direction: column; justify-content: center; min-height: 90vh; }
+        .auth-card { background: var(--card); padding: 25px; border-radius: 25px; border: 1px solid #2d3a4f; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .auth-card input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid #3d4b5f; background: #0d131f; color: white; box-sizing: border-box; }
+        .btn-auth { width: 100%; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; background: var(--blue); color: white; margin-top: 10px; }
+
+        /* Dashboard Styling */
+        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: var(--card); border-radius: 0 0 20px 20px; }
+        .user-pill { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; background: var(--gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold; }
+        .wallet-box { margin: 15px; padding: 25px; background: linear-gradient(135deg, #1e3a8a, #1e40af); border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .bonus-card { margin: 0 15px 15px; background: linear-gradient(90deg, #ff416c, #ff4b2b); padding: 15px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 5px 15px rgba(255,65,108,0.3); }
+        .game-launch-banner { margin: 10px 15px; background: linear-gradient(45deg, #1a1a1a, #2d3a4f); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #3d4b5f; cursor: pointer; position: relative; }
+        .game-icon { width: 60px; height: 60px; background: var(--gold); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #000; }
+        .play-tag { position: absolute; right: 20px; background: var(--gold); color: #000; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .menu-list { margin: 20px 15px; }
+        .menu-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; cursor: pointer; border: 1px solid #2d3a4f; }
+        .menu-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .page-view { display: none; }
+        .page-view.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #161e2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2d3a4f; z-index: 1000; }
+        .nav-item { text-align: center; color: #64748b; cursor: pointer; flex: 1; font-size: 11px; }
+        .nav-item.active { color: var(--gold); }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; display: block; }
     </style>
 </head>
 <body>
 
-<div id="loginSection" class="card">
-    <h2 style="text-align:center">Jalwa V7 Login</h2>
-    <div id="phoneBox">
-        <input type="tel" id="phoneNumber" placeholder="+91 0000000000">
-        <div id="recaptcha-container"></div>
-        <button class="btn-main" onclick="sendOTP()">Send OTP</button>
+<div class="app-container">
+    <div id="auth-ui">
+        <div id="auth-page">
+            <div class="auth-card" id="reg-box">
+                <h2 style="color: var(--gold); text-align: center;">JALWA PRO V7</h2>
+                <input type="text" id="regName" placeholder="Full Name">
+                <input type="email" id="regEmail" placeholder="Email Address">
+                <input type="password" id="regPass" placeholder="Password">
+                <button class="btn-auth" onclick="handleRegister()">CREATE ACCOUNT</button>
+                <p style="text-align: center; font-size: 13px; color: #888;" onclick="toggleAuth()">Already have account? <span style="color: var(--gold);">Login</span></p>
+            </div>
+            <div class="auth-card" id="login-box" style="display:none;">
+                <h2 style="color: var(--gold); text-align: center;">LOGIN</h2>
+                <input type="email" id="logEmail" placeholder="Email Address">
+                <input type="password" id="logPass" placeholder="Password">
+                <button class="btn-auth" style="background: var(--gold); color: black;" onclick="handleLogin()">LOGIN</button>
+                <p style="text-align: center; font-size: 13px; color: #888;" onclick="toggleAuth()">New member? <span style="color: var(--blue);">Register</span></p>
+            </div>
+        </div>
     </div>
-    <div id="otpBox" style="display:none">
-        <input type="number" id="otpCode" placeholder="6 Digit OTP">
-        <button class="btn-main" onclick="verifyOTP()" style="background:var(--green)">Verify & Play</button>
+
+    <div id="main-ui" style="display:none;">
+        <div class="header">
+            <div class="user-pill">
+                <div class="avatar" id="avatarLetter">J</div>
+                <div>
+                    <div style="font-size: 10px; color: #888;">ID: <span id="uID">...</span></div>
+                    <div id="uNameDisplay" style="font-weight: bold; font-size: 13px;">Welcome Back</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="home" class="page-view active">
+            <div class="wallet-box">
+                <div style="font-size: 13px; opacity: 0.8;">Total Assets</div>
+                <div style="font-size: 32px; font-weight: bold; margin: 5px 0;">₹ <span id="mainBal">0.00</span></div>
+                <div style="font-size: 11px; color: #4ade80;"><i class="fas fa-shield-alt"></i> Secure Wallet</div>
+            </div>
+            <div class="bonus-card">
+                <div><b style="font-size: 14px;">₹20 Daily Gift</b><br><small>One-time Reward</small></div>
+                <button id="claimBtn" onclick="claimBonus()" style="background: white; color: #ff4b2b; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">CLAIM</button>
+            </div>
+            <div class="game-launch-banner" onclick="location.href='game.html'">
+                <div class="game-icon"><i class="fas fa-gamepad"></i></div>
+                <div class="game-info"><h3>WinGo 30s</h3><p>Real Cash Game</p></div>
+                <div class="play-tag">PLAY</div>
+            </div>
+        </div>
+
+        <div id="wallet" class="page-view">
+            <div style="padding: 20px; text-align: center;">
+                <div class="wallet-box" style="margin: 0 0 20px 0;">
+                    <div style="font-size: 14px; opacity: 0.8;">Wallet Balance</div>
+                    <div style="font-size: 30px; font-weight: bold;">₹ <span id="walletBal">0.00</span></div>
+                </div>
+                <button onclick="location.href='wallet.html'" style="width: 100%; padding: 18px; background: var(--blue); color: white; border: none; border-radius: 15px; font-weight: bold; font-size: 16px;">
+                    <i class="fas fa-wallet"></i> OPEN WALLET
+                </button>
+            </div>
+        </div>
+
+        <div id="account" class="page-view">
+            <div style="padding: 20px;">
+                <div class="menu-list">
+                    <button onclick="logout()" style="width: 100%; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid #ef4444; padding: 15px; border-radius: 15px; margin-top: 20px; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i> LOGOUT
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="showPage('home', this)"><i class="fas fa-house"></i>Home</div>
+            <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i>Wallet</div>
+            <div class="nav-item" onclick="showPage('account', this)"><i class="fas fa-user"></i>Account</div>
+        </div>
     </div>
 </div>
 
-<div id="walletSection" class="card wallet-ui">
+<script>
+    // Firebase Config (Replace with your actual keys if different)
+    const firebaseConfig = {
+        apiKey: "AIzaSyBNZ8boj-dR0I-wwQEJUYYD4fCIAUtX5Dc",
+        authDomain: "jalwa-v7.firebaseapp.com",
+        databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/",
+        projectId: "jalwa-v7",
+        storageBucket: "jalwa-v7.firebasestorage.app",
+        messagingSenderId: "348695578578",
+        appId: "1:348695578578:web:c646d46c1cf6c9ce1cea0b"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
+
+    // Toggle between Login & Register
+    function toggleAuth() {
+        const reg = document.getElementById('reg-box');
+        const log = document.getElementById('login-box');
+        reg.style.display = reg.style.display === 'none' ? 'block' : 'none';
+        log.style.display = log.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // AUTH Observer
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            document.getElementById('auth-ui').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'block';
+            loadData(user.uid);
+        } else {
+            document.getElementById('auth-ui').style.display = 'block';
+            document.getElementById('main-ui').style.display = 'none';
+        }
+    });
+
+    async function handleRegister() {
+        const name = document.getElementById('regName').value;
+        const email = document.getElementById('regEmail').value;
+        const pass = document.getElementById('regPass').value;
+        if(!name || !email || !pass) return alert("All fields required");
+        
+        try {
+            const res = await auth.createUserWithEmailAndPassword(email, pass);
+            await db.ref('users/' + res.user.uid).set({
+                name: name,
+                balance: 100, // Signup Bonus
+                bonusClaimed: false
+            });
+            alert("Registered! ₹100 added.");
+        } catch (e) { alert(e.message); }
+    }
+
+    function handleLogin() {
+        const email = document.getElementById('logEmail').value;
+        const pass = document.getElementById('logPass').value;
+        auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+    }
+
+    function loadData(uid) {
+        db.ref('users/' + uid).on('value', (snap) => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('uID').innerText = uid.substring(0,6).toUpperCase();
+                document.getElementById('uNameDisplay').innerText = data.name;
+                document.getElementById('avatarLetter').innerText = data.name.charAt(0).toUpperCase();
+                let bal = Number(data.balance || 0);
+                document.getElementById('mainBal').innerText = bal.toFixed(2);
+                document.getElementById('walletBal').innerText = bal.toFixed(2);
+                
+                if(data.bonusClaimed) {
+                    const b = document.getElementById('claimBtn');
+                    b.innerText = "CLAIMED"; b.disabled = true; b.style.opacity = "0.5";
+                }
+            }
+        });
+    }
+
+    function showPage(id, el) {
+        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function claimBonus() {
+        const uid = auth.currentUser.uid;
+        db.ref('users/' + uid + '/bonusClaimed').once('value', (snap) => {
+            if(snap.val()) return alert("Already claimed!");
+            db.ref('users/' + uid + '/balance').transaction(c => (c || 0) + 20);
+            db.ref('users/' + uid + '/bonusClaimed').set(true);
+            alert("₹20 Gift Added!");
+        });
+    }
+
+    function logout() { if(confirm("Logout?")) auth.signOut(); }
+</script>
+</body>
+</html>
     <div style="text-align: center; margin-bottom: 20px;">
         <div style="color: #64748b;">Total Balance</div>
         <div style="font-size: 32px; font-weight: bold;">₹<span id="headerBal">0</span></div>
