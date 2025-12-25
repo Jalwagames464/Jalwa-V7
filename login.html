@@ -17,7 +17,7 @@
         input { width: 100%; background: var(--card); border: 1px solid #2d3a4f; padding: 15px 15px 15px 45px; border-radius: 15px; color: white; outline: none; box-sizing: border-box; }
         .btn-login { width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: bold; background: var(--gold); color: #000; cursor: pointer; }
         .link { margin-top: 25px; font-size: 14px; color: #888; }
-        .link a { color: var(--gold); text-decoration: none; font-weight: bold; cursor: pointer; }
+        .link a { color: var(--gold); text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -34,6 +34,107 @@
     <div class="input-group">
         <i class="fas fa-lock"></i>
         <input type="password" id="logPass" placeholder="Password">
+    </div>
+
+    <button class="btn btn-login" onclick="handleLogin()">LOGIN TO PLAY</button>
+
+    <div class="link">New player? <a href="register.html">Create Account</a></div>
+</div>
+
+<script>
+    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function handleLogin() {
+        const phone = document.getElementById('logPhone').value;
+        const pass = document.getElementById('logPass').value;
+
+        if(!phone || !pass) return alert("Fill all fields!");
+
+        db.ref('users').orderByChild('phone').equalTo(phone).once('value', (snap) => {
+            if(snap.exists()) {
+                const userData = Object.values(snap.val())[0];
+                if(userData.password === pass) {
+                    localStorage.setItem('jalwa_id', userData.userId);
+                    alert("Login Success!");
+                    window.location.href = "index.html";
+                } else {
+                    alert("Wrong Password!");
+                }
+            } else {
+                alert("User not found!");
+            }
+        });
+    }
+</script>
+<script>
+    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // 1. Sabse pehle check karo ki ID hai ya nahi
+    let userId = localStorage.getItem('jalwa_id');
+
+    // Agar ID nahi hai, toh seedha login par bhejo aur niche ka code mat chalao
+    if (!userId) {
+        window.location.replace("login.html");
+    }
+
+    function showPage(id, el) {
+        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    window.onload = () => {
+        // Dobara check security ke liye
+        if(!userId) return;
+
+        document.getElementById('uID').innerText = userId;
+        document.getElementById('profID').innerText = userId;
+        
+        // Database se balance aur name uthao
+        db.ref('users/' + userId).on('value', (snap) => {
+            const data = snap.val();
+            if(data) {
+                document.getElementById('uNameDisplay').innerText = data.name || "Player";
+                document.getElementById('avatarIcon').innerText = (data.name || "J").charAt(0).toUpperCase();
+                document.getElementById('bigAvatar').innerText = (data.name || "J").charAt(0).toUpperCase();
+                
+                let val = Number(data.balance || 0);
+                document.getElementById('mainBal').innerText = val.toFixed(2);
+                document.getElementById('walletBal').innerText = val.toFixed(2);
+
+                if(data.bonusClaimed === true) {
+                    const btn = document.getElementById('claimBtn');
+                    if(btn) {
+                        btn.innerText = "CLAIMED";
+                        btn.style.opacity = "0.6";
+                        btn.disabled = true;
+                    }
+                }
+            } else {
+                // Agar ID database mein nahi mili (invalid ID), toh logout kardo
+                logout();
+            }
+        });
+    };
+
+    // LOGOUT FIX: Clear storage and redirect
+    function logout() {
+        if(confirm("Bhai, logout karna chahte ho?")) { 
+            localStorage.clear(); // Pura storage saaf
+            sessionStorage.clear(); // Session bhi saaf
+            window.location.replace("login.html"); // Redirect
+        }
+    }
+
+    // Baaki functions (claimBonus, copyAdminID) pehle jaise hi rahenge
+</script>
+</body>
+</html>
     </div>
 
     <button class="btn-login" onclick="handleLogin()">LOGIN TO PLAY</button>
