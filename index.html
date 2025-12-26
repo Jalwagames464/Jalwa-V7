@@ -16,9 +16,12 @@
         .wallet-box { margin: 15px; padding: 25px; background: linear-gradient(135deg, #1e3a8a, #1e40af); border-radius: 24px; }
         .bonus-card, .refer-card, .tg-card { margin: 10px 15px; background: var(--card); padding: 15px; border-radius: 15px; border: 1px solid #2d3a4f; position: relative; overflow: hidden; }
         
-        /* Telegram Card Style */
         .tg-card { background: rgba(0, 136, 204, 0.1); border-color: var(--tg); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
         .tg-icon { color: var(--tg); font-size: 24px; }
+
+        .bonus-card { border-color: var(--blue); display: flex; justify-content: space-between; align-items: center; }
+        .btn-claim { background: var(--blue); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-claim:disabled { background: #444; color: #888; cursor: not-allowed; }
 
         .game-launch-banner { margin: 10px 15px; background: linear-gradient(45deg, #1a1a1a, #2d3a4f); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 15px; border: 1px solid #3d4b5f; cursor: pointer; }
         .page-view { display: none; }
@@ -54,17 +57,25 @@
             <div style="font-size: 32px; font-weight: bold; margin: 5px 0;">₹ <span id="mainBal">0.00</span></div>
             <div style="font-size: 11px; color: #4ade80;"><i class="fas fa-shield-alt"></i> Secure Wallet</div>
         </div>
+
+        <div class="bonus-card">
+            <div>
+                <div style="font-weight: bold; font-size: 14px;">Daily Gift</div>
+                <div style="font-size: 11px; color: #aaa;">Claim ₹20 every 24 hours</div>
+            </div>
+            <button class="btn-claim" id="dailyBtn" onclick="claimDaily()">CLAIM</button>
+        </div>
         
         <div class="refer-card">
             <div style="font-size: 14px; font-weight: bold; color: var(--gold); letter-spacing: 0.5px;">REFER & EARN ₹250</div>
-            <div style="font-size: 11px; color: #888; margin-top: 4px;">Share your link and get bonus.</div>
+            <div style="font-size: 11px; color: #888; margin-top: 4px;">Get ₹250 when friend recharges ₹500+</div>
             <button onclick="copyReferLink()" style="background:var(--gold); border:none; width: 100%; padding:10px; border-radius:8px; margin-top:12px; font-weight:bold; cursor:pointer; color:#000;">COPY REFER LINK</button>
         </div>
 
         <div class="tg-card" onclick="window.open('https://t.me/Realtrademods8911', '_blank')">
             <div>
                 <div style="font-weight: bold; color: var(--tg); font-size: 14px;">JOIN OFFICIAL TELEGRAM</div>
-                <div style="font-size: 11px; color: #888; margin-top: 4px;">Get latest updates & predictions.</div>
+                <div style="font-size: 11px; color: #888; margin-top: 4px;">Predictions & Updates</div>
             </div>
             <i class="fab fa-telegram tg-icon"></i>
         </div>
@@ -120,6 +131,13 @@
 
     window.onload = () => {
         if(!userId) return;
+        
+        // Removed browser alert, replaced with Toast
+        if(localStorage.getItem('just_logged_in')){
+            showToast("Login Successful!");
+            localStorage.removeItem('just_logged_in');
+        }
+
         db.ref('users/' + userId).on('value', (snap) => {
             const data = snap.val();
             if(data) {
@@ -129,23 +147,53 @@
                 let val = Number(data.balance || 0);
                 document.getElementById('mainBal').innerText = val.toFixed(2);
                 document.getElementById('walletBal').innerText = val.toFixed(2);
+
+                if(data.totalRecharge >= 500 && data.referredBy && data.referredBy !== "DIRECT" && !data.referRewardSent) {
+                    sendReferReward(data.referredBy);
+                }
+
+                const today = new Date().toDateString();
+                if(data.lastClaim === today) {
+                    document.getElementById('dailyBtn').disabled = true;
+                    document.getElementById('dailyBtn').innerText = "DONE";
+                }
             }
         });
     };
+
+    function claimDaily() {
+        db.ref('users/' + userId).once('value', (snap) => {
+            const data = snap.val();
+            const today = new Date().toDateString();
+            if(data.lastClaim === today) {
+                showToast("Already claimed today!");
+            } else {
+                db.ref('users/' + userId).update({
+                    balance: (data.balance || 0) + 20,
+                    lastClaim: today
+                }).then(() => showToast("₹20 Daily Bonus Added!"));
+            }
+        });
+    }
+
+    function sendReferReward(refID) {
+        db.ref('users/' + refID).once('value', (snap) => {
+            if(snap.exists()) {
+                const refData = snap.val();
+                db.ref('users/' + refID).update({
+                    balance: (refData.balance || 0) + 250
+                }).then(() => {
+                    db.ref('users/' + userId).update({ referRewardSent: true });
+                    console.log("Referral Reward of ₹250 Sent to " + refID);
+                });
+            }
+        });
+    }
 
     function copyReferLink() {
         const link = "https://132deepak.github.io/Jalwa-V7/register.html?ref=" + userId;
         navigator.clipboard.writeText(link).then(() => {
             showToast("Link Copied Successfully!");
-        }).catch(() => {
-            // Fallback for older browsers
-            const textArea = document.createElement("textarea");
-            textArea.value = link;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textArea);
-            showToast("Link Copied!");
         });
     }
 
@@ -154,5 +202,4 @@
 
 </body>
 </html>
-
 
