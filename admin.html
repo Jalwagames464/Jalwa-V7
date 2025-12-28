@@ -3,180 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin: Wingo + Aviator</title>
+    <title>Master Admin: Wingo + Aviator ULTIMATE</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* CSS Same as your admin original */
         :root { --bg: #0b0f19; --card: #161d2b; --gold: #ff9800; --green: #00c853; --red: #ff5252; --blue: #00e5ff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 10px; overflow-x: hidden; }
         .section { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #2d3a4f; margin-bottom: 15px; }
-        h3 { color: var(--gold); margin-top: 0; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 8px; text-transform: uppercase; }
+        h3 { color: var(--gold); margin-top: 0; font-size: 14px; border-bottom: 1px solid #333; padding-bottom: 8px; text-transform: uppercase; }
+        
+        /* Stats Header */
+        .stat-card { background: linear-gradient(45deg, #1e293b, #0f172a); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid var(--gold); margin-bottom: 15px; }
+        .stat-card h2 { margin: 5px 0; font-size: 28px; color: var(--gold); }
+        .stat-card p { margin: 0; font-size: 11px; color: #888; text-transform: uppercase; }
+
         .bet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .bet-card { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; border: 1px solid #333; }
+        .bet-card { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; border: 1px solid #333; font-size: 12px; }
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-        .num-box { background: #1f293a; padding: 10px; border-radius: 5px; text-align: center; cursor: pointer; border: 1px solid #333; font-size: 14px; }
+        .num-box { background: #1f293a; padding: 10px; border-radius: 5px; text-align: center; cursor: pointer; border: 1px solid #333; font-size: 13px; }
         .aviator-box { border: 2px solid #d11345; }
         .avi-stats { display: flex; justify-content: space-between; margin-bottom: 10px; background: #000; padding: 10px; border-radius: 8px; }
         .stat-item { text-align: center; flex: 1; }
         .stat-item span { display: block; font-size: 10px; color: #888; }
-        .stat-item b { font-size: 16px; color: var(--blue); }
-        .live-bets-list { background: #000; padding: 10px; border-radius: 8px; max-height: 120px; overflow-y: auto; font-size: 12px; margin-bottom: 10px; }
+        .stat-item b { font-size: 14px; color: var(--blue); }
+        .live-bets-list { background: #000; padding: 10px; border-radius: 8px; max-height: 100px; overflow-y: auto; font-size: 12px; margin-bottom: 10px; }
         .bet-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #222; }
+        
+        .quick-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+        .q-btn { background: #333; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .q-btn.active { background: var(--blue); color: #000; }
+
         .control-input { display: flex; gap: 10px; margin: 10px 0; }
         .control-input input { flex: 1; padding: 12px; border-radius: 5px; border: 1px solid #444; background: #000; color: #fff; font-weight: bold; }
-        .req-list { max-height: 250px; overflow-y: auto; }
-        .req-item { background: #1f293a; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--gold); }
+        
+        .req-list { max-height: 200px; overflow-y: auto; }
+        .req-item { background: #1f293a; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--gold); font-size: 13px; }
         .btn { border: none; padding: 10px; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; }
         .btn-green { background: var(--green); }
         .btn-red { background: var(--red); }
         .btn-blue { background: var(--blue); color: #000; }
-        .status-toggle { width: 100%; margin-top: 5px; font-size: 13px; }
+        .status-toggle { width: 100%; margin-top: 5px; font-size: 12px; }
     </style>
 </head>
 <body>
 
+<div class="stat-card">
+    <p><i class="fas fa-id-card"></i> New User IDs Today</p>
+    <h2 id="todayUsersCount">0</h2>
+</div>
+
 <div class="section">
     <h3 style="display:flex; justify-content:space-between;">
-        <span><i class="fas fa-eye"></i> WINGO 30S TRACKER</span>
-        <span id="curPeriod" style="color:#888; font-size:12px;">Period: --</span>
+        <span>WINGO 30S CONTROL</span>
+        <span id="winModeDisp" style="color:var(--red)">PROFIT MODE</span>
     </h3>
     <div class="bet-grid">
-        <div id="box-Green" class="bet-card" style="background:var(--green)" onclick="forceResult('Green')">GREEN<br>₹<span id="sumG">0</span></div>
-        <div id="box-Violet" class="bet-card" style="background:purple" onclick="forceResult('Violet')">VIOLET<br>₹<span id="sumV">0</span></div>
-        <div id="box-Red" class="bet-card" style="background:var(--red)" onclick="forceResult('Red')">RED<br>₹<span id="sumR">0</span></div>
+        <div class="bet-card" style="background:var(--green)" onclick="forceWingo('Green')">GREEN<br>₹<span id="sumG">0</span></div>
+        <div class="bet-card" style="background:purple" onclick="forceWingo('Violet')">VIOLET<br>₹<span id="sumV">0</span></div>
+        <div class="bet-card" style="background:var(--red)" onclick="forceWingo('Red')">RED<br>₹<span id="sumR">0</span></div>
     </div>
     <div class="num-grid" id="numBets"></div>
+    <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn btn-green status-toggle" onclick="setWingoMode('fair')">FAIR MODE</button>
+        <button class="btn btn-red status-toggle" onclick="setWingoMode('profit')">PROFIT MODE</button>
+    </div>
 </div>
 
 <div class="section aviator-box">
-    <h3><i class="fas fa-plane"></i> AVIATOR MASTER CONTROL</h3>
+    <h3>AVIATOR CRASH MASTER</h3>
     <div class="avi-stats">
-        <div class="stat-item"><span>LIVE BETS</span><b id="aviLiveBets">0</b></div>
-        <div class="stat-item"><span>TOTAL LOAD</span><b id="aviTotalLoad">₹0</b></div>
-        <div class="stat-item"><span>STATUS</span><b id="aviStatusText">...</b></div>
+        <div class="stat-item"><span>LOAD</span><b id="aviTotalLoad">₹0</b></div>
+        <div class="stat-item"><span>MODE</span><b id="aviModeDisp">PROFIT</b></div>
     </div>
-    <div class="live-bets-list" id="aviPlayerList">
-        <div style="text-align:center; color:#444;">No live bets yet...</div>
+    <div class="live-bets-list" id="aviPlayerList"></div>
+    <div class="quick-btns">
+        <button class="q-btn" id="m1" onclick="quickCrash(1.10, 'm1')">1.1x</button>
+        <button class="q-btn" id="m2" onclick="quickCrash(2.00, 'm2')">2.0x</button>
+        <button class="q-btn" id="m5" onclick="quickCrash(5.00, 'm5')">5.0x</button>
+        <button class="q-btn" id="m10" onclick="quickCrash(10.0, 'm10')">10x</button>
     </div>
     <div class="control-input">
-        <input type="number" id="nextCrash" step="0.01" placeholder="Fix Next Crash (e.g. 1.50)">
-        <button class="btn btn-blue" onclick="setAviCrash()">FIX CRASH</button>
+        <input type="number" id="nextCrash" step="0.01" placeholder="Fix Next">
+        <button class="btn btn-blue" onclick="setManualCrash()">FIX</button>
     </div>
     <div style="display: flex; gap: 8px;">
-        <button class="btn btn-green status-toggle" onclick="toggleAviator(true)">ENABLE FAIR GAME</button>
-        <button class="btn btn-red status-toggle" onclick="toggleAviator(false)">ACTIVATE PROFIT MODE</button>
+        <button class="btn btn-green status-toggle" onclick="setAviMode(true)">FAIR</button>
+        <button class="btn btn-red status-toggle" onclick="setAviMode(false)">PROFIT</button>
     </div>
 </div>
 
 <div class="section">
-    <h3><i class="fas fa-university"></i> WITHDRAWAL REQUESTS</h3>
-    <div id="witList" class="req-list">Loading...</div>
+    <h3>WITHDRAWALS</h3>
+    <div id="witList" class="req-list"></div>
 </div>
 
 <div class="section">
-    <h3><i class="fas fa-plus-circle"></i> PENDING DEPOSITS</h3>
-    <div id="depList" class="req-list">Loading...</div>
+    <h3>DEPOSITS</h3>
+    <div id="depList" class="req-list"></div>
 </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Wingo Logic
-    let currentPeriod = "";
+    // 1. TODAY USER COUNTER
+    function syncUsers() {
+        const today = new Date().toISOString().split('T')[0];
+        db.ref('users').on('value', snap => {
+            let count = 0;
+            snap.forEach(u => { if(u.val().regDate === today) count++; });
+            document.getElementById('todayUsersCount').innerText = count;
+        });
+    }
+    syncUsers();
+
+    // 2. WINGO LOGIC
+    let curP = "";
     setInterval(() => {
-        const now = new Date();
-        let pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + "30" + Math.floor((now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/30);
-        if(currentPeriod !== pId) { currentPeriod = pId; document.getElementById('curPeriod').innerText = "Period: " + currentPeriod; syncBets(currentPeriod); }
+        const n = new Date();
+        let pId = n.getFullYear().toString() + (n.getMonth()+1).toString().padStart(2,'0') + n.getDate().toString().padStart(2,'0') + "30" + Math.floor((n.getHours()*3600 + n.getMinutes()*60 + n.getSeconds())/30);
+        if(curP !== pId) { curP = pId; loadWingoBets(curP); }
     }, 1000);
 
-    function syncBets(pId) {
-        db.ref('bets/' + pId).on('value', snap => {
-            let sums = { Green: 0, Red: 0, Violet: 0 };
-            let numSums = Array(10).fill(0);
+    function loadWingoBets(p) {
+        db.ref('bets/' + p).on('value', snap => {
+            let s = {Green:0, Red:0, Violet:0}, ns = Array(10).fill(0);
             snap.forEach(c => {
-                let b = c.val(); let amt = Number(b.amt || 0); let sel = b.sel;
-                if(typeof sel === 'number') numSums[sel] += amt; else if(sums.hasOwnProperty(sel)) sums[sel] += amt;
+                let b = c.val(); let amt = Number(b.amt||0);
+                if(typeof b.sel === 'number') ns[b.sel] += amt; else s[b.sel] += amt;
             });
-            document.getElementById('sumG').innerText = sums.Green; document.getElementById('sumV').innerText = sums.Violet; document.getElementById('sumR').innerText = sums.Red;
-            let nHtml = ""; for(let i=0; i<=9; i++) { nHtml += `<div class="num-box" onclick="forceResult(${i})">${i}<br>₹${numSums[i]}</div>`; }
-            document.getElementById('numBets').innerHTML = nHtml;
+            document.getElementById('sumG').innerText = s.Green;
+            document.getElementById('sumV').innerText = s.Violet;
+            document.getElementById('sumR').innerText = s.Red;
+            let h = ""; for(let i=0; i<=9; i++) h+=`<div class="num-box" onclick="forceWingo(${i})">${i}<br>₹${ns[i]}</div>`;
+            document.getElementById('numBets').innerHTML = h;
         });
     }
-    function forceResult(val) { db.ref('gameControl/nextResult').set(val).then(() => alert("Wingo Fixed: " + val)); }
-
-    // Aviator Logic (Connected to Game)
-    db.ref('aviator/live').on('value', snap => {
-        let total = 0, count = 0, html = "";
-        snap.forEach(child => {
-            let bet = child.val();
-            total += Number(bet.amt || 0);
-            count++;
-            html += `<div class="bet-row"><span>UID: ${child.key.slice(-6)}</span><span style="color:var(--gold)">₹${bet.amt}</span></div>`;
-        });
-        document.getElementById('aviLiveBets').innerText = count;
-        document.getElementById('aviTotalLoad').innerText = "₹" + total;
-        document.getElementById('aviPlayerList').innerHTML = html || '<div style="text-align:center; color:#444;">No live bets yet...</div>';
+    function setWingoMode(m) { db.ref('gameControl/mode').set(m); }
+    db.ref('gameControl/mode').on('value', snap => {
+        const m = snap.val() || 'profit';
+        document.getElementById('winModeDisp').innerText = m.toUpperCase() + " MODE";
+        document.getElementById('winModeDisp').style.color = m==='fair'?'var(--green)':'var(--red)';
     });
+    function forceWingo(v) { db.ref('gameControl/nextResult').set(v); }
 
-    function setAviCrash() {
-        let val = document.getElementById('nextCrash').value;
-        if(!val || val < 1) return alert("Sahi number daalo!");
-        db.ref('aviator/control/nextCrash').set(parseFloat(val)).then(() => alert("Crash Fixed at: " + val + "x"));
+    // 3. AVIATOR LOGIC
+    function quickCrash(v, id) {
+        document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+        if(id) document.getElementById(id).classList.add('active');
+        db.ref('aviator/control/nextCrash').set(v);
     }
-
-    function toggleAviator(status) { db.ref('aviator/control/active').set(status); }
-
+    function setManualCrash() { let v = document.getElementById('nextCrash').value; if(v>=1) quickCrash(parseFloat(v)); }
+    function setAviMode(s) { db.ref('aviator/control/active').set(s); }
+    
     db.ref('aviator/control/active').on('value', snap => {
-        let active = snap.val();
-        let txt = document.getElementById('aviStatusText');
-        txt.innerText = active ? "FAIR MODE" : "PROFIT MODE";
-        txt.style.color = active ? "var(--green)" : "var(--red)";
+        let a = snap.val();
+        document.getElementById('aviModeDisp').innerText = a ? "FAIR" : "PROFIT";
+        document.getElementById('aviModeDisp').style.color = a ? "var(--green)" : "var(--red)";
     });
 
-    // Withdrawals & Deposits (Same as original)
+    db.ref('aviator/live').on('value', snap => {
+        let total = 0, h = "";
+        snap.forEach(c => {
+            let b = c.val(); total += Number(b.amt||0);
+            h += `<div class="bet-row"><span>UID: ${c.key.slice(-5)}</span><span style="color:var(--gold)">₹${b.amt}</span></div>`;
+        });
+        document.getElementById('aviTotalLoad').innerText = "₹" + total;
+        document.getElementById('aviPlayerList').innerHTML = h || "No active bets";
+    });
+
+    // 4. PAYMENTS (WITH REJECT LOGIC)
     db.ref('requests/withdrawals').on('value', snap => {
-        let html = "";
-        snap.forEach(child => {
-            let w = child.val();
-            if(w.status === 'pending' || !w.status) {
-                html += `<div class="req-item"><b>UID: ${w.uid}</b> <span style="float:right; color:var(--red)">₹${w.amount}</span><br>
-                    <button class="btn btn-green" onclick="handleWit('${child.key}','success')">PAID</button>
-                    <button class="btn btn-red" onclick="handleWit('${child.key}','rejected','${w.uid}',${w.amount})">REJECT</button></div>`;
+        let h = "";
+        snap.forEach(c => {
+            let w = c.val();
+            if(w.status === 'pending') {
+                h += `<div class="req-item"><b>UID: ${w.uid}</b> - ₹${w.amount}<br>
+                    <button class="btn btn-green" onclick="handleW('${c.key}','success')">PAID</button>
+                    <button class="btn btn-red" onclick="handleW('${c.key}','rejected','${w.uid}',${w.amount})">REJECT</button></div>`;
             }
         });
-        document.getElementById('witList').innerHTML = html || "<p style='text-align:center;'>No Withdrawals</p>";
+        document.getElementById('witList').innerHTML = h || "Empty";
     });
-
-    function handleWit(key, status, uid, amt) {
-        if(status === 'rejected') db.ref('users/'+uid+'/balance').transaction(c => (Number(c)||0) + Number(amt));
-        db.ref('requests/withdrawals/'+key).update({ status: status });
+    function handleW(k, s, u, a) {
+        if(s==='rejected') db.ref('users/'+u+'/balance').transaction(c => (Number(c)||0) + Number(a));
+        db.ref('requests/withdrawals/'+k).update({status:s});
     }
 
     db.ref('requests/deposits').on('value', snap => {
-        let html = "";
-        snap.forEach(child => {
-            let d = child.val();
-            if(d.status === 'pending' || !d.status) {
-                html += `<div class="req-item"><b>UID: ${d.uid}</b> <span style="float:right; color:var(--green)">₹${d.amount}</span><br>
-                    <button class="btn btn-green" style="width:100%" onclick="approveDep('${child.key}','${d.uid}',${d.amount})">APPROVE</button></div>`;
+        let h = "";
+        snap.forEach(c => {
+            let d = c.val();
+            if(d.status === 'pending') {
+                h += `<div class="req-item"><b>UID: ${d.uid}</b> - ₹${d.amount}<br>
+                    <button class="btn btn-green" style="width:100%" onclick="appD('${c.key}','${d.uid}',${d.amount})">APPROVE</button></div>`;
             }
         });
-        document.getElementById('depList').innerHTML = html || "<p style='text-align:center;'>No Deposits</p>";
+        document.getElementById('depList').innerHTML = h || "Empty";
     });
-
-    function approveDep(key, uid, amt) {
-        db.ref('users/'+uid+'/balance').transaction(c => (Number(c)||0) + Number(amt));
-        db.ref('requests/deposits/'+key).update({ status: 'success' });
+    function appD(k, u, a) {
+        db.ref('users/'+u+'/balance').transaction(c => (Number(c)||0) + Number(a));
+        db.ref('requests/deposits/'+k).update({status:'success'});
     }
 </script>
 </body>
 </html>
-}
-</script>
-</body>
-</html>
+
 
