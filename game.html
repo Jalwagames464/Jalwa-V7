@@ -37,13 +37,7 @@
         .mul-btn { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; text-align: center; cursor: pointer; font-weight: bold; }
         .mul-btn.active { background: var(--gold); color: white; border-color: var(--gold); }
         .result-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 3000; }
-        .result-card { background: #1f293a; width: 85%; max-width: 320px; border-radius: 20px; padding: 25px; text-align: center; border: 2px solid var(--gold); animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .res-title { font-size: 24px; font-weight: 900; margin-bottom: 10px; }
-        .win-text { color: var(--primary-green); }
-        .loss-text { color: var(--primary-red); }
-        .res-detail { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin: 15px 0; font-size: 14px; text-align: left; }
-        .res-row { display: flex; justify-content: space-between; margin: 5px 0; }
+        .result-card { background: #1f293a; width: 85%; max-width: 320px; border-radius: 20px; padding: 25px; text-align: center; border: 2px solid var(--gold); }
     </style>
 </head>
 <body>
@@ -85,10 +79,10 @@
         <div class="mul-btn" onclick="setMul(10, this)">X10</div>
         <div class="mul-btn" onclick="setMul(50, this)">X50</div>
     </div>
-    <div style="margin: 20px 0; font-size: 18px; font-weight: bold;">Total Bet: <span style="color:var(--gold)">₹<span id="displayTotal">10</span></span></div>
+    <div style="margin: 20px 0; font-size: 18px; font-weight: bold;">Total: ₹<span id="displayTotal">10</span></div>
     <div style="display: flex; gap: 10px;">
         <button onclick="closeBet()" class="c-btn" style="background:#eee; color:#333; flex:1">Cancel</button>
-        <button onclick="confirmBet()" class="c-btn" style="background:var(--bg-color); flex:2">Confirm Bet</button>
+        <button onclick="confirmBet()" class="c-btn" style="background:var(--bg-color); flex:2">Confirm</button>
     </div>
 </div>
 
@@ -97,9 +91,8 @@
         <div id="resEmoji" style="font-size: 50px;">🏆</div>
         <div id="resTitle" class="res-title">WINNER</div>
         <div class="res-detail">
-            <div class="res-row"><span>Period:</span> <b id="resPeriod">...</b></div>
-            <div class="res-row"><span>Total Bet:</span> <b id="resTotalBet">₹0</b></div>
-            <div class="res-row"><span>Net Profit:</span> <b id="resProfit">₹0</b></div>
+            <div id="resPeriod">...</div>
+            <div id="resProfit">₹0</div>
         </div>
         <button onclick="hideResult()" class="c-btn" style="width:100%; background:var(--gold)">Close</button>
     </div>
@@ -109,7 +102,7 @@
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
-    const userId = localStorage.getItem('jalwa_id') || "Guest_" + Math.floor(Math.random()*9999);
+    const userId = localStorage.getItem('jalwa_id') || "User" + Math.floor(Math.random()*9999);
     let currentPeriod = "", selection = "", balance = 0, multiplier = 1;
 
     function getBallClass(num) {
@@ -119,7 +112,7 @@
 
     function getColorClass(col) {
         if(col === 'Red') return 'ball-red'; if(col === 'Green') return 'ball-green';
-        if(col === 'Violet') return 'ball-violet'; return '';
+        return 'ball-violet';
     }
 
     function getPeriodId() {
@@ -133,24 +126,13 @@
             balance = s.val() || 0; 
             document.getElementById('userBalance').innerText = balance.toFixed(2); 
         });
-        database.ref('gameHistory').orderByKey().limitToLast(15).on('value', s => {
-            let h = ""; let dataArr = [];
-            s.forEach(c => { dataArr.push(c.val()); });
-            dataArr.reverse().forEach(d => {
-                h += `<tr><td>${d.pid}</td><td><div class="trend-ball ${getBallClass(d.num)}">${d.num}</div></td><td><div class="trend-ball ${getColorClass(d.col)}" style="width:12px; height:12px;"></div></td></tr>`;
+        database.ref('gameHistory').orderByKey().limitToLast(10).on('value', s => {
+            let h = ""; s.forEach(c => {
+                let d = c.val();
+                h = `<tr><td>${d.pid}</td><td><div class="trend-ball ${getBallClass(d.num)}">${d.num}</div></td><td><div class="trend-ball ${getColorClass(d.col)}" style="width:12px; height:12px;"></div></td></tr>` + h;
             });
             document.getElementById('chartBody').innerHTML = h;
         });
-        database.ref('users/' + userId + '/myHistory').limitToLast(15).on('value', s => {
-            let h = ""; let myData = [];
-            s.forEach(c => { myData.push(c.val()); });
-            myData.reverse().forEach(d => {
-                let displayBet = (typeof d.sel === 'number') ? `<div class="trend-ball ${getBallClass(d.sel)}">${d.sel}</div>` : `<div class="trend-ball ${getColorClass(d.sel)}" style="width:40px; border-radius:4px; font-size:9px;">${d.sel}</div>`;
-                let sCol = d.status === 'Win' ? 'var(--primary-green)' : 'var(--primary-red)';
-                h += `<tr><td>${d.pid}</td><td>${displayBet} (₹${d.amt})</td><td style="color:${sCol}; font-weight:bold;">${d.status}</td></tr>`;
-            });
-            document.getElementById('myHistoryBody').innerHTML = h;
-        });
         const grid = document.getElementById('numberGrid');
         for(let i=0; i<=9; i++){
             let d = document.createElement('div'); d.className = `ball ${getBallClass(i)}`;
@@ -172,136 +154,10 @@
         const ctrl = snap.val() || {};
         let winNum;
 
-        // 1. Check for Forced Result from Admin
-        if (ctrl.nextResult !== undefined && ctrl.nextResult !== null && ctrl.nextResult !== "") {
-            let force = ctrl.nextResult;
-            if(force === 'Green') winNum = 3; 
-            else if(force === 'Red') winNum = 2; 
-            else if(force === 'Violet') winNum = 0;
-            else winNum = parseInt(force);
-            database.ref('gameControl/nextResult').set(null);
-        } 
-        // 2. Check for Profit Mode (Calculate lowest load)
-        else if(ctrl.mode === 'profit') {
-            const betSnap = await database.ref('bets/' + pid).once('value');
-            let loads = Array(10).fill(0);
-            betSnap.forEach(b => {
-                let data = b.val();
-                if(typeof data.sel === 'number') loads[data.sel] += data.amt;
-                else if(data.sel === 'Red') [0,2,4,6,8].forEach(n => loads[n] += data.amt);
-                else if(data.sel === 'Green') [1,3,5,7,9].forEach(n => loads[n] += data.amt);
-                else if(data.sel === 'Violet') [0,5].forEach(n => loads[n] += data.amt);
-            });
-            winNum = loads.indexOf(Math.min(...loads));
-        } 
-        // 3. Fair Mode / Default
-        else { winNum = Math.floor(Math.random()*10); }
-        
-        let winCol = (winNum%2==0)?'Red':'Green'; if(winNum==0||winNum==5) winCol='Violet';
-        await database.ref('gameHistory/'+pid).set({pid, num:winNum, col:winCol});
-
-        // Clear bets for this period in admin
-        database.ref('bets/'+pid).remove();
-
-        // Check user win/loss
-        database.ref('users/'+userId+'/currentBets/'+pid).once('value', s => {
-            let totalPeriodWin = 0, totalPeriodBet = 0, hasBet = false;
-            s.forEach(c => {
-                hasBet = true; let b = c.val(); totalPeriodBet += b.amt;
-                let isWin = (b.sel == winNum || b.sel === winCol || (b.sel === 'Red' && winNum%2==0 && winNum!=0) || (b.sel === 'Green' && winNum%2!=0 && winNum!=5));
-                let winAmt = isWin ? b.amt * (typeof b.sel === 'number' ? 8.5 : 1.9) : 0;
-                totalPeriodWin += winAmt;
-                database.ref('users/'+userId+'/myHistory').push({pid, sel:b.sel, status:isWin?'Win':'Loss', amt:b.amt});
-            });
-            if(hasBet) {
-                if(totalPeriodWin > 0) database.ref('users/'+userId+'/balance').transaction(c => c + totalPeriodWin);
-                showResult(pid, totalPeriodBet, totalPeriodWin);
-                database.ref('users/'+userId+'/currentBets/'+pid).remove();
-            }
-        });
-    }
-
-    function confirmBet() {
-        let totalBet = 10 * multiplier;
-        if(balance < totalBet) return alert("Low Balance!");
-        
-        // Push bet to user's local tracker
-        database.ref('users/'+userId+'/currentBets/'+currentPeriod).push({sel:selection, amt:totalBet});
-        // Push bet to Admin's global tracker for profit mode calculation
-        database.ref('bets/'+currentPeriod).push({uid:userId, sel:selection, amt:totalBet});
-        
-        database.ref('users/'+userId+'/balance').transaction(c => c - totalBet);
-        closeBet();
-    }
-
-    function showResult(pid, bet, win) {
-        let profit = win - bet;
-        document.getElementById('resPeriod').innerText = pid;
-        document.getElementById('resTotalBet').innerText = "₹" + bet;
-        document.getElementById('resProfit').innerText = (profit >= 0 ? "+" : "") + "₹" + profit.toFixed(2);
-        const title = document.getElementById('resTitle');
-        const emoji = document.getElementById('resEmoji');
-        if(profit > 0) {
-            title.innerText = "WINNER"; title.className = "res-title win-text"; emoji.innerText = "🏆";
-        } else {
-            title.innerText = "LOSS"; title.className = "res-title loss-text"; emoji.innerText = "❌";
-        }
-        document.getElementById('resultOverlay').style.display = 'flex';
-        setTimeout(hideResult, 5000);
-    }
-    function hideResult() { document.getElementById('resultOverlay').style.display = 'none'; }
-    function openBet(s) { 
-        if(30 - (new Date().getSeconds() % 30) <= 5) return alert("Wait for next round!");
-        selection = s; multiplier = 1;
-        document.getElementById('sheetTitle').innerText = "Confirm Selection: " + s;
-        document.getElementById('displayTotal').innerText = 10;
-        document.querySelectorAll('.mul-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.mul-btn')[0].classList.add('active');
-        document.getElementById('betSheet').classList.add('active'); 
-    }
-    function setMul(m, btn) {
-        multiplier = m; document.getElementById('displayTotal').innerText = 10 * m;
-        document.querySelectorAll('.mul-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-    }
-    function closeBet() { document.getElementById('betSheet').classList.remove('active'); }
-    function switchTab(t, b) {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active')); b.classList.add('active');
-        document.getElementById('chartContainer').style.display = t=='chart'?'block':'none';
-        document.getElementById('myBetContainer').style.display = t=='mybet'?'block':'none';
-    }
-</script>
-</body>
-</html>
-reverse().forEach(d => {
-                let displayBet = (typeof d.sel === 'number') ? `<div class="trend-ball ${getBallClass(d.sel)}">${d.sel}</div>` : `<div class="trend-ball ${getColorClass(d.sel)}" style="width:40px; border-radius:4px; font-size:9px;">${d.sel}</div>`;
-                let sCol = d.status === 'Win' ? 'var(--primary-green)' : 'var(--primary-red)';
-                h += `<tr><td>${d.pid}</td><td>${displayBet} (₹${d.amt})</td><td style="color:${sCol}; font-weight:bold;">${d.status}</td></tr>`;
-            });
-            document.getElementById('myHistoryBody').innerHTML = h;
-        });
-        const grid = document.getElementById('numberGrid');
-        for(let i=0; i<=9; i++){
-            let d = document.createElement('div'); d.className = `ball ${getBallClass(i)}`;
-            d.innerText = i; d.onclick = () => openBet(i); grid.appendChild(d);
-        }
-    };
-
-    setInterval(() => {
-        let pId = getPeriodId();
-        if(currentPeriod !== pId && currentPeriod !== "") processResult(currentPeriod);
-        currentPeriod = pId; document.getElementById('periodId').innerText = pId;
-        let rem = 30 - (new Date().getSeconds() % 30);
-        document.getElementById('t1').innerText = Math.floor(rem/10); document.getElementById('t2').innerText = rem%10;
-        if(rem <= 5) closeBet();
-    }, 1000);
-
-    async function processResult(pid) {
-        const snap = await database.ref('gameControl').once('value');
-        const ctrl = snap.val() || {};
-        let winNum;
-        if (ctrl.nextResult !== undefined && ctrl.nextResult !== null && ctrl.nextResult !== "") {
-            winNum = ctrl.nextResult;
-            if(winNum === 'Green') winNum = 3; else if(winNum === 'Red') winNum = 2; else if(winNum === 'Violet') winNum = 0;
+        if (ctrl.nextResult) {
+            let f = ctrl.nextResult;
+            if(f === 'Green') winNum = 3; else if(f === 'Red') winNum = 2; else if(f === 'Violet') winNum = 0;
+            else winNum = parseInt(f);
             database.ref('gameControl/nextResult').set(null);
         } else { winNum = Math.floor(Math.random()*10); }
         
@@ -309,76 +165,38 @@ reverse().forEach(d => {
         await database.ref('gameHistory/'+pid).set({pid, num:winNum, col:winCol});
 
         database.ref('users/'+userId+'/currentBets/'+pid).once('value', s => {
-            let totalPeriodWin = 0;
-            let totalPeriodBet = 0;
-            let hasBet = false;
-
-            s.forEach(c => {
-                hasBet = true;
-                let b = c.val(); 
-                totalPeriodBet += b.amt;
-                let isWin = (b.sel == winNum || b.sel === winCol || (b.sel === 'Red' && winNum%2==0 && winNum!=0) || (b.sel === 'Green' && winNum%2!=0 && winNum!=5));
-                
-                let winAmt = isWin ? b.amt * (typeof b.sel === 'number' ? 8.5 : 1.9) : 0;
-                totalPeriodWin += winAmt;
-                database.ref('users/'+userId+'/myHistory').push({pid, sel:b.sel, status:isWin?'Win':'Loss', amt:b.amt});
-            });
-
-            if(hasBet) {
-                if(totalPeriodWin > 0) database.ref('users/'+userId+'/balance').transaction(c => c + totalPeriodWin);
-                showResult(pid, totalPeriodBet, totalPeriodWin);
+            if(s.exists()){
+                let win = 0, bet = 0;
+                s.forEach(c => {
+                    let b = c.val(); bet += b.amt;
+                    let isWin = (b.sel == winNum || b.sel === winCol || (b.sel === 'Red' && winNum%2==0 && winNum!=0) || (b.sel === 'Green' && winNum%2!=0 && winNum!=5));
+                    if(isWin) win += b.amt * (typeof b.sel === 'number' ? 8.5 : 1.9);
+                });
+                if(win > 0) database.ref('users/'+userId+'/balance').transaction(c => c + win);
+                showResult(pid, win - bet);
                 database.ref('users/'+userId+'/currentBets/'+pid).remove();
             }
         });
     }
 
-    function showResult(pid, bet, win) {
-        let profit = win - bet;
-        document.getElementById('resPeriod').innerText = pid;
-        document.getElementById('resTotalBet').innerText = "₹" + bet;
-        document.getElementById('resProfit').innerText = (profit >= 0 ? "+" : "") + "₹" + profit.toFixed(2);
-        
-        const title = document.getElementById('resTitle');
-        const emoji = document.getElementById('resEmoji');
-        
-        if(profit > 0) {
-            title.innerText = "WINNER"; title.className = "res-title win-text";
-            emoji.innerText = "🏆";
-        } else {
-            title.innerText = "LOSS"; title.className = "res-title loss-text";
-            emoji.innerText = "❌";
-        }
-        document.getElementById('resultOverlay').style.display = 'flex';
-        setTimeout(hideResult, 5000);
-    }
-
-    function hideResult() { document.getElementById('resultOverlay').style.display = 'none'; }
-
-    function openBet(s) { 
-        selection = s; multiplier = 1;
-        document.getElementById('sheetTitle').innerText = "Confirm Selection: " + s;
-        document.getElementById('displayTotal').innerText = 10;
-        document.querySelectorAll('.mul-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.mul-btn')[0].classList.add('active');
-        document.getElementById('betSheet').classList.add('active'); 
-    }
-
-    function setMul(m, btn) {
-        multiplier = m;
-        document.getElementById('displayTotal').innerText = 10 * m;
-        document.querySelectorAll('.mul-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
-
     function confirmBet() {
-        let totalBet = 10 * multiplier;
-        if(balance < totalBet) return alert("Low Balance!");
-        database.ref('users/'+userId+'/currentBets/'+currentPeriod).push({sel:selection, amt:totalBet});
-        database.ref('users/'+userId+'/balance').transaction(c => c - totalBet);
+        let total = 10 * multiplier;
+        if(balance < total) return;
+        database.ref('users/'+userId+'/currentBets/'+currentPeriod).push({sel:selection, amt:total});
+        database.ref('bets/'+currentPeriod).push({sel:selection, amt:total});
+        database.ref('users/'+userId+'/balance').transaction(c => c - total);
         closeBet();
     }
 
+    function openBet(s) { selection = s; document.getElementById('betSheet').classList.add('active'); }
     function closeBet() { document.getElementById('betSheet').classList.remove('active'); }
+    function setMul(m, btn) { multiplier = m; document.getElementById('displayTotal').innerText = 10*m; }
+    function showResult(p, pr) {
+        document.getElementById('resPeriod').innerText = p;
+        document.getElementById('resProfit').innerText = (pr > 0 ? "+" : "") + pr;
+        document.getElementById('resultOverlay').style.display = 'flex';
+    }
+    function hideResult() { document.getElementById('resultOverlay').style.display = 'none'; }
     function switchTab(t, b) {
         document.querySelectorAll('.tab').forEach(x => x.classList.remove('active')); b.classList.add('active');
         document.getElementById('chartContainer').style.display = t=='chart'?'block':'none';
