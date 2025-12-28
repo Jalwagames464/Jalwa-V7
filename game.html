@@ -3,80 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa WinGo Pro - V2 Fixed</title>
+    <title>Jalwa WinGo Pro - Persistent History</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
         :root { --bg-color: #0d131f; --card-bg: #1f293a; --primary-green: #00c853; --primary-red: #d50000; --primary-violet: #aa00ff; --gold: #ff9800; }
-        body { margin: 0; padding: 0; background: #000; font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
+        body { margin: 0; padding: 0; background: #000; font-family: 'Segoe UI', sans-serif; color: white; overflow-y: auto; }
         .app-container { width: 100%; max-width: 480px; background: var(--bg-color); min-height: 100vh; margin: auto; position: relative; }
-        .top-nav { padding: 12px 15px; background: #161e2b; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #2a3544; }
-        .header-balance { background: #2a3544; padding: 5px 12px; border-radius: 20px; font-weight: bold; color: var(--gold); border: 1px solid #3d4b5f; }
-        .period-info-box { background: var(--card-bg); margin: 10px; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a3544; }
-        .digit { background: #000; color: #fff; padding: 6px 10px; border-radius: 6px; font-weight: 900; font-size: 22px; border: 1px solid #334155; }
+        .top-nav { padding: 15px; background: var(--card-bg); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #2a3544; }
+        .wallet-card { background: linear-gradient(135deg, #2196f3, #0046a1); margin: 10px; padding: 20px; border-radius: 15px; }
+        .timer-row { background: var(--card-bg); margin: 10px; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .digit { background: #334155; color: var(--gold); padding: 5px 10px; border-radius: 5px; font-weight: bold; font-size: 24px; margin-left: 2px; }
         .game-area { padding: 15px; background: var(--card-bg); margin: 10px; border-radius: 15px; }
-        .btn-group { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .c-btn { width: 31%; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 14px; }
-        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .ball { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); }
-        .res-ball { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: white; }
-        .b-red { background: var(--primary-red); }
-        .b-green { background: var(--primary-green); }
+        .btn-group { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .c-btn { width: 31%; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+        
+        /* Ball Styling */
+        .ball { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); color: white; }
         .ball-0 { background: linear-gradient(135deg, var(--primary-red) 50%, var(--primary-violet) 50%); }
         .ball-5 { background: linear-gradient(135deg, var(--primary-green) 50%, var(--primary-violet) 50%); }
-        .tabs { display: flex; background: #161e2b; border-bottom: 1px solid #2a3544; }
+        .ball-red { background: var(--primary-red); }
+        .ball-green { background: var(--primary-green); }
+        
+        /* Trend Chart Ball (Smaller) */
+        .trend-ball { width: 25px; height: 25px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin: 0 auto; color: white; }
+
+        .tabs { display: flex; background: var(--card-bg); margin-top: 10px; position: sticky; top: 58px; z-index: 999; }
         .tab { flex: 1; text-align: center; padding: 15px; cursor: pointer; color: #888; font-weight: bold; }
         .tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
-        .history-table { width: 100%; border-collapse: collapse; background: #161e2b; text-align: center; }
-        .history-table th { padding: 12px; font-size: 11px; color: #5c6a7e; }
-        .history-table td { padding: 12px; border-bottom: 1px solid #1f293a; font-size: 13px; }
-        #resPopup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); width: 85%; max-width: 320px; border-radius: 25px; z-index: 3000; transition: 0.4s; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
-        #resPopup.active { transform: translate(-50%, -50%) scale(1); }
-        .pop-content { background: #fff; color: #333; padding-bottom: 25px; text-align: center; }
-        .pop-header { padding: 25px; color: #fff; font-size: 28px; font-weight: 900; }
-        .bet-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: #fff; border-radius: 24px 24px 0 0; transition: 0.4s; z-index: 2000; padding: 20px; color: #333; box-sizing: border-box; }
+        .scroll-area { background: #161e2b; padding-bottom: 50px; }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: #1f293a; padding: 12px; color: #888; font-size: 11px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #2a3544; font-size: 13px; }
+
+        .bet-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: #fff; border-radius: 20px 20px 0 0; transition: 0.3s; z-index: 2000; padding: 20px; color: #333; box-sizing: border-box; }
         .bet-sheet.active { bottom: 0; }
-        .opt-btn { padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #f5f6fa; cursor: pointer; font-weight: bold; flex: 1; text-align: center; }
-        .opt-btn.active { background: #161e2b; color: #fff; }
-        .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1500; }
-        .overlay.active { display:block; }
+        .res-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: #fff; width: 80%; border-radius: 20px; z-index: 3000; transition: 0.3s; padding: 25px; text-align: center; color: #333; }
+        .res-popup.active { transform: translate(-50%, -50%) scale(1); }
     </style>
 </head>
 <body>
 
-<div class="overlay" id="overlay"></div>
-
-<div id="resPopup">
-    <div class="pop-content">
-        <div id="popBanner" class="pop-header">RESULT</div>
-        <div style="padding: 20px;">
-            <div id="popPeriod">--</div>
-            <div id="popAmt" style="font-size: 32px; font-weight: 900; margin: 15px 0;">₹0.00</div>
-        </div>
-        <button class="c-btn" style="background:#161e2b; width:80%; border-radius: 50px;" onclick="closePopup()">OKAY</button>
-    </div>
-</div>
-
 <div class="app-container">
     <div class="top-nav">
-        <span style="font-weight: 900; color: var(--gold);">JALWA WinGo</span>
-        <div class="header-balance">₹ <span id="userBalance">0.00</span></div>
+        <a href="index.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+        <span style="font-weight: bold;">WIN GO 30S</span>
+        <div onclick="window.location.href='wallet.html'"><i class="fas fa-wallet"></i></div>
     </div>
 
-    <div class="period-info-box">
-        <div><div style="color:#6a7c92; font-size:11px;">PERIOD ID</div><div id="periodId" style="font-size:16px; font-weight: bold;">--</div></div>
-        <div style="text-align:right;">
-            <div style="color:#6a7c92; font-size:11px;">TIME LEFT</div>
-            <div style="display:flex; gap:4px; margin-top:5px;"><div class="digit" id="t1">0</div><div class="digit" id="t2">0</div></div>
+    <div class="wallet-card">
+        <div style="font-size: 13px; opacity: 0.8;">Available Balance</div>
+        <div style="font-size: 30px; font-weight: bold; margin-top: 5px;">₹ <span id="userBalance">0.00</span></div>
+    </div>
+
+    <div class="timer-row">
+        <div>
+            <div style="color: #888; font-size: 11px;">Period</div>
+            <div id="periodId" style="font-weight: bold; font-size: 15px; color: #eee;">Loading...</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="color: #888; font-size: 11px; margin-bottom: 4px;">Time Left</div>
+            <div style="display: flex;"><div class="digit" id="t1">0</div><div class="digit" id="t2">0</div></div>
         </div>
     </div>
 
     <div class="game-area">
         <div class="btn-group">
-            <button class="c-btn b-green" onclick="openBet('Green', 'var(--primary-green)')">Green</button>
-            <button class="c-btn" style="background:var(--primary-violet)" onclick="openBet('Violet', 'var(--primary-violet)')">Violet</button>
-            <button class="c-btn b-red" onclick="openBet('Red', 'var(--primary-red)')">Red</button>
+            <button class="c-btn" style="background:var(--primary-green)" onclick="openBet('Green', '#00c853')">Green</button>
+            <button class="c-btn" style="background:var(--primary-violet)" onclick="openBet('Violet', '#aa00ff')">Violet</button>
+            <button class="c-btn" style="background:var(--primary-red)" onclick="openBet('Red', '#d50000')">Red</button>
         </div>
         <div class="num-grid" id="numberGrid"></div>
     </div>
@@ -86,179 +85,198 @@
         <div class="tab" onclick="switchTab('mybet', this)">My History</div>
     </div>
 
-    <div id="chartContainer"><table class="history-table"><thead><tr><th>Period</th><th>Result</th><th>Color</th></tr></thead><tbody id="chartBody"></tbody></table></div>
-    <div id="myBetContainer" style="display:none;"><table class="history-table"><thead><tr><th>Period</th><th>Selection</th><th>Bet</th><th>Profit/Loss</th></tr></thead><tbody id="myHistoryBody"></tbody></table></div>
+    <div class="scroll-area">
+        <div id="chartContainer">
+            <table>
+                <thead><tr><th>Period</th><th>Number</th><th>Color</th></tr></thead>
+                <tbody id="chartBody"></tbody>
+            </table>
+        </div>
+        <div id="myBetContainer" style="display:none;">
+            <table>
+                <thead><tr><th>Period</th><th>Selection</th><th>Amount</th><th>Status</th></tr></thead>
+                <tbody id="myHistoryBody"></tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <div id="betSheet" class="bet-sheet">
-    <h3 id="sheetTitle" style="text-align: center;">Select</h3>
-    <div style="display: flex; gap: 10px; margin-bottom: 15px;" id="baseRow">
-        <div class="opt-btn active" onclick="setBase(10, this)">10</div>
-        <div class="opt-btn" onclick="setBase(100, this)">100</div>
-        <div class="opt-btn" onclick="setBase(1000, this)">1000</div>
+    <h3 id="sheetTitle" style="margin-top:0">Select</h3>
+    <div style="display:flex; gap:10px; margin:20px 0;">
+        <div class="c-btn" style="background:#f4f4f4; color:#333; text-align:center;" onclick="setAmt(10)">10</div>
+        <div class="c-btn" style="background:#f4f4f4; color:#333; text-align:center;" onclick="setAmt(100)">100</div>
+        <div class="c-btn" style="background:#f4f4f4; color:#333; text-align:center;" onclick="setAmt(1000)">1000</div>
     </div>
-    <div style="display: flex; gap: 5px; margin-bottom: 20px;" id="mulRow">
-        <div class="opt-btn active" onclick="setMul(1, this)">X1</div>
-        <div class="opt-btn" onclick="setMul(5, this)">X5</div>
-        <div class="opt-btn" onclick="setMul(10, this)">X10</div>
-    </div>
-    <div style="text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 20px;">Total: ₹<span id="totalBetTxt">10</span></div>
-    <button id="confBtn" onclick="confirmBet()" style="width:100%; padding:15px; border:none; border-radius: 12px; color:white; font-weight:bold;">CONFIRM BET</button>
+    <div style="font-weight:bold; font-size: 18px;">Total: <span style="color:var(--gold)">₹<span id="totalBetTxt">10</span></span></div>
+    <button onclick="confirmBet()" id="confBtn" style="width:100%; padding:15px; border:none; border-radius:10px; color:white; font-weight:bold; font-size:18px; margin-top:20px;">Confirm</button>
+</div>
+
+<div id="resPopup" class="res-popup">
+    <h2 id="resStat" style="margin:0;">Result</h2>
+    <div style="font-size: 20px; margin: 15px 0;">Amount: <span id="resAmt" style="font-weight:bold;">₹0.00</span></div>
+    <button onclick="this.parentElement.classList.remove('active')" style="width:100%; padding:12px; background:#333; color:white; border:none; border-radius:10px;">OK</button>
 </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    
-    let userId = localStorage.getItem('jalwa_id') || "user_" + Math.floor(Math.random()*900000);
-    localStorage.setItem('jalwa_id', userId);
+    const database = firebase.database();
 
-    let balance = 0, currentPeriod = "", baseAmt = 10, multiplier = 1, selection = "";
+    const userId = localStorage.getItem('jalwa_id');
+    let balance = 0, currentPeriod = "", currentBetAmt = 10, selection = "";
 
-    // Balance Listener
-    db.ref('users/' + userId + '/balance').on('value', snap => {
-        balance = snap.val() || 0;
-        document.getElementById('userBalance').innerText = balance.toFixed(2);
-    });
+    window.onload = () => {
+        if(!userId) return window.location.href = "index.html";
 
-    // Global Result History
-    db.ref('history/wingo30').limitToLast(15).on('value', snap => {
-        let h = "";
-        let data = [];
-        snap.forEach(c => { data.push(c.val()); });
-        data.reverse().forEach(r => {
-            let bClass = r.num===0?'ball-0':(r.num===5?'ball-5':(r.num%2===0?'b-red':'b-green'));
-            h += `<tr><td>${r.period.slice(-4)}</td><td><div class="res-ball ${bClass}">${r.num}</div></td><td style="color:${r.num%2===0?'#ff5252':'#00c853'}">${r.color}</td></tr>`;
+        // 1. Sync Balance
+        database.ref('users/' + userId + '/balance').on('value', snap => {
+            balance = Number(snap.val() || 0);
+            document.getElementById('userBalance').innerText = balance.toFixed(2);
         });
-        document.getElementById('chartBody').innerHTML = h;
-        
-        // Check trades whenever a NEW result appears
-        if (data.length > 0) checkMyTrades(data[0]); 
-    });
 
-    // My Personal Trade History - Fixed Loop
-    db.ref('users/' + userId + '/trades').on('value', snap => {
-        let h = "";
-        let trades = [];
-        snap.forEach(c => { trades.push(c.val()); });
-        trades.reverse().forEach(t => {
-            if(t.status === 'pending') return;
-            let ball = isNaN(t.sel) ? `<span style="color:#aaa;">${t.sel}</span>` : `<div class="res-ball ${t.sel%2===0?'b-red':'b-green'}">${t.sel}</div>`;
-            let net = t.status === 'win' ? (t.winAmt - t.amt) : -t.amt;
-            let color = net >= 0 ? '#00c853' : '#ff5252';
-            h += `<tr><td>${t.period.slice(-4)}</td><td>${ball}</td><td>₹${t.amt}</td><td style="color:${color}; font-weight:bold;">${net >= 0 ? '+' : ''}₹${net.toFixed(2)}</td></tr>`;
+        // 2. Load and Sync Trend Chart (Permanent)
+        database.ref('gameHistory').limitToLast(20).on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                let data = child.val();
+                let bClass = "";
+                if(data.num == 0) bClass = "ball-0";
+                else if(data.num == 5) bClass = "ball-5";
+                else bClass = (data.num % 2 === 0) ? "ball-red" : "ball-green";
+
+                let cClass = (data.col === "Red") ? "ball-red" : (data.col === "Green" ? "ball-green" : "ball-0");
+
+                h = `<tr>
+                    <td>${data.pid.slice(-4)}</td>
+                    <td><div class="trend-ball ${bClass}">${data.num}</div></td>
+                    <td><div class="trend-ball ${cClass}" style="width:15px; height:15px;"></div></td>
+                </tr>` + h;
+            });
+            document.getElementById('chartBody').innerHTML = h;
         });
-        document.getElementById('myHistoryBody').innerHTML = h;
-    });
 
+        // 3. Load and Sync My History (Permanent)
+        database.ref('users/' + userId + '/myHistory').limitToLast(20).on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                let data = child.val();
+                let statusColor = data.status === "Win" ? "var(--primary-green)" : "var(--primary-red)";
+                h = `<tr>
+                    <td>${data.pid.slice(-4)}</td>
+                    <td>${data.sel}</td>
+                    <td>₹${data.amt}</td>
+                    <td style="color:${statusColor}; font-weight:bold;">${data.status}</td>
+                </tr>` + h;
+            });
+            document.getElementById('myHistoryBody').innerHTML = h;
+        });
+
+        // Build Numbers
+        const grid = document.getElementById('numberGrid');
+        for(let i=0; i<=9; i++){
+            let d = document.createElement('div');
+            d.className = `ball ${i===0?'ball-0':''} ${i===5?'ball-5':''}`;
+            if(i!==0 && i!==5) d.style.background = (i%2===0)?'var(--primary-red)':'var(--primary-green)';
+            d.innerText = i; d.onclick = () => openBet(i, (i%2===0)?'#d50000':'#00c853');
+            grid.appendChild(d);
+        }
+    };
+
+    // Timer Logic
     setInterval(() => {
         const now = new Date();
-        let rem = 30 - (now.getSeconds() % 30);
-        let pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + "30" + Math.floor((now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/30);
+        let sec = now.getSeconds();
+        let rem = 30 - (sec % 30);
+        let pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + Math.floor((now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds())/30);
         
-        if (currentPeriod !== pId) {
-            if(currentPeriod !== "") syncResult(currentPeriod);
-            currentPeriod = pId;
-            document.getElementById('periodId').innerText = currentPeriod;
+        if (currentPeriod !== pId && currentPeriod !== "") { 
+            generateResult(currentPeriod); 
         }
-        document.getElementById('t1').innerText = Math.floor(rem/10);
-        document.getElementById('t2').innerText = rem%10;
-        if(rem <= 3) closeSheet();
+        currentPeriod = pId;
+        document.getElementById('periodId').innerText = currentPeriod;
+        let s = rem.toString().padStart(2, '0');
+        document.getElementById('t1').innerText = s[0];
+        document.getElementById('t2').innerText = s[1];
+        if(rem <= 5) document.getElementById('betSheet').classList.remove('active');
     }, 1000);
 
-    async function syncResult(pid) {
-        const ref = db.ref('history/wingo30/' + pid);
-        const snap = await ref.once('value');
-        if(snap.exists()) return;
+    async function generateResult(pid) {
+        // Sirf ek baar result generate ho uske liye check
+        const resRef = database.ref('gameHistory/' + pid);
+        const snapshot = await resRef.once('value');
+        if(snapshot.exists()) return;
 
-        let forced = (await db.ref('gameControl/nextResult').once('value')).val();
-        let winNum = (forced !== null) ? (isNaN(forced) ? (forced==='Red'?2:1) : parseInt(forced)) : Math.floor(Math.random()*10);
-        let winCol = (winNum===0||winNum===5)?'Violet':(winNum%2===0?'Red':'Green');
-        
-        await ref.set({ period: pid, num: winNum, color: winCol });
-        db.ref('gameControl/nextResult').remove();
-    }
+        let winNum = Math.floor(Math.random() * 10);
+        let winCol = (winNum % 2 === 0) ? "Red" : "Green";
+        if(winNum === 0 || winNum === 5) winCol = "Violet";
 
-    // Check ALL pending trades for the specific result period
-    async function checkMyTrades(lastRes) {
-        if(!lastRes) return;
-        const tradesRef = db.ref('users/' + userId + '/trades');
-        // Filter trades that are pending and belong to the finished period
-        const snap = await tradesRef.orderByChild('status').equalTo('pending').once('value');
-        
-        let totalProfitLoss = 0;
-        let processedCount = 0;
+        // Save Result to Firebase (Permanent)
+        resRef.set({ pid: pid, num: winNum, col: winCol });
 
-        snap.forEach(child => {
-            let t = child.val();
-            if(t.period === lastRes.period) {
-                let isWin = false;
-                if(t.sel === lastRes.num) isWin = true;
-                else if(t.sel === 'Red' && lastRes.num%2===0 && lastRes.num!==0) isWin = true;
-                else if(t.sel === 'Green' && lastRes.num%2!==0 && lastRes.num!==5) isWin = true;
-                else if(t.sel === 'Violet' && (lastRes.num===0||lastRes.num===5)) isWin = true;
+        // Check user bets for this period
+        database.ref('users/' + userId + '/currentBets/' + pid).once('value', snap => {
+            if(snap.exists()){
+                snap.forEach(child => {
+                    let bet = child.val();
+                    let isWin = false;
+                    if(bet.sel == winNum) isWin = true;
+                    else if(bet.sel === winCol) isWin = true;
+                    else if(bet.sel === "Red" && winNum % 2 === 0 && winNum !== 0) isWin = true;
+                    else if(bet.sel === "Green" && winNum % 2 !== 0 && winNum !== 5) isWin = true;
 
-                let winAmt = isWin ? t.amt * (typeof t.sel === 'number' ? 8.8 : 1.95) : 0;
-                if(isWin) db.ref('users/'+userId+'/balance').transaction(c => (c || 0) + winAmt);
-                
-                tradesRef.child(t.id).update({ status: isWin?'win':'loss', winAmt: winAmt });
-                
-                totalProfitLoss += (isWin ? (winAmt - t.amt) : -t.amt);
-                processedCount++;
+                    let status = isWin ? "Win" : "Loss";
+                    let winAmount = isWin ? (bet.amt * (typeof bet.sel === 'number' ? 8.8 : 1.9)) : 0;
+
+                    // Update balance if Win
+                    if(isWin) database.ref('users/' + userId + '/balance').transaction(c => (c || 0) + winAmount);
+
+                    // Move to permanent history
+                    database.ref('users/' + userId + '/myHistory').push({
+                        pid: pid, sel: bet.sel, amt: bet.amt, status: status, win: winAmount
+                    });
+
+                    // Show Popup
+                    document.getElementById('resStat').innerText = isWin ? "WINNER!" : "LOST";
+                    document.getElementById('resStat').style.color = isWin ? "var(--primary-green)" : "var(--primary-red)";
+                    document.getElementById('resAmt').innerText = "₹" + winAmount.toFixed(2);
+                    document.getElementById('resPopup').classList.add('active');
+                });
+                database.ref('users/' + userId + '/currentBets/' + pid).remove();
             }
         });
-
-        if(processedCount > 0) {
-            showSummaryPopup(lastRes.period, totalProfitLoss);
-        }
     }
 
     function openBet(sel, col) {
-        selection = sel; 
-        document.getElementById('sheetTitle').innerText = "Bet on " + sel;
+        selection = sel;
+        document.getElementById('sheetTitle').innerText = "Select " + sel;
         document.getElementById('confBtn').style.background = col;
         document.getElementById('betSheet').classList.add('active');
-        document.getElementById('overlay').classList.add('active');
     }
+
+    function setAmt(a) { currentBetAmt = a; document.getElementById('totalBetTxt').innerText = a; }
 
     function confirmBet() {
-        let total = baseAmt * multiplier;
-        if(balance < total) return alert("Insufficient Balance!");
-        let newRef = db.ref('users/'+userId+'/trades').push();
-        newRef.set({ id: newRef.key, period: currentPeriod, sel: selection, amt: total, status: 'pending', winAmt: 0 });
-        db.ref('users/'+userId+'/balance').transaction(c => (c || 0) - total);
-        closeSheet();
+        if(balance < currentBetAmt) return alert("Insufficient Balance!");
+        
+        database.ref('users/' + userId + '/balance').transaction(c => {
+            if(c >= currentBetAmt) {
+                // Bet save karein temporary
+                database.ref('users/' + userId + '/currentBets/' + currentPeriod).push({
+                    sel: selection, amt: currentBetAmt, pid: currentPeriod
+                });
+                return c - currentBetAmt;
+            }
+            return c;
+        });
+        document.getElementById('betSheet').classList.remove('active');
     }
 
-    function showSummaryPopup(period, netProfit) {
-        document.getElementById('popBanner').innerText = netProfit >= 0 ? "WINNER!" : "FAILED";
-        document.getElementById('popBanner').style.background = netProfit >= 0 ? "#00c853" : "#ff5252";
-        document.getElementById('popPeriod').innerText = "Period: " + period.slice(-4);
-        document.getElementById('popAmt').innerText = (netProfit >= 0 ? "+ ₹" : "- ₹") + Math.abs(netProfit).toFixed(2);
-        document.getElementById('popAmt').style.color = netProfit >= 0 ? "#00c853" : "#ff5252";
-        document.getElementById('resPopup').classList.add('active');
-        document.getElementById('overlay').classList.add('active');
-    }
-
-    // UI Helpers
-    const grid = document.getElementById('numberGrid');
-    for(let i=0; i<=9; i++){
-        let d = document.createElement('div');
-        d.className = `ball ${i===0?'ball-0':(i===5?'ball-5':(i%2===0?'b-red':'b-green'))}`;
-        d.innerText = i;
-        d.onclick = () => openBet(i, i%2===0?'var(--primary-red)':'var(--primary-green)');
-        grid.appendChild(d);
-    }
-    function setBase(v, b) { baseAmt = v; document.querySelectorAll('#baseRow .opt-btn').forEach(el => el.classList.remove('active')); b.classList.add('active'); updateTotal(); }
-    function setMul(m, b) { multiplier = m; document.querySelectorAll('#mulRow .opt-btn').forEach(el => el.classList.remove('active')); b.classList.add('active'); updateTotal(); }
-    function updateTotal() { document.getElementById('totalBetTxt').innerText = baseAmt * multiplier; }
-    function closeSheet() { document.getElementById('betSheet').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
-    function closePopup() { document.getElementById('resPopup').classList.remove('active'); document.getElementById('overlay').classList.remove('active'); }
-    function switchTab(t, b) {
-        document.querySelectorAll('.tab').forEach(i => i.classList.remove('active')); b.classList.add('active');
-        document.getElementById('chartContainer').style.display = t==='chart'?'block':'none';
-        document.getElementById('myBetContainer').style.display = t==='mybet'?'block':'none';
+    function switchTab(type, btn) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('chartContainer').style.display = type === 'chart' ? 'block' : 'none';
+        document.getElementById('myBetContainer').style.display = type === 'mybet' ? 'block' : 'none';
     }
 </script>
 </body>
