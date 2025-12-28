@@ -46,18 +46,18 @@
     <div id="depositSec">
         <div class="upi-box">
             <small>Transfer to UPI ID</small>
-            <div style="font-size: 16px; font-weight: bold; margin: 5px 0;" id="adminUpi">deepakdeepaksingh103@oksbi</div>
-            <button onclick="copyUPI()" style="color:var(--blue); background:none; border:none; font-weight:bold; cursor:pointer;">COPY UPI</button>
+            <div style="font-size: 16px; font-weight: bold; margin: 5px 0;" id="adminUpi">d28122004@ptyes</div>
+            <button id="copyBtn" onclick="copyUPI()" style="color:var(--blue); background:none; border:none; font-weight:bold; cursor:pointer;">COPY UPI</button>
         </div>
         <input type="number" id="depAmount" placeholder="Amount (Min ₹500)">
         <input type="text" id="utrNumber" placeholder="12 Digit UTR Number">
-        <button class="btn-action" style="background:var(--green);" onclick="submitDeposit()">SUBMIT DEPOSIT</button>
+        <button class="btn-action" id="depBtn" style="background:var(--green);" onclick="submitDeposit()">SUBMIT DEPOSIT</button>
     </div>
 
     <div id="withdrawSec" style="display:none;">
         <input type="number" id="witAmount" placeholder="Amount (Min ₹500)">
         <input type="text" id="witUpi" placeholder="Enter UPI ID (example@ybl)">
-        <button class="btn-action" style="background:var(--blue);" onclick="submitWithdraw()">WITHDRAW NOW</button>
+        <button class="btn-action" id="witBtn" style="background:var(--blue);" onclick="submitWithdraw()">WITHDRAW NOW</button>
     </div>
 
     <div style="margin-top: 30px;">
@@ -103,29 +103,52 @@
 
     function copyUPI() {
         const upi = document.getElementById('adminUpi').innerText;
-        navigator.clipboard.writeText(upi).then(() => alert("UPI Copied!"));
+        const btn = document.getElementById('copyBtn');
+        navigator.clipboard.writeText(upi).then(() => {
+            btn.innerText = "COPIED!";
+            setTimeout(() => { btn.innerText = "COPY UPI"; }, 2000);
+        });
     }
 
     function submitDeposit() {
         const amt = document.getElementById('depAmount').value;
         const utr = document.getElementById('utrNumber').value;
-        if(amt < 500 || utr.length < 10) return alert("Fill correct details!");
+        const btn = document.getElementById('depBtn');
+        if(amt < 500 || utr.length < 10) return;
+        
         db.ref('requests/deposits').push({ uid: userId, amount: Number(amt), utr: utr, status: 'pending', time: Date.now() })
-        .then(() => alert("Request Sent!"));
+        .then(() => {
+            btn.innerText = "SENT SUCCESSFULLY!";
+            btn.disabled = true;
+            setTimeout(() => { 
+                btn.innerText = "SUBMIT DEPOSIT"; 
+                btn.disabled = false;
+                document.getElementById('depAmount').value = "";
+                document.getElementById('utrNumber').value = "";
+            }, 3000);
+        });
     }
 
     function submitWithdraw() {
         const amt = Number(document.getElementById('witAmount').value);
         const upi = document.getElementById('witUpi').value;
-        if(amt < 500 || !upi) return alert("Min ₹500 & UPI ID required");
+        const btn = document.getElementById('witBtn');
+        if(amt < 500 || !upi) return;
         
         db.ref('users/' + userId + '/balance').transaction(bal => {
             if(bal >= amt) return bal - amt;
         }, (err, comm) => {
             if(comm) {
                 db.ref('requests/withdrawals').push({ uid: userId, amount: amt, upi: upi, status: 'pending', time: Date.now() });
-                alert("Withdrawal Requested!");
-            } else alert("Insufficient Balance!");
+                btn.innerText = "REQUESTED!";
+                btn.disabled = true;
+                setTimeout(() => { 
+                    btn.innerText = "WITHDRAW NOW"; 
+                    btn.disabled = false;
+                    document.getElementById('witAmount').value = "";
+                    document.getElementById('witUpi').value = "";
+                }, 3000);
+            }
         });
     }
 
@@ -133,3 +156,4 @@
 </script>
 </body>
 </html>
+
