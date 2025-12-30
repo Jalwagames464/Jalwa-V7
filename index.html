@@ -28,7 +28,6 @@
         .game-card { background: #161d3d; border-radius: 15px; padding: 25px 15px; text-align: center; border: 1px solid #1f2855; cursor: pointer; transition: 0.3s; text-decoration: none; color: white; }
         .card { background: var(--card-bg); border-radius: 15px; padding: 15px; border: 1px solid #1f2855; margin: 15px; }
 
-        /* History Buttons UI */
         .history-btn { background: #161d3d; padding: 15px; border-radius: 12px; margin: 10px 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1f2855; cursor: pointer; }
         .hist-item-new { background: #10142d; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--text-gray); display: flex; justify-content: space-between; font-size: 13px; }
         .status-success { border-left-color: var(--green); color: var(--green); }
@@ -135,7 +134,7 @@
             <h3 style="color:var(--gold); margin-bottom: 5px;">INVITE FRIENDS</h3>
             <p style="margin: 0 0 10px 0; font-size: 14px;">Recharge ₹500 & Get <b>₹200 Bonus</b>!</p>
             <div style="background:#06091b; padding:10px; border-radius:8px; display:flex; justify-content:space-between; border:1px dashed var(--cyan);">
-                <span id="refLink" style="font-size:11px;">https://rebrand.ly/2cuhjgg</span>
+                <span id="refLink" style="font-size:11px;">Loading link...</span>
                 <i class="fas fa-copy" style="color:var(--cyan)" onclick="copyText('refLink')"></i>
             </div>
         </div>
@@ -176,8 +175,20 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    let userId = localStorage.getItem('jalwa_id') || ('UID' + Math.floor(Math.random() * 900000 + 100000));
-    localStorage.setItem('jalwa_id', userId);
+    // --- REFERRAL TRACKING (URL check) ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const referredBy = urlParams.get('ref');
+
+    let userId = localStorage.getItem('jalwa_id');
+    let isNewUser = false;
+
+    if(!userId) {
+        isNewUser = true;
+        userId = 'UID' + Math.floor(Math.random() * 900000 + 100000);
+        localStorage.setItem('jalwa_id', userId);
+        // Save referral info if available
+        if(referredBy) localStorage.setItem('referred_by', referredBy);
+    }
     document.getElementById('userUIDDisplay').innerText = userId;
 
     let userBalance = 0;
@@ -189,7 +200,15 @@
             userBalance = data.balance || 0;
             updateUI();
         } else {
-            db.ref('users/' + userId).set({ balance: 0, totalDeposit: 0, totalWithdraw: 0 });
+            // New user init with referral tracking
+            const refID = localStorage.getItem('referred_by') || "None";
+            db.ref('users/' + userId).set({ 
+                balance: 0, 
+                totalDeposit: 0, 
+                totalWithdraw: 0,
+                referredBy: refID,
+                joinedAt: Date.now()
+            });
         }
     });
 
@@ -198,9 +217,13 @@
         document.getElementById('globalBalance').innerText = bal;
         if(document.getElementById('walBal')) document.getElementById('walBal').innerText = bal;
         if(document.getElementById('accBal')) document.getElementById('accBal').innerText = bal;
+        
+        // Dynamic Referral Link
+        const siteUrl = window.location.href.split('?')[0];
+        document.getElementById('refLink').innerText = siteUrl + "?ref=" + userId;
     }
 
-    // --- DEPOSIT & WITHDRAW HANDLERS ---
+    // --- HANDLERS ---
     async function handleDeposit() {
         let amt = parseFloat(document.getElementById('dAmt').value);
         let utr = document.getElementById('dUTR').value;
@@ -222,23 +245,16 @@
         } else { showNotif("Check Balance or Min ₹550"); }
     }
 
-    // --- HISTORY LOGIC ---
     function openHistory(type) {
         showPage('historyPage');
         const listDiv = document.getElementById('histList');
         const totalDisp = document.getElementById('totalHistAmt');
         document.getElementById('histTitle').innerText = type === 'deposits' ? "Deposit History" : "Withdrawal History";
         document.getElementById('totalLabel').innerText = type === 'deposits' ? "Total Success Deposit" : "Total Success Withdrawal";
-        
         listDiv.innerHTML = "<p style='text-align:center;'>Loading...</p>";
-
         db.ref('requests/' + type).orderByChild('uid').equalTo(userId).on('value', snap => {
             let html = "", total = 0, items = [];
-            snap.forEach(c => {
-                let d = c.val();
-                items.push(d);
-                if(d.status === 'success') total += Number(d.amount);
-            });
+            snap.forEach(c => { let d = c.val(); items.push(d); if(d.status === 'success') total += Number(d.amount); });
             items.reverse().forEach(d => {
                 html += `<div class="hist-item-new status-${d.status}">
                     <div><b>₹${d.amount}</b><br><small>${new Date(d.time).toLocaleDateString()}</small></div>
@@ -250,14 +266,10 @@
         });
     }
 
-    // --- GENERAL FUNCTIONS ---
     function showPage(pId, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(pId).classList.add('active');
-        if(el) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
+        if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
     }
 
     function showNotif(msg) {
@@ -267,8 +279,8 @@
     }
 
     function copyText(id) {
-        navigator.clipboard.writeText(document.getElementById(id).innerText);
-        showNotif("Copied!");
+        const text = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(text).then(() => showNotif("Copied!"));
     }
 
     function toggleHistory() {
@@ -286,3 +298,4 @@
 </script>
 </body>
 </html>
+
