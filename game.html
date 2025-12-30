@@ -26,7 +26,6 @@
         .order-table th { background: #f1f1f1; padding: 10px; text-align: center; color: #666; }
         .order-table td { padding: 12px 8px; border-bottom: 1px solid #eee; text-align: center; }
         
-        /* MODALS */
         #betModal, #ticketOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 3000; justify-content: center; align-items: center; }
         .bet-box, .ticket { background: white; width: 90%; max-width: 350px; border-radius: 20px; overflow: hidden; animation: zoomIn 0.3s; }
         @keyframes zoomIn { from {transform: scale(0.8); opacity: 0;} to {transform: scale(1); opacity: 1;} }
@@ -58,7 +57,7 @@
 <body>
 
 <div class="nav">
-    <span>JALWA WIN</span>
+    <span onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> JALWA WIN</span>
     <div>₹<span id="balDisplay">0.00</span></div>
 </div>
 
@@ -134,14 +133,16 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
+    // SUPABASE (NOT REMOVED)
     const SB_URL = "https://orksbkahfantwdbwzrye.supabase.co"; 
     const SB_KEY = "sb_publishable_F7ErxCXZz7Zpcpd2-yH-Bg_qDFL8tUI";
     const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-    const userId = localStorage.getItem('jalwa_id') || 'test_user';
+    // MASTER ID SYNC
+    const userId = localStorage.getItem('jalwa_user_phone') || localStorage.getItem('jalwa_id');
     let userBalance = 0, currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, myBets = [];
 
-    // Sync Balance
+    // Sync Balance with Firebase
     db.ref('users/' + userId).on('value', snap => {
         if(snap.val()) { userBalance = Number(snap.val().balance || 0); document.getElementById('balDisplay').innerText = userBalance.toFixed(2); }
     });
@@ -183,6 +184,7 @@
         n = Number(n);
         let col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
         
+        // SAVE TO SUPABASE
         await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
         
         let periodWin = 0;
@@ -190,7 +192,7 @@
 
         myBets.forEach(b => {
             if(b.pid === pid && b.status === 'Wait') {
-                hasActiveBet = true; // User ne is period me bet lagayi thi
+                hasActiveBet = true;
                 let isWin = false, m = 2;
                 if(b.sel == n) { isWin=true; m=9; }
                 else if(b.sel==='Green' && (n%2!==0 || n===5)) { isWin=true; m=(n===5)?1.5:2; }
@@ -203,11 +205,7 @@
         });
 
         if(periodWin > 0) await db.ref('users/' + userId).update({ balance: userBalance + periodWin });
-
-        // FIX: Sirf tab dikhao jab bet lagayi ho
-        if(hasActiveBet) {
-            showTicket(n, (n===0?'Mix':(n===5?'MixG':'c-'+col)), periodWin);
-        }
+        if(hasActiveBet) showTicket(n, (n===0?'Mix':(n===5?'MixG':'c-'+col)), periodWin);
 
         updateOrderTable();
         fetchHistory();
@@ -247,7 +245,10 @@
         if (currentP !== pId) { if (currentP !== "") pushResult(currentP); currentP = pId; fetchHistory(); }
     }, 1000);
 
-    window.onload = fetchHistory;
+    window.onload = function() {
+        if(!userId) window.location.href = 'index.html';
+        fetchHistory();
+    };
 </script>
 </body>
 </html>
