@@ -1,127 +1,96 @@
-<!DOCTYPE html>
+l<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Pro - Register</title>
+    <title>Jalwa.Game - Register</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --bg: #0d131f; --card: #1f293a; --gold: #ff9800; --blue: #2196f3; --green: #00c853; --red: #ff5252; }
-        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .auth-container { width: 90%; max-width: 400px; background: var(--bg); padding: 30px; border-radius: 30px; border: 1px solid #2d3a4f; box-shadow: 0 20px 50px rgba(0,0,0,0.5); text-align: center; }
-        .logo { font-size: 40px; color: var(--gold); margin-bottom: 10px; }
-        h2 { margin-bottom: 30px; font-weight: 600; letter-spacing: 1px; }
-        .input-group { position: relative; margin-bottom: 20px; }
-        .input-group i { position: absolute; left: 15px; top: 18px; color: #64748b; }
-        input { width: 100%; background: var(--card); border: 1px solid #2d3a4f; padding: 15px 15px 15px 45px; border-radius: 15px; color: white; outline: none; box-sizing: border-box; font-size: 15px; }
-        input:focus { border-color: var(--gold); }
-        .btn { width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        .btn-reg { background: var(--gold); color: #000; }
-        .btn-reg:active { transform: scale(0.95); }
-        .link { margin-top: 20px; font-size: 14px; color: #888; }
-        .link a { color: var(--gold); text-decoration: none; font-weight: bold; }
-        .ref-tag { font-size: 11px; color: #4ade80; margin-bottom: 15px; display: none; }
-
-        /* Professional Toast Style - Fixes "Localhost" Error */
-        #customToast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 10001; left: 50%; top: 50%; transform: translate(-50%, -50%); font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #444; }
-        #customToast.show { visibility: visible; animation: fadeInOut 2.5s; }
-        @keyframes fadeInOut { 0% {opacity: 0; transform: translate(-50%, -40%);} 15% {opacity: 1; transform: translate(-50%, -50%);} 85% {opacity: 1; transform: translate(-50%, -50%);} 100% {opacity: 0; transform: translate(-50%, -60%);} }
+        :root { --bg: #060a1e; --input: #161d3d; --cyan: #00ffca; --gray: #7e87a8; }
+        body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; }
+        .header { padding: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-size: 24px; font-weight: bold; font-style: italic; }
+        .logo span { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+        .container { padding: 20px; }
+        .tab-title { text-align: center; color: var(--cyan); border-bottom: 2px solid var(--cyan); padding: 10px; margin-bottom: 30px; font-weight: bold; }
+        .input-group { margin-bottom: 15px; }
+        .label { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 8px; }
+        .label i { color: var(--cyan); font-size: 18px; }
+        .input-box { display: flex; background: var(--input); border: 1px solid #1f2855; border-radius: 8px; align-items: center; }
+        input { width: 100%; padding: 14px; background: transparent; border: none; color: white; outline: none; }
+        .btn-reg { width: 100%; padding: 15px; margin-top: 30px; background: linear-gradient(to right, #2af598, #009efd); border: none; border-radius: 30px; color: #000; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="customToast">Action Success!</div>
+<div class="header">
+    <i class="fas fa-chevron-left" onclick="history.back()"></i>
+    <div class="logo">Jalwa<span>.Game</span></div>
+    <div></div>
+</div>
 
-<div class="auth-container">
-    <div class="logo"><i class="fas fa-gamepad"></i></div>
-    <h2>CREATE ACCOUNT</h2>
-    
-    <div id="refStatus" class="ref-tag"><i class="fas fa-user-plus"></i> Referral Applied</div>
+<div class="container">
+    <div class="tab-title"><i class="fas fa-mobile-alt"></i> Register your phone</div>
 
     <div class="input-group">
-        <i class="fas fa-user"></i>
-        <input type="text" id="regName" placeholder="Full Name">
+        <div class="label"><i class="fas fa-mobile-alt"></i> Phone number</div>
+        <div class="input-box">
+            <div style="padding:0 15px;">+91 <i class="fas fa-chevron-down" style="font-size:10px;"></i></div>
+            <input type="number" id="rPhone" placeholder="Please enter the phone number">
+        </div>
     </div>
 
     <div class="input-group">
-        <i class="fas fa-phone"></i>
-        <input type="number" id="regPhone" placeholder="Mobile Number">
+        <div class="label"><i class="fas fa-lock"></i> Set password</div>
+        <div class="input-box">
+            <input type="password" id="rPass" placeholder="Set password">
+            <i class="far fa-eye-slash" style="padding:15px; color:var(--gray);"></i>
+        </div>
     </div>
 
     <div class="input-group">
-        <i class="fas fa-lock"></i>
-        <input type="password" id="regPass" placeholder="Create Password">
+        <div class="label"><i class="fas fa-lock"></i> Confirm password</div>
+        <div class="input-box">
+            <input type="password" id="rConfirm" placeholder="Confirm password">
+            <i class="far fa-eye-slash" style="padding:15px; color:var(--gray);"></i>
+        </div>
     </div>
 
-    <button class="btn btn-reg" id="regBtn" onclick="handleRegister()">REGISTER NOW</button>
+    <div class="input-group">
+        <div class="label"><i class="fas fa-user-friends"></i> Invite code</div>
+        <div class="input-box">
+            <input type="text" id="rInvite" placeholder="Please enter invite code">
+        </div>
+    </div>
 
-    <div class="link">Already have an account? <a href="login.html">Login</a></div>
+    <div style="font-size: 12px; margin-top: 20px;">
+        <i class="fas fa-check-circle" style="color:var(--cyan);"></i> I have read and agree <span style="color:red;">[Privacy Agreement]</span>
+    </div>
+
+    <button class="btn-reg" onclick="register()">Register</button>
+    <button onclick="location.href='login.html'" style="width:100%; background:none; border:none; color:white; margin-top:20px;">I have an account <span style="color:var(--cyan);">Login</span></button>
 </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const refBy = urlParams.get('ref') || "DIRECT";
+    function register() {
+        const phone = document.getElementById('rPhone').value;
+        const pass = document.getElementById('rPass').value;
+        const confirm = document.getElementById('rConfirm').value;
+        
+        if(!phone || !pass) return alert("Fill all fields!");
+        if(pass !== confirm) return alert("Password not matching!");
 
-    if(refBy !== "DIRECT") {
-        document.getElementById('refStatus').style.display = "block";
-    }
-
-    // Custom function to show messages without Localhost alert
-    function showMsg(msg, isError = false) {
-        const t = document.getElementById("customToast");
-        t.innerText = msg;
-        t.style.backgroundColor = isError ? "#ff5252" : "#00c853";
-        t.className = "show";
-        setTimeout(() => { t.className = ""; }, 2500);
-    }
-
-    function handleRegister() {
-        const name = document.getElementById('regName').value.trim();
-        const phone = document.getElementById('regPhone').value.trim();
-        const pass = document.getElementById('regPass').value.trim();
-        const btn = document.getElementById('regBtn');
-
-        if(!name || !phone || !pass) return showMsg("Please fill all details!", true);
-        if(phone.length < 10) return showMsg("Enter valid 10-digit number!", true);
-
-        btn.disabled = true;
-        btn.innerText = "PROCESSING...";
-
-        const userId = "JALWA-" + Math.floor(100000 + Math.random() * 900000);
-
-        db.ref('users').orderByChild('phone').equalTo(phone).once('value', (snap) => {
-            if(snap.exists()) {
-                showMsg("Phone already registered!", true);
-                btn.disabled = false;
-                btn.innerText = "REGISTER NOW";
-            } else {
-                db.ref('users/' + userId).set({
-                    name: name,
-                    phone: phone,
-                    password: pass,
-                    balance: 0,
-                    bonusClaimed: false,
-                    userId: userId,
-                    referredBy: refBy,
-                    totalRecharge: 0,
-                    joinedAt: new Date().toISOString()
-                }).then(() => {
-                    localStorage.setItem('jalwa_id', userId);
-                    showMsg("Registration Successful! Redirecting...");
-                    setTimeout(() => {
-                        window.location.replace("index.html");
-                    }, 2000);
-                }).catch(e => {
-                    showMsg("Database Error!", true);
-                    btn.disabled = false;
-                });
-            }
+        const userId = "JALWA-" + Math.floor(Math.random() * 900000);
+        firebase.database().ref('users/' + userId).set({
+            phone: phone, password: pass, balance: 0, userId: userId
+        }).then(() => {
+            localStorage.setItem('jalwa_id', userId);
+            window.location.href = "index.html";
         });
     }
 </script>
