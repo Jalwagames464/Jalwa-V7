@@ -16,11 +16,15 @@
         .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 90px; }
 
         /* POPUP UI */
-        #bonusOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 30000; display: flex; align-items: center; justify-content: center; }
+        #bonusOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 30000; display: none; align-items: center; justify-content: center; }
         .popup-box { background: #161d3d; width: 85%; border-radius: 20px; border: 2px solid var(--cyan); box-shadow: var(--neon-glow); text-align: center; overflow: hidden; }
         .popup-box h2 { background: var(--cyan); color: #000; margin: 0; padding: 15px; font-size: 20px; }
         .popup-body { padding: 20px; }
         .btn-grab { background: var(--cyan); color: #000; width: 100%; border: none; padding: 12px; border-radius: 30px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        
+        /* Stop Today Styling */
+        .stop-today-container { margin-top: 15px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--text-gray); gap: 8px; }
+        .stop-today-container input { width: auto; margin: 0; cursor: pointer; accent-color: var(--cyan); }
 
         /* PAGE SYSTEM */
         .page { display: none; animation: fadeIn 0.3s; position: relative; min-height: 100vh; background: var(--bg-dark); }
@@ -33,7 +37,7 @@
 
         /* CARDS & GRID */
         .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
-        .game-card { background: #161d3d; border-radius: 15px; padding: 25px 15px; text-align: center; border: 1px solid #1f2855; cursor: pointer; transition: 0.3s; }
+        .game-card { background: #161d3d; border-radius: 15px; padding: 25px 15px; text-align: center; border: 1px solid #1f2855; cursor: pointer; transition: 0.3s; text-decoration: none; color: white; }
         .game-card:active { transform: scale(0.95); }
         .card { background: var(--card-bg); border-radius: 15px; padding: 15px; border: 1px solid #1f2855; margin: 15px; }
 
@@ -57,6 +61,12 @@
             <p>Add ₹500 & Get <b>₹100 Bonus</b></p>
             <p>Add ₹1000 & Get <b>₹250 Bonus</b></p>
             <button class="btn-grab" onclick="showPage('deposit'); closeBonus();">RECHARGE NOW</button>
+            
+            <div class="stop-today-container">
+                <input type="checkbox" id="stopToday">
+                <label for="stopToday">Stop today</label>
+            </div>
+
             <button style="background:transparent; color:var(--text-gray); border:none; margin-top:10px; cursor:pointer;" onclick="closeBonus()">Close</button>
         </div>
     </div>
@@ -79,36 +89,14 @@
         </div>
 
         <div class="game-grid">
-            <div class="game-card" style="border-color:var(--cyan)" onclick="showPage('wingoPage')">
+            <a href="game.html" class="game-card" style="border-color:var(--cyan)">
                 <i class="fas fa-dice" style="font-size:40px; color:var(--cyan); margin-bottom:10px;"></i><br>
                 <b style="font-size:18px;">WinGo 30s</b>
-            </div>
-            <div class="game-card" style="border-color:var(--red)" onclick="showPage('aviatorPage')">
+            </a>
+            <a href="aviator.html" class="game-card" style="border-color:var(--red)">
                 <i class="fas fa-paper-plane" style="font-size:40px; color:var(--red); margin-bottom:10px;"></i><br>
                 <b style="font-size:18px;">Aviator Pro</b>
-            </div>
-        </div>
-    </div>
-
-    <div id="wingoPage" class="page">
-        <div class="top-bar">
-            <b>WinGo Game</b>
-            <i class="fas fa-times-circle close-btn" onclick="showPage('home')"></i>
-        </div>
-        <div style="text-align:center; padding:100px 20px;">
-            <i class="fas fa-dice" style="font-size:80px; color:var(--cyan)"></i>
-            <h3>Loading WinGo...</h3>
-        </div>
-    </div>
-
-    <div id="aviatorPage" class="page">
-        <div class="top-bar">
-            <b>Aviator Engine</b>
-            <i class="fas fa-times-circle close-btn" onclick="showPage('home')"></i>
-        </div>
-        <div style="text-align:center; padding:100px 20px;">
-            <i class="fas fa-plane-departure" style="font-size:80px; color:var(--red)"></i>
-            <h3>Connecting to Server...</h3>
+            </a>
         </div>
     </div>
 
@@ -211,7 +199,10 @@
 
 <script>
     let userData = JSON.parse(localStorage.getItem('jalwa_user')) || { 
-        balance: 0.00, totalDeposit: 0.00, totalWithdraw: 0.00, lastClaim: '' 
+        balance: 5000.00, 
+        totalDeposit: 0.00, 
+        totalWithdraw: 0.00, 
+        lastClaim: '' 
     };
 
     function updateDisplay() {
@@ -224,6 +215,23 @@
         localStorage.setItem('jalwa_user', JSON.stringify(userData));
     }
 
+    // New Popup Logic
+    function checkPopup() {
+        const stopDate = localStorage.getItem('stopPopupDate');
+        const today = new Date().toDateString();
+        
+        if (stopDate !== today) {
+            document.getElementById('bonusOverlay').style.display = 'flex';
+        }
+    }
+
+    function closeBonus() {
+        if (document.getElementById('stopToday').checked) {
+            localStorage.setItem('stopPopupDate', new Date().toDateString());
+        }
+        document.getElementById('bonusOverlay').style.display = 'none';
+    }
+
     function showPage(pageId, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
@@ -233,7 +241,6 @@
         }
     }
 
-    function closeBonus() { document.getElementById('bonusOverlay').style.display = 'none'; }
     function showNotif(msg) {
         const n = document.getElementById('notif');
         n.innerText = msg; n.style.display = 'block';
@@ -247,7 +254,7 @@
 
     function handleDeposit() {
         let amt = parseFloat(document.getElementById('dAmt').value);
-        if(amt < 500) return showNotif("Min ₹500!");
+        if(isNaN(amt) || amt < 500) return showNotif("Min ₹500!");
         userData.balance += amt;
         userData.totalDeposit += amt;
         updateDisplay();
@@ -257,7 +264,7 @@
 
     function handleWithdraw() {
         let amt = parseFloat(document.getElementById('wAmt').value);
-        if(amt < 550) return showNotif("Min ₹550!");
+        if(isNaN(amt) || amt < 550) return showNotif("Min ₹550!");
         if(amt > userData.balance) return showNotif("Low Balance!");
         userData.balance -= amt;
         userData.totalWithdraw += amt;
@@ -279,7 +286,10 @@
         h.style.display = h.style.display === 'none' ? 'block' : 'none';
     }
 
-    window.onload = updateDisplay;
+    window.onload = function() {
+        updateDisplay();
+        checkPopup();
+    };
 </script>
 </body>
 </html>
