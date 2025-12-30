@@ -5,221 +5,254 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jalwa Pro Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --bg: #0d131f; --card: #1f293a; --gold: #ff9800; --blue: #2196f3; --green: #00c853; --red: #ff4d4d; }
-        body { margin: 0; background: #000; font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 480px; margin: auto; background: var(--bg); min-height: 100vh; padding-bottom: 100px; }
+        :root { 
+            --bg-dark: #06091b; 
+            --card-bg: #10142d; 
+            --cyan: #00ffca; 
+            --text-gray: #7e87a8;
+            --gradient-blue: linear-gradient(135deg, #2af598 0%, #009efd 100%);
+            --gold: #ffd700;
+        }
+
+        body { 
+            margin: 0; background: var(--bg-dark); 
+            font-family: 'Segoe UI', Roboto, sans-serif; color: white; 
+            overflow-x: hidden; 
+        }
+
+        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 80px; }
 
         /* --- HEADER --- */
-        .user-top-bar { padding: 15px; background: var(--card); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3a4f; }
-        .user-info-side { display: flex; align-items: center; gap: 10px; }
-        .id-val { font-weight: bold; color: var(--gold); font-size: 14px; }
-        .bal-side { display: flex; align-items: center; gap: 12px; }
-        .bal-amount { font-size: 18px; font-weight: 800; color: #fff; }
-        .refresh-btn { color: var(--gold); font-size: 18px; cursor: pointer; }
+        .header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 22px; font-weight: bold; font-style: italic; color: #fff; }
+        .logo span { color: var(--cyan); }
+        .header-btns { display: flex; gap: 8px; }
+        .btn-top { padding: 6px 12px; border-radius: 5px; font-size: 12px; font-weight: bold; border: 1px solid #333; cursor: pointer; color: white; background: #161d3d; }
 
-        /* --- ACTIONS --- */
-        .action-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 20px 15px; }
-        .action-btn { background: #252f3f; padding: 12px 5px; border-radius: 15px; text-align: center; border: 1px solid #2d3a4f; cursor: pointer; }
-        .action-btn i { font-size: 20px; margin-bottom: 5px; display: block; }
-        .action-btn.dep i { color: var(--green); }
-        .action-btn.wit i { color: var(--blue); }
-        .action-btn.sup i { color: var(--gold); }
-        .action-btn span { font-size: 11px; font-weight: 600; }
+        /* --- AUTO SLIDING BANNER --- */
+        .banner-container { padding: 0 15px; margin-bottom: 15px; }
+        .slider-wrapper {
+            width: 100%; height: 160px; border-radius: 15px; overflow: hidden;
+            border: 1px solid #1f2855; position: relative;
+            background: #10142d;
+        }
+        .slides {
+            display: flex; width: 300%; height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .slide { width: 100%; height: 100%; flex-shrink: 0; position: relative; }
+        .slide img { width: 100%; height: 100%; object-fit: cover; }
+        .slide-info {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            padding: 12px; font-size: 13px;
+        }
+        .slide-info b { color: var(--cyan); }
 
-        /* --- DAILY REWARD --- */
-        .daily-mission { margin: 0 15px 25px 15px; background: linear-gradient(90deg, #1e3a8a, #1e40af); padding: 15px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; }
+        /* --- UNIQUE MARKETING POPUP --- */
+        .modal-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 9999; 
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        .bonus-card { 
+            width: 88%; max-width: 380px; background: #161d3d; border-radius: 30px; 
+            padding: 25px 20px; border: 1px solid var(--cyan); position: relative;
+            box-shadow: 0 0 40px rgba(0,255,202,0.2);
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* --- GAMES GRID --- */
-        .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 15px; }
-        .game-box { background: #161e2b; border-radius: 20px; padding: 15px; text-align: center; border: 1px solid #2d3a4f; cursor: pointer; border-bottom: 4px solid transparent; }
-        .game-box.wingo { border-bottom-color: var(--gold); }
-        .game-box.aviator { border-bottom-color: var(--red); }
-        .game-box i { font-size: 30px; margin-bottom: 8px; display: block; }
-        .game-name { font-weight: bold; font-size: 14px; }
+        .popup-header { text-align: center; margin-bottom: 20px; }
+        .popup-header i { font-size: 40px; color: var(--gold); margin-bottom: 10px; }
+        .popup-header h2 { margin: 0; font-size: 24px; color: var(--cyan); text-transform: uppercase; }
+        .popup-header p { margin: 5px 0 0; font-size: 12px; color: var(--text-gray); }
 
-        /* --- EARN PAGE STYLES --- */
-        .earn-container { padding: 20px 15px; }
-        .mission-card { background: var(--card); padding: 15px; border-radius: 18px; border-left: 4px solid var(--gold); display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .btn-claim-small { background: var(--blue); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: bold; cursor: pointer; }
-        .btn-claim-small:disabled { background: #444 !important; color: #888 !important; }
+        .bonus-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: rgba(255,255,255,0.03); padding: 15px; border-radius: 18px; 
+            margin-bottom: 12px; border: 1px solid #1f2855;
+            transition: 0.3s;
+        }
+        .bonus-row:hover { background: rgba(0,255,202,0.05); border-color: var(--cyan); }
+        
+        .bonus-info { line-height: 1.4; }
+        .bonus-tag { font-size: 9px; color: var(--text-gray); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        .bonus-info b { display: block; font-size: 16px; color: #fff; }
+        .bonus-profit { font-size: 13px; color: #2af598; font-weight: bold; }
+        
+        .dep-btn-sm { 
+            background: var(--cyan); color: #000; border: none; 
+            padding: 10px 18px; border-radius: 12px; font-weight: 900; 
+            font-size: 11px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,255,202,0.2);
+        }
 
-        /* NAV */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #161e2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #2d3a4f; z-index: 1000; }
-        .nav-item { text-align: center; color: #64748b; font-size: 10px; flex: 1; cursor: pointer; }
-        .nav-item.active { color: var(--gold); }
-        .page-view { display: none; }
-        .page-view.active { display: block; }
+        .popup-footer { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-top: 20px; padding-top: 15px; border-top: 1px solid #1f2855; 
+        }
+        .stop-today { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-gray); cursor: pointer; }
+        .stop-today input { width: 18px; height: 18px; accent-color: var(--cyan); cursor: pointer; }
+        .close-btn { 
+            background: #ff4d4d; color: white; border: none; 
+            padding: 10px 22px; border-radius: 25px; font-weight: bold; 
+            font-size: 12px; cursor: pointer; 
+        }
 
-        #customToast { visibility: hidden; background: var(--green); color: #fff; padding: 12px; border-radius: 10px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; font-weight: bold; }
-        #customToast.show { visibility: visible; animation: fadeInOut 2s; }
-        @keyframes fadeInOut { 0%, 100% {opacity:0} 20%, 80% {opacity:1} }
+        /* --- NOTICE & GAMES --- */
+        .notice-bar { margin: 10px 15px; background: #161d3d; padding: 10px 15px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-size: 12px; border: 1px solid #1f2855; }
+        .notice-bar i { color: var(--cyan); }
+
+        .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
+        .game-box {
+            background: var(--card-bg); border-radius: 20px; padding: 20px 10px;
+            text-align: center; border: 1px solid #1f2855; cursor: pointer;
+        }
+        .game-icon { width: 65px; height: 65px; background: #161d3d; border-radius: 18px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--cyan); box-shadow: 0 5px 15px rgba(0,255,202,0.15); }
+        .game-icon i { font-size: 32px; color: var(--cyan); }
+        .play-small-btn { background: var(--gradient-blue); color: #000; border: none; padding: 6px 18px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #10142d; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1f2855; z-index: 1000; }
+        .nav-item { text-align: center; color: var(--text-gray); font-size: 11px; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; display: block; }
+        .nav-item.active { color: var(--cyan); }
+        .nav-item.home-mid { background: #161d3d; width: 65px; height: 65px; border-radius: 50%; margin-top: -35px; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 5px solid var(--bg-dark); color: var(--cyan); }
     </style>
 </head>
 <body>
 
-<div id="customToast">Action Success!</div>
+<div class="modal-overlay" id="bonusPopup">
+    <div class="bonus-card">
+        <div class="popup-header">
+            <i class="fas fa-gem"></i>
+            <h2>Exclusive Rewards</h2>
+            <p>Your first deposit bonus is waiting!</p>
+        </div>
+        
+        <div class="bonus-row">
+            <div class="bonus-info">
+                <span class="bonus-tag">New Player Special</span>
+                <b>Deposit ₹500</b>
+                <span class="bonus-profit">Get ₹550 in Wallet</span>
+            </div>
+            <button class="dep-btn-sm" onclick="location.href='wallet.html'">DEPOSIT</button>
+        </div>
+
+        <div class="bonus-row" style="border-color: var(--cyan);">
+            <div class="bonus-info">
+                <span class="bonus-tag" style="color:var(--cyan)">🔥 Most Popular</span>
+                <b>Deposit ₹1,000</b>
+                <span class="bonus-profit">Get ₹1,250 in Wallet</span>
+            </div>
+            <button class="dep-btn-sm" onclick="location.href='wallet.html'">DEPOSIT</button>
+        </div>
+
+        <div class="bonus-row">
+            <div class="bonus-info">
+                <span class="bonus-tag">💎 VIP Choice</span>
+                <b>Deposit ₹1,500</b>
+                <span class="bonus-profit">Get ₹2,000 in Wallet</span>
+            </div>
+            <button class="dep-btn-sm" onclick="location.href='wallet.html'">DEPOSIT</button>
+        </div>
+
+        <div class="popup-footer">
+            <label class="stop-today">
+                <input type="checkbox" id="stopTodayCheck"> Stop Today
+            </label>
+            <button class="close-btn" onclick="closePopup()">CLOSE</button>
+        </div>
+    </div>
+</div>
 
 <div class="app-container">
-    
-    <div id="home" class="page-view active">
-        <div class="user-top-bar">
-            <div class="user-info-side">
-                <div class="avatar" style="width:32px; height:32px; background:var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold;">U</div>
-                <div><span style="font-size:9px; color:#888; display:block;">UID</span><span class="id-val" id="uID">...</span></div>
-            </div>
-            <div class="bal-side">
-                <div class="bal-amount">₹<span id="mainBal">0.00</span></div>
-                <i class="fas fa-sync-alt refresh-btn" onclick="location.reload()"></i>
+    <div class="header">
+        <div class="logo">Jalwa<span>.Game</span></div>
+        <div class="header-btns">
+            <div class="btn-top" onclick="location.href='login.html'">Log in</div>
+            <div class="btn-top" style="background:var(--cyan); color:#000; border:none;" onclick="location.href='register.html'">Register</div>
+        </div>
+    </div>
+
+    <div id="home">
+        <div class="banner-container">
+            <div class="slider-wrapper">
+                <div class="slides" id="mainSlider">
+                    <div class="slide">
+                        <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                        <div class="slide-info">🚀 <b>WinGo 30s:</b> Predict Color & Win 2X!</div>
+                    </div>
+                    <div class="slide">
+                        <img src="https://images.unsplash.com/photo-1596838132731-3301c3fd4317?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                        <div class="slide-info">✈️ <b>Aviator Pro:</b> Multiplier up to 100x!</div>
+                    </div>
+                    <div class="slide">
+                        <img src="https://images.unsplash.com/photo-1518133835104-39f41705574c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80">
+                        <div class="slide-info">🎁 <b>Daily Bonus:</b> Check Activity Page!</div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="action-row">
-            <div class="action-btn dep" onclick="showPage('wallet', document.querySelectorAll('.nav-item')[2])"><i class="fas fa-plus-circle"></i><span>Deposit</span></div>
-            <div class="action-btn wit" onclick="showPage('wallet', document.querySelectorAll('.nav-item')[2])"><i class="fas fa-money-bill-transfer"></i><span>Withdraw</span></div>
-            <div class="action-btn sup" onclick="window.open('https://t.me/yourlink')"><i class="fas fa-headset"></i><span>Support</span></div>
-        </div>
-
-        <div class="daily-mission">
-            <div><div style="font-weight:bold; font-size:14px;">Daily Login Bonus</div><div style="font-size:10px; color:#ddd;">Claim ₹20 free cash</div></div>
-            <button id="dailyBtn" onclick="claimDaily()" style="background:#fff; color:#1e40af; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; font-size:11px;">CLAIM</button>
+        <div class="notice-bar">
+            <i class="fas fa-volume-up"></i>
+            <marquee scrollamount="3">Winner! User UID 992** just won ₹25,000 in Aviator Pro. Jalwa.Game - Instant Payouts...</marquee>
         </div>
 
         <div class="games-grid">
-            <div class="game-box wingo" onclick="location.href='game.html'"><i class="fas fa-dice" style="color:var(--gold)"></i><div class="game-name">WinGo 30s</div></div>
-            <div class="game-box aviator" onclick="location.href='aviator.html'"><i class="fas fa-plane-departure" style="color:var(--red)"></i><div class="game-name">Aviator</div></div>
-        </div>
-    </div>
-
-    <div id="earn" class="page-view">
-        <div class="earn-container">
-            <div style="background:var(--card); padding:20px; border-radius:20px; text-align:center; border:1px solid var(--gold); margin-bottom: 20px;">
-                <div style="font-size:15px; font-weight:bold;">Invite & Earn <span style="color:var(--gold);">₹250</span></div>
-                <div style="font-size:11px; color:#bbb; margin: 10px 0;">Reward added if friend <b style="color:var(--gold);">recharges ₹500+</b></div>
-                <button onclick="copyReferLink()" style="background:var(--gold); border:none; padding:12px; width:100%; border-radius:12px; font-weight:bold; color:#000;">COPY REFERRAL LINK</button>
+            <div class="game-box" onclick="location.href='game.html'">
+                <div class="game-icon"><i class="fas fa-dice"></i></div>
+                <b>Win Go 30s</b><br><br>
+                <button class="play-small-btn">PLAY NOW</button>
             </div>
-
-            <div style="font-size: 14px; font-weight: bold; color: #888; margin-bottom: 12px;">LIFETIME MISSIONS</div>
-
-            <div class="mission-card" style="border-left-color: var(--blue);">
-                <div>
-                    <div style="font-weight: bold; font-size: 14px;">Recharge ₹500</div>
-                    <div style="font-size: 11px; color: #888;">Claim ₹20 Bonus Cash</div>
-                </div>
-                <button class="btn-claim-small" id="taskRechargeBtn" onclick="claimTask('recharge')">CLAIM</button>
+            <div class="game-box" onclick="location.href='aviator.html'">
+                <div class="game-icon"><i class="fas fa-paper-plane"></i></div>
+                <b>Aviator Pro</b><br><br>
+                <button class="play-small-btn">FLY NOW</button>
             </div>
-
-            <div class="mission-card" style="border-left-color: var(--green);">
-                <div>
-                    <div style="font-weight: bold; font-size: 14px;">Complete 100 Bets</div>
-                    <div style="font-size: 11px; color: #888;">Claim ₹20 Bonus Cash</div>
-                </div>
-                <button class="btn-claim-small" id="taskBetBtn" onclick="claimTask('bet')">CLAIM</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="wallet" class="page-view">
-        <div style="padding:20px; text-align: center;">
-            <div style="background: linear-gradient(135deg, #1e3a8a, #1e40af); padding: 40px 20px; border-radius: 20px; margin-bottom: 20px;">
-                <div style="font-size: 14px; opacity: 0.8;">Wallet Balance</div>
-                <div style="font-size: 32px; font-weight: bold;">₹ <span id="walletBal">0.00</span></div>
-            </div>
-            <button onclick="location.href='wallet.html'" style="width:100%; padding:18px; background:var(--blue); color:white; border:none; border-radius:18px; font-weight:bold;">DEPOSIT / WITHDRAW</button>
         </div>
     </div>
 
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="showPage('home', this)"><i class="fas fa-house"></i><br>Home</div>
-        <div class="nav-item" onclick="showPage('earn', this)"><i class="fas fa-sack-dollar"></i><br>Earn</div>
-        <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i><br>Wallet</div>
-        <div class="nav-item" onclick="logout()"><i class="fas fa-power-off"></i><br>Logout</div>
+        <div class="nav-item active"><i class="fas fa-house"></i>Promotion</div>
+        <div class="nav-item"><i class="fas fa-gift"></i>Activity</div>
+        <div class="nav-item home-mid"><i class="fas fa-gamepad"></i>Home</div>
+        <div class="nav-item"><i class="fas fa-wallet"></i>Wallet</div>
+        <div class="nav-item"><i class="fas fa-user"></i>Account</div>
     </div>
-
 </div>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const userId = localStorage.getItem('jalwa_id');
-
-    if(!userId) window.location.replace("login.html");
-
-    function showToast(msg) {
-        const t = document.getElementById("customToast");
-        t.innerText = msg; t.className = "show";
-        setTimeout(() => { t.className = ""; }, 2000);
+    // --- Slider Logic ---
+    let currentSlide = 0;
+    const slider = document.getElementById('mainSlider');
+    function autoSlide() {
+        currentSlide = (currentSlide + 1) % 3;
+        slider.style.transform = `translateX(-${currentSlide * 33.33}%)`;
     }
+    setInterval(autoSlide, 3500);
 
-    function showPage(id, el) {
-        document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        el.classList.add('active');
-    }
-
+    // --- Popup Logic ---
     window.onload = () => {
-        db.ref('users/' + userId).on('value', (snap) => {
-            const data = snap.val();
-            if(data) {
-                document.getElementById('uID').innerText = userId;
-                let bal = Number(data.balance || 0).toFixed(2);
-                document.getElementById('mainBal').innerText = bal;
-                document.getElementById('walletBal').innerText = bal;
-                
-                const today = new Date().toDateString();
-                if(data.lastClaim === today) {
-                    document.getElementById('dailyBtn').disabled = true;
-                    document.getElementById('dailyBtn').innerText = "DONE";
-                }
-                if(data.task500Claimed) {
-                    document.getElementById('taskRechargeBtn').disabled = true;
-                    document.getElementById('taskRechargeBtn').innerText = "DONE";
-                }
-                if(data.task100BetClaimed) {
-                    document.getElementById('taskBetBtn').disabled = true;
-                    document.getElementById('taskBetBtn').innerText = "DONE";
-                }
-            }
-        });
+        const stopToday = localStorage.getItem('stop_bonus_popup');
+        const todayStr = new Date().toDateString();
+
+        if (stopToday !== todayStr) {
+            setTimeout(() => {
+                document.getElementById('bonusPopup').style.display = 'flex';
+            }, 1000);
+        }
     };
 
-    function claimDaily() {
-        db.ref('users/' + userId).once('value', (snap) => {
-            const data = snap.val();
-            const today = new Date().toDateString();
-            if(data.lastClaim !== today) {
-                db.ref('users/' + userId).update({ balance: (data.balance || 0) + 20, lastClaim: today })
-                .then(() => showToast("₹20 Bonus Added!"));
-            }
-        });
+    function closePopup() {
+        if(document.getElementById('stopTodayCheck').checked) {
+            localStorage.setItem('stop_bonus_popup', new Date().toDateString());
+        }
+        document.getElementById('bonusPopup').style.display = 'none';
     }
-
-    function claimTask(type) {
-        db.ref('users/' + userId).once('value', (snap) => {
-            const data = snap.val();
-            if(type === 'recharge') {
-                if(!data.task500Claimed && data.totalRecharge >= 500) {
-                    db.ref('users/' + userId).update({ balance: (data.balance || 0) + 20, task500Claimed: true });
-                } else { showToast(data.task500Claimed ? "Already Claimed!" : "Recharge ₹500 first!"); }
-            } else if(type === 'bet') {
-                if(!data.task100BetClaimed && data.totalBets >= 100) {
-                    db.ref('users/' + userId).update({ balance: (data.balance || 0) + 20, task100BetClaimed: true });
-                } else { showToast(data.task100BetClaimed ? "Already Claimed!" : "Complete 100 bets!"); }
-            }
-        });
-    }
-
-    function copyReferLink() {
-        navigator.clipboard.writeText("https://rebrand.ly/b60a27").then(() => showToast("Link Copied!"));
-    }
-
-    function logout() { localStorage.clear(); window.location.replace("login.html"); }
 </script>
 </body>
 </html>
-
-
