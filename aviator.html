@@ -50,7 +50,7 @@
 <body>
 
 <div class="header">
-    <div class="logo">Aviator</div>
+    <div class="logo" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> Aviator</div>
     <div id="walletDisplay" class="wallet">0.00 Rs</div>
 </div>
 
@@ -106,13 +106,16 @@
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const userId = localStorage.getItem('jalwa_id') || "Guest_" + Math.floor(Math.random()*999);
+    
+    // MASTER SYNC
+    const userId = localStorage.getItem('jalwa_user_phone') || localStorage.getItem('jalwa_id');
 
     let wallet = 0, multiplier = 1.0, gameStatus = "waiting", crashAt = 2.0;
     let bets = { 1: { active: false, amt: 0 }, 2: { active: false, amt: 0 } };
     let myHistory = JSON.parse(localStorage.getItem('avi_hist')) || [];
     let topStrip = JSON.parse(localStorage.getItem('avi_strip')) || [];
 
+    // Real-time Balance from Dashboard
     db.ref('users/' + userId).on('value', snap => {
         wallet = snap.val()?.balance || 0;
         document.getElementById('walletDisplay').innerText = wallet.toFixed(2) + " Rs";
@@ -263,7 +266,10 @@
         }
     }
 
-    window.onload = initGame;
+    window.onload = function() {
+        if(!userId) window.location.href = 'index.html';
+        initGame();
+    };
 </script>
 </body>
 </html>
