@@ -31,26 +31,28 @@
         input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #1f2855; background: #06091b; color: white; box-sizing: border-box; }
         
         .task-box { background: #161d3d; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1f2855; }
-        .mission-btn { background: var(--cyan); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; }
-        .mission-btn.claimed { background: #333 !important; color: #777 !important; cursor: not-allowed; }
+        .mission-btn { background: var(--cyan); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 11px; }
+        .mission-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
 
         .ref-box { background: rgba(0, 255, 202, 0.1); padding: 12px; border-radius: 10px; border: 1px dashed var(--cyan); margin-top: 10px; font-size: 12px; word-break: break-all; color: var(--cyan); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
 
-        .history-tabs { display: flex; gap: 10px; margin: 15px; }
-        .tab-btn { flex: 1; padding: 10px; background: #161d3d; border: 1px solid #1f2855; color: white; border-radius: 8px; cursor: pointer; font-size: 12px; }
-        .tab-btn.active { background: var(--cyan); color: black; border: none; font-weight: bold; }
-        
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 15px; }
-        .stat-box { background: #161d3d; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid #1f2855; }
-
-        .history-item { display: flex; justify-content: space-between; padding: 12px; background: #0c1026; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .history-item { display: flex; justify-content: space-between; padding: 12px; background: #0c1026; border-radius: 8px; margin-bottom: 8px; font-size: 13px; border-left: 3px solid var(--cyan); }
         
         .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #10142d; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1f2855; z-index: 1000; }
         .nav-item { text-align: center; color: var(--text-gray); font-size: 11px; cursor: pointer; }
         .nav-item.active { color: var(--cyan); }
         .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
         
-        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: black; padding: 10px 25px; border-radius: 20px; display: none; z-index: 5000; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: black; padding: 10px 25px; border-radius: 20px; display: none; z-index: 5000; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); white-space: nowrap; }
+        
+        .profile-header { text-align: center; padding: 20px; background: var(--blue-gradient); border-radius: 0 0 30px 30px; margin-bottom: 20px; }
+        .avatar { width: 80px; height: 80px; background: var(--cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 40px; color: #000; }
+        
+        .stat-btn { flex: 1; background: #161d3d; padding: 10px; border-radius: 10px; border: 1px solid #1f2855; text-align: center; cursor: pointer; }
+        .stat-btn b { color: var(--cyan); display: block; font-size: 16px; }
+        .stat-btn small { color: var(--text-gray); }
+
+        .acc-nav-btn { background: #161d3d; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #1f2855; }
     </style>
 </head>
 <body>
@@ -94,29 +96,31 @@
 
     <div id="activity" class="page">
         <div class="top-bar"><b>Rewards & Refer</b></div>
-        
         <div class="card" style="background:var(--blue-gradient)">
             <h4 style="margin:0;">Refer & Earn ₹200</h4>
-            <p style="font-size:11px; opacity:0.8;">Share your link and get bonus on friend's first deposit!</p>
             <div class="ref-box" onclick="copyRef()">
                 <span id="refLink">jalwa-v7.vercel.app?ref=...</span>
                 <i class="fas fa-copy"></i>
             </div>
         </div>
-
         <div class="card">
+            <h4 style="margin-bottom:15px;">Daily Rewards</h4>
             <div class="task-box">
-                <div><b>Daily Login</b><br><small>Get ₹20.00 free daily</small></div>
+                <div><b>Daily Login Bonus</b><br><small>Get ₹20.00 free daily</small></div>
                 <button class="mission-btn" id="dailyBtn" onclick="claimDaily()">CLAIM</button>
             </div>
-            <h4 style="margin: 20px 0 10px 0;">Recharge Bonus</h4>
+            <h4 style="margin: 20px 0 15px 0;">Recharge Missions</h4>
             <div class="task-box">
-                <div><b>Recharge ₹500</b><br><small>Extra Bonus: ₹20.00</small></div>
-                <button class="mission-btn" id="m1Btn" onclick="claimMission(1, 20, 500)">CLAIM</button>
+                <div><b>Recharge ₹500</b><br><small>Bonus: ₹20.00</small></div>
+                <button class="mission-btn" id="m500" onclick="claimMission(500, 20)">CLAIM</button>
             </div>
             <div class="task-box">
-                <div><b>Recharge ₹1000</b><br><small>Extra Bonus: ₹50.00</small></div>
-                <button class="mission-btn" id="m2Btn" onclick="claimMission(2, 50, 1000)">CLAIM</button>
+                <div><b>Recharge ₹1000</b><br><small>Bonus: ₹50.00</small></div>
+                <button class="mission-btn" id="m1000" onclick="claimMission(1000, 50)">CLAIM</button>
+            </div>
+            <div class="task-box">
+                <div><b>Recharge ₹2000</b><br><small>Bonus: ₹100.00</small></div>
+                <button class="mission-btn" id="m2000" onclick="claimMission(2000, 100)">CLAIM</button>
             </div>
         </div>
     </div>
@@ -127,31 +131,54 @@
             <p style="color:var(--text-gray); margin:0;">Total Balance</p>
             <h1 class="user-bal-text" style="color:var(--cyan); font-size:40px; margin:10px 0;">₹0.00</h1>
         </div>
-        <div class="stat-grid">
-            <div class="stat-box">
-                <small style="color:var(--text-gray)">Total Deposit</small>
-                <div id="totalDepText" style="color:var(--green); font-weight:bold;">₹0</div>
+        <div style="display:flex; gap:10px; padding:0 15px 15px 15px;">
+            <div class="stat-btn" onclick="showPage('history_page'); loadFinanceHistory('deposits');">
+                <small>Total Deposit</small>
+                <b id="totDepText">₹0.00</b>
             </div>
-            <div class="stat-box">
-                <small style="color:var(--text-gray)">Total Withdraw</small>
-                <div id="totalWitText" style="color:var(--red); font-weight:bold;">₹0</div>
+            <div class="stat-btn" onclick="showPage('history_page'); loadFinanceHistory('withdrawals');">
+                <small>Total Withdrawal</small>
+                <b id="totWitText">₹0.00</b>
             </div>
         </div>
         <div style="display:flex; gap:10px; padding:15px;">
             <button class="btn-main" onclick="showPage('deposit_page')">DEPOSIT</button>
-            <button class="btn-main" style="background:white" onclick="showPage('withdraw_page')">WITHDRAW</button>
+            <button class="btn-main" style="background:white; color:black" onclick="showPage('withdraw_page')">WITHDRAW</button>
         </div>
-        <div class="history-tabs">
-            <button class="tab-btn active" id="btn-dep-hist" onclick="toggleHistory('dep')">Deposit History</button>
-            <button class="tab-btn" id="btn-wit-hist" onclick="toggleHistory('wit')">Withdraw History</button>
+    </div>
+
+    <div id="account" class="page">
+        <div class="profile-header">
+            <div class="avatar"><i class="fas fa-user"></i></div>
+            <h3 id="profileId" style="margin:5px 0;">ID: 000000</h3>
+            <p style="color:var(--cyan); font-weight:bold;" class="user-bal-text">₹0.00</p>
         </div>
-        <div id="history-container" style="padding: 0 15px;"></div>
+        <div style="padding: 0 15px;">
+            <div class="acc-nav-btn" onclick="showPage('history_page'); loadGameHistory();">
+                <span><i class="fas fa-dice" style="color:var(--cyan); margin-right:10px;"></i> Game History</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="acc-nav-btn" onclick="window.location.href='https://t.me/Realtrademods8911'">
+                <span><i class="fab fa-telegram" style="color:#0088cc; margin-right:10px;"></i> Customer Support</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <button class="btn-main" style="background:#ff4d4d; color:white; margin-top:30px;" onclick="logout()">LOGOUT</button>
+        </div>
+    </div>
+
+    <div id="history_page" class="page">
+        <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('account')"></i> <b id="histTitle">History</b></div>
+        <div id="historyList" style="padding:15px;"></div>
     </div>
 
     <div id="deposit_page" class="page">
         <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('wallet')"></i> <b>Deposit</b></div>
         <div class="card">
-            <p>Admin UPI: <b id="adminUPI">d28122004@ptyes</b> <i class="fas fa-copy" onclick="copyUPI()"></i></p>
+            <div style="background:#06091b; padding:15px; border-radius:10px; margin-bottom:15px; text-align:center;">
+                <small style="color:var(--text-gray)">Official Admin UPI</small>
+                <h3 style="color:var(--cyan); margin:5px 0;">d28122004@ptyes</h3>
+                <button class="mission-btn" onclick="copyUPI()">COPY UPI</button>
+            </div>
             <input type="number" id="depAmt" placeholder="Amount (Min 500)">
             <input type="text" id="depUTR" placeholder="12 Digit UTR Number">
             <button class="btn-main" onclick="submitDeposit()">Submit Payment</button>
@@ -174,7 +201,7 @@
         <div class="nav-item active" onclick="showPage('home', this)"><i class="fas fa-home"></i>Home</div>
         <div class="nav-item" onclick="showPage('activity', this)"><i class="fas fa-gift"></i>Activity</div>
         <div class="nav-item" onclick="showPage('wallet', this)"><i class="fas fa-wallet"></i>Wallet</div>
-        <div class="nav-item" onclick="logout()"><i class="fas fa-sign-out-alt"></i>Logout</div>
+        <div class="nav-item" onclick="showPage('account', this)"><i class="fas fa-user-circle"></i>Account</div>
     </div>
 </div>
 
@@ -183,24 +210,13 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // GAME BALANCE FIX: jalwa_id ki jagah jalwa_user_phone check karo
-    let userPhone = localStorage.getItem('jalwa_user_phone');
+    let userPhone = localStorage.getItem('jalwa_id') || localStorage.getItem('jalwa_user_phone');
     let userBalance = 0;
-    let totalDep = 0;
+    let totalDepAmt = 0;
+    let totalWitAmt = 0;
     let currentAuthMode = 'reg';
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg; t.style.display = 'block';
-        setTimeout(() => { t.style.display = 'none'; }, 2500);
-    }
-
-    function toggleAuth(mode) {
-        currentAuthMode = mode;
-        document.getElementById('tab-reg').className = mode === 'reg' ? 'active' : '';
-        document.getElementById('tab-login').className = mode === 'login' ? 'active' : '';
-        document.getElementById('authBtn').innerText = mode === 'reg' ? 'Create Account' : 'Login Now';
-    }
+    function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 2500); }
 
     async function handleAuth() {
         const ph = document.getElementById('authPhone').value;
@@ -208,13 +224,11 @@
         if(ph.length < 10) return showToast("Invalid Phone!");
         const snap = await db.ref('users/' + ph).once('value');
         if(currentAuthMode === 'reg') {
-            if(snap.exists()) return showToast("User exists! Please Login.");
-            await db.ref('users/' + ph).set({ password: ps, balance: 0, totalDeposit: 0, totalWithdraw: 0, lastCheckin: "", missions: [] });
+            if(snap.exists()) return showToast("Already exists!");
+            await db.ref('users/' + ph).set({ password: ps, balance: 0, totalDeposit: 0, totalWithdraw: 0, missions: [], lastCheckin: "" });
         } else {
-            if(!snap.exists() || snap.val().password !== ps) return showToast("Wrong ID/Password!");
+            if(!snap.exists() || snap.val().password !== ps) return showToast("Wrong ID/Pass!");
         }
-        
-        // LOGIN SUCCESS: Game balance connectivity ke liye ye dono save karna zaroori hai
         localStorage.setItem('jalwa_user_phone', ph);
         localStorage.setItem('jalwa_id', ph); 
         location.reload();
@@ -223,33 +237,31 @@
     if(userPhone) {
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
+        document.getElementById('profileId').innerText = "ID: " + userPhone;
         document.getElementById('refLink').innerText = "jalwa-v7.vercel.app?ref=" + userPhone;
 
         db.ref('users/' + userPhone).on('value', snap => {
             const d = snap.val();
             if(d) {
                 userBalance = d.balance || 0;
-                totalDep = d.totalDeposit || 0;
+                totalDepAmt = d.totalDeposit || 0;
+                totalWitAmt = d.totalWithdraw || 0;
                 document.querySelectorAll('.user-bal-text').forEach(el => el.innerText = "₹" + userBalance.toFixed(2));
-                document.getElementById('totalDepText').innerText = "₹" + totalDep;
-                document.getElementById('totalWitText').innerText = "₹" + (d.totalWithdraw || 0);
-                updateMissionUI(d);
+                document.getElementById('totDepText').innerText = "₹" + totalDepAmt.toFixed(2);
+                document.getElementById('totWitText').innerText = "₹" + totalWitAmt.toFixed(2);
+                
+                const today = new Date().toDateString();
+                if(d.lastCheckin === today) { document.getElementById('dailyBtn').innerText="CLAIMED"; document.getElementById('dailyBtn').disabled=true; }
+                updateMissions(d.missions || []);
             }
         });
-        toggleHistory('dep');
     }
 
-    function updateMissionUI(d) {
-        const today = new Date().toDateString();
-        const dailyBtn = document.getElementById('dailyBtn');
-        if(d.lastCheckin === today) { dailyBtn.innerText = "CLAIMED"; dailyBtn.classList.add('claimed'); dailyBtn.disabled = true; }
-
-        const missions = d.missions || [];
-        const m1Btn = document.getElementById('m1Btn');
-        if(missions.includes(1)) { m1Btn.innerText = "CLAIMED"; m1Btn.classList.add('claimed'); m1Btn.disabled = true; }
-        
-        const m2Btn = document.getElementById('m2Btn');
-        if(missions.includes(2)) { m2Btn.innerText = "CLAIMED"; m2Btn.classList.add('claimed'); m2Btn.disabled = true; }
+    function updateMissions(mList) {
+        [500, 1000, 2000].forEach(amt => {
+            const btn = document.getElementById('m'+amt);
+            if(mList.includes(amt)) { btn.innerText="CLAIMED"; btn.disabled=true; }
+        });
     }
 
     async function claimDaily() {
@@ -258,68 +270,77 @@
         showToast("₹20 Daily Bonus Added!");
     }
 
-    async function claimMission(id, bonus, req) {
-        if(totalDep < req) {
-            showToast("Redirecting to Deposit...");
-            setTimeout(() => showPage('deposit_page'), 1000);
-            return;
-        }
+    async function claimMission(req, bonus) {
+        if(totalDepAmt < req) return showToast("Recharge ₹" + req + " first!");
         const snap = await db.ref('users/' + userPhone + '/missions').once('value');
-        let missions = snap.val() || [];
-        if(missions.includes(id)) return;
-        
-        missions.push(id);
-        await db.ref('users/' + userPhone).update({ balance: userBalance + bonus, missions: missions });
-        showToast("₹" + bonus + " Bonus Claimed!");
-    }
-
-    function toggleHistory(type) {
-        document.getElementById('btn-dep-hist').className = type === 'dep' ? 'tab-btn active' : 'tab-btn';
-        document.getElementById('btn-wit-hist').className = type === 'wit' ? 'tab-btn active' : 'tab-btn';
-        loadHistory(type);
-    }
-
-    function loadHistory(type) {
-        const path = type === 'dep' ? 'requests/deposits' : 'requests/withdrawals';
-        db.ref(path).on('value', snap => {
-            let h = "";
-            const data = snap.val();
-            if(!data) { document.getElementById('history-container').innerHTML = "No history"; return; }
-            Object.values(data).filter(x => x.uid === userPhone).forEach(item => {
-                h += `<div class="history-item"><span>${type.toUpperCase()} ₹${item.amount}</span><span style="color:${item.status==='success'?'var(--green)':'var(--gold)'}">${item.status.toUpperCase()}</span></div>`;
-            });
-            document.getElementById('history-container').innerHTML = h || "No history";
-        });
+        let m = snap.val() || [];
+        if(m.includes(req)) return;
+        m.push(req);
+        await db.ref('users/' + userPhone).update({ balance: userBalance + bonus, missions: m });
+        showToast("Bonus Claimed!");
     }
 
     function submitDeposit() {
         const amt = Number(document.getElementById('depAmt').value);
-        if(amt < 500) return showToast("Min 500 required");
+        if(amt < 500) return showToast("Min 500 Required");
+        showToast("Processing...");
         db.ref('requests/deposits').push({ uid: userPhone, amount: amt, utr: document.getElementById('depUTR').value, status: 'pending', time: Date.now() });
-        showToast("Request Sent!");
-        showPage('wallet');
+        setTimeout(() => { showToast("Success!"); showPage('wallet'); }, 1500);
     }
 
     function submitWithdraw() {
         const amt = Number(document.getElementById('witAmt').value);
         if(amt < 550 || amt > userBalance) return showToast("Check Balance/Min Limit");
-        db.ref('requests/withdrawals').push({ uid: userPhone, amount: amt, status: 'pending', time: Date.now(), bank: document.getElementById('witBank').value, acc: document.getElementById('witAcc').value });
+        showToast("Processing...");
+        db.ref('requests/withdrawals').push({ uid: userPhone, amount: amt, status: 'pending', time: Date.now() });
         db.ref('users/' + userPhone).update({ balance: userBalance - amt });
-        showToast("Withdrawal Requested!");
-        showPage('wallet');
+        setTimeout(() => { showToast("Success!"); showPage('wallet'); }, 1500);
+    }
+
+    function loadGameHistory() {
+        document.getElementById('histTitle').innerText = "Game History";
+        db.ref('gameHistory').limitToLast(20).on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.uid === userPhone) {
+                    h += `<div class="history-item"><span>Game <br><small>${new Date(d.time).toLocaleString()}</small></span><b>₹${d.amount}</b></div>`;
+                }
+            });
+            document.getElementById('historyList').innerHTML = h || "No History Found";
+        });
+    }
+
+    function loadFinanceHistory(type) {
+        document.getElementById('histTitle').innerText = type.toUpperCase();
+        db.ref('requests/' + type).on('value', snap => {
+            let h = "";
+            snap.forEach(child => {
+                const d = child.val();
+                if(d.uid === userPhone) {
+                    h += `<div class="history-item"><span>₹${d.amount} <br><small>${new Date(d.time).toLocaleDateString()}</small></span><b style="color:var(--gold)">${d.status.toUpperCase()}</b></div>`;
+                }
+            });
+            document.getElementById('historyList').innerHTML = h || "No Records Found";
+        });
     }
 
     function showPage(pId, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(pId).classList.add('active');
-        if(el) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
+        if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
     }
-    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLink').innerText); showToast("Link Copied!"); }
+    
+    function toggleAuth(mode) {
+        currentAuthMode = mode;
+        document.getElementById('tab-reg').className = mode === 'reg' ? 'active' : '';
+        document.getElementById('tab-login').className = mode === 'login' ? 'active' : '';
+        document.getElementById('authBtn').innerText = mode === 'reg' ? 'Create Account' : 'Login Now';
+    }
     function copyUPI() { navigator.clipboard.writeText("d28122004@ptyes"); showToast("UPI Copied!"); }
+    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLink').innerText); showToast("Link Copied!"); }
     function logout() { localStorage.clear(); location.reload(); }
 </script>
 </body>
-</html>
+    </html>
+    
