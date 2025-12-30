@@ -58,7 +58,7 @@
         <input type="number" id="authPhone" placeholder="Mobile Number">
         <input type="password" id="authPass" placeholder="Password">
         <div id="inviteBox">
-            <input type="text" id="authRef" placeholder="Invite Code (Auto-filled)">
+            <input type="text" id="authRef" placeholder="Invite Code (Optional)">
         </div>
         <button class="btn-main" id="authBtn" onclick="handleAuth()">Create Account</button>
     </div>
@@ -90,32 +90,31 @@
         <div class="top-bar"><b>Activity & Rewards</b></div>
         <div class="card" style="background:var(--blue-gradient); border: 2px solid var(--cyan);">
             <h2 style="margin:0; color: var(--cyan);">₹200 BONUS</h2>
-            <p style="font-size:13px; margin: 10px 0; font-weight: bold;">Get ₹200 on every Referral Recharge of ₹500!</p>
+            <p style="font-size:13px; margin: 10px 0; font-weight: bold;">Referral Bonus on ₹500 Recharge!</p>
             <div style="background: rgba(0,0,255,0.2); padding: 12px; border: 1px dashed var(--cyan); border-radius: 8px; font-size: 11px; display:flex; justify-content:space-between; align-items:center;" onclick="copyRef()">
-                <span id="refLink">Loading Link...</span> <i class="fas fa-copy"></i>
+                <span id="refLink">Loading...</span> <i class="fas fa-copy"></i>
             </div>
         </div>
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div><b>Daily Reward</b><br><small>Claim ₹20.00 daily</small></div>
-                <button class="btn-main" style="width:auto; padding:8px 15px; font-size:11px; margin:0;" id="dailyBtn" onclick="claimDaily()">CLAIM NOW</button>
+                <button class="btn-main" style="width:auto; padding:8px 15px; font-size:11px; margin:0;" onclick="claimDaily()">CLAIM</button>
             </div>
         </div>
     </div>
 
     <div id="history" class="page">
-        <div class="top-bar"><b>Full History</b></div>
-        <div style="padding: 10px 15px;">
-            <input type="number" id="searchHist" placeholder="Search by Mobile Number" oninput="filterHistory()" style="margin-bottom: 15px; border-color: var(--cyan);">
-            <h5 style="color:var(--cyan); border-bottom: 1px solid #1f2855; padding-bottom:5px;">Deposit Records</h5>
+        <div class="top-bar"><b>Transactions</b></div>
+        <div style="padding: 15px;">
+            <h5 style="color:var(--cyan);">Deposits</h5>
             <div id="fullDepHistory"></div>
-            <h5 style="color:var(--red); border-bottom: 1px solid #1f2855; padding-bottom:5px; margin-top:20px;">Withdrawal Records</h5>
+            <h5 style="color:var(--red); margin-top:20px;">Withdrawals</h5>
             <div id="fullWitHistory"></div>
         </div>
     </div>
 
     <div id="wallet" class="page">
-        <div class="top-bar"><b>Wallet</b></div>
+        <div class="top-bar"><b>My Wallet</b></div>
         <div style="text-align:center; padding:35px 20px;">
             <p style="color:var(--text-gray); margin:0;">Total Balance</p>
             <h1 class="user-bal-text" style="color:var(--cyan); font-size:45px; margin:10px 0;">₹0.00</h1>
@@ -129,9 +128,9 @@
     <div id="deposit_page" class="page">
         <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('wallet')"></i> <b>Recharge</b></div>
         <div class="card">
-            <p style="font-size:13px;">Copy UPI and Pay:</p>
+            <p style="font-size:13px;">Copy UPI & Pay:</p>
             <div style="background:#06091b; padding:15px; border-radius:10px; margin-bottom:15px; display:flex; justify-content:space-between; border: 1px solid var(--cyan);">
-                <b>d28122004@ptyes</b> <i class="fas fa-copy" onclick="copyUPI()"></i>
+                <b id="adminUPI">d28122004@ptyes</b> <i class="fas fa-copy" onclick="copyUPI()"></i>
             </div>
             <input type="number" id="depAmt" placeholder="Amount (Min ₹500)">
             <input type="text" id="depUTR" placeholder="12 Digit UTR Number">
@@ -140,10 +139,10 @@
     </div>
 
     <div id="withdraw_page" class="page">
-        <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('wallet')"></i> <b>Withdrawal</b></div>
+        <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('wallet')"></i> <b>Withdraw</b></div>
         <div class="card">
             <input type="number" id="witAmt" placeholder="Amount (Min ₹550)">
-            <input type="text" id="witUPI" placeholder="Your UPI ID (e.g. 89555... @paytm)">
+            <input type="text" id="witUPI" placeholder="Your UPI ID">
             <button class="btn-main" onclick="submitWithdraw()">Request Withdrawal</button>
         </div>
     </div>
@@ -158,6 +157,7 @@
 </div>
 
 <script>
+    // Firebase Setup
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -166,41 +166,37 @@
     let userBalance = 0;
 
     window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get('ref');
-        if (refCode) localStorage.setItem('sticky_ref', refCode);
-        
-        const savedRef = localStorage.getItem('sticky_ref');
-        if (savedRef && document.getElementById('authRef')) document.getElementById('authRef').value = savedRef;
-
         if(userPhone) {
             document.getElementById('auth-screen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
             initApp();
-            loadHistory();
         }
     }
 
     function initApp() {
         document.getElementById('refLink').innerText = "https://jalwa-v7.vercel.app/?ref=" + userPhone;
-        // BALANCE SYNC - Path: users/PHONE
+        
+        // SYNC BALANCE FROM FIREBASE (Crucial for Game Sync)
         db.ref('users/' + userPhone).on('value', snap => {
-            const d = snap.val();
-            if(d) {
-                userBalance = d.balance || 0;
+            const data = snap.val();
+            if(data) {
+                userBalance = data.balance || 0;
                 document.querySelectorAll('.user-bal-text').forEach(el => el.innerText = "₹" + Number(userBalance).toFixed(2));
             }
         });
+        loadHistory();
     }
 
     async function handleAuth() {
         const ph = document.getElementById('authPhone').value.trim();
         const ps = document.getElementById('authPass').value.trim();
         const ref = document.getElementById('authRef').value.trim() || "none";
+        const isReg = document.getElementById('tab-reg').classList.contains('active');
+
         if(ph.length < 10 || ps === "") return showToast("Enter Details!");
         
         const snap = await db.ref('users/' + ph).once('value');
-        if(document.getElementById('tab-reg').classList.contains('active')) {
+        if(isReg) {
             if(snap.exists()) return showToast("Already exists!");
             await db.ref('users/' + ph).set({ phone: ph, password: ps, balance: 0, totalDeposit: 0, invitedBy: ref, lastCheckin: "" });
         } else {
@@ -208,39 +204,6 @@
         }
         localStorage.setItem('jalwa_user_phone', ph);
         location.reload();
-    }
-
-    // ... LoadHistory, Filter, ShowPage functions (Rest as per your code) ...
-    function loadHistory() {
-        db.ref('requests/deposits').orderByChild('uid').equalTo(userPhone).on('value', snap => {
-            const list = document.getElementById('fullDepHistory'); list.innerHTML = "";
-            snap.forEach(i => {
-                const v = i.val();
-                const date = new Date(v.time).toLocaleString();
-                list.innerHTML += `<div class="hist-card" data-phone="${v.uid}">
-                    <div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status.toUpperCase()}</span></div>
-                    <div style="font-size:10px; opacity:0.6;">UTR: ${v.utr} | ${date}</div>
-                </div>`;
-            });
-        });
-        db.ref('requests/withdrawals').orderByChild('uid').equalTo(userPhone).on('value', snap => {
-            const list = document.getElementById('fullWitHistory'); list.innerHTML = "";
-            snap.forEach(i => {
-                const v = i.val();
-                const date = new Date(v.time).toLocaleString();
-                list.innerHTML += `<div class="hist-card" style="border-left-color:var(--red)" data-phone="${v.uid}">
-                    <div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status.toUpperCase()}</span></div>
-                    <div style="font-size:10px; opacity:0.6;">UPI: ${v.upi} | ${date}</div>
-                </div>`;
-            });
-        });
-    }
-
-    function filterHistory() {
-        const val = document.getElementById('searchHist').value;
-        document.querySelectorAll('.hist-card').forEach(card => {
-            card.style.display = card.dataset.phone.includes(val) ? 'block' : 'none';
-        });
     }
 
     function showPage(pId, el) {
@@ -256,6 +219,7 @@
         document.getElementById('tab-reg').className = (m === 'reg' ? 'active' : '');
         document.getElementById('tab-login').className = (m === 'login' ? 'active' : '');
         document.getElementById('inviteBox').style.display = (m === 'reg' ? 'block' : 'none');
+        document.getElementById('authBtn').innerText = (m === 'reg' ? 'Create Account' : 'Login');
     }
 
     function showToast(m) {
@@ -263,25 +227,42 @@
         t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500);
     }
 
-    function logout() { localStorage.clear(); location.reload(); }
-    function copyUPI() { navigator.clipboard.writeText("d28122004@ptyes"); showToast("UPI Copied!"); }
-    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLink').innerText); showToast("Link Copied!"); }
-
     function submitDeposit() {
         const amt = Number(document.getElementById('depAmt').value);
         const utr = document.getElementById('depUTR').value.trim();
-        if(amt < 500 || utr.length < 10) return showToast("Check Amount/UTR!");
+        if(amt < 500 || utr.length < 10) return showToast("Min ₹500 & Correct UTR!");
+        
         db.ref('requests/deposits').push({ uid: userPhone, amount: amt, utr: utr, status: 'pending', time: Date.now() });
-        showToast("Request Sent!"); showPage('history');
+        showToast("Request Sent!");
+        showPage('history');
     }
 
     function submitWithdraw() {
         const amt = Number(document.getElementById('witAmt').value);
         const upi = document.getElementById('witUPI').value.trim();
-        if(amt < 550 || amt > userBalance || upi === "") return showToast("Check Balance/UPI!");
-        db.ref('requests/withdrawals').push({ uid: userPhone, amount: amt, upi: upi, status: 'pending', time: Date.now() });
+        if(amt < 550 || amt > userBalance) return showToast("Insufficient Balance (Min ₹550)");
+        
         db.ref('users/' + userPhone).update({ balance: userBalance - amt });
-        showToast("Withdrawal Requested!"); showPage('history');
+        db.ref('requests/withdrawals').push({ uid: userPhone, amount: amt, upi: upi, status: 'pending', time: Date.now() });
+        showToast("Withdrawal Requested!");
+        showPage('history');
+    }
+
+    function loadHistory() {
+        db.ref('requests/deposits').orderByChild('uid').equalTo(userPhone).on('value', snap => {
+            const list = document.getElementById('fullDepHistory'); list.innerHTML = "";
+            snap.forEach(i => {
+                const v = i.val();
+                list.innerHTML += `<div class="hist-card"><div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status}</span></div><small>UTR: ${v.utr}</small></div>`;
+            });
+        });
+        db.ref('requests/withdrawals').orderByChild('uid').equalTo(userPhone).on('value', snap => {
+            const list = document.getElementById('fullWitHistory'); list.innerHTML = "";
+            snap.forEach(i => {
+                const v = i.val();
+                list.innerHTML += `<div class="hist-card" style="border-left-color:var(--red)"><div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status}</span></div><small>UPI: ${v.upi}</small></div>`;
+            });
+        });
     }
 
     async function claimDaily() {
@@ -291,6 +272,10 @@
         await db.ref('users/' + userPhone).update({ balance: userBalance + 20, lastCheckin: today });
         showToast("₹20 Bonus Added!");
     }
+
+    function logout() { localStorage.clear(); location.reload(); }
+    function copyUPI() { navigator.clipboard.writeText("d28122004@ptyes"); showToast("UPI Copied!"); }
+    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLink').innerText); showToast("Link Copied!"); }
 </script>
 </body>
 </html>
