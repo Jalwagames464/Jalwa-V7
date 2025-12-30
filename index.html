@@ -12,154 +12,171 @@
             --bg-dark: #06091b; --card-bg: #10142d; --cyan: #00ffca; 
             --text-gray: #7e87a8; --gold: #ffd700; --red: #ff4d4d; --green: #2ecc71;
             --blue-gradient: linear-gradient(180deg, #1a237e 0%, #06091b 100%);
-            --neon-glow: 0 0 15px var(--cyan);
         }
         body { margin: 0; background: var(--bg-dark); font-family: 'Segoe UI', sans-serif; color: white; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 90px; }
+        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 90px; display: none; }
 
-        .page { display: none; animation: fadeIn 0.3s; position: relative; min-height: 100vh; background: var(--bg-dark); }
+        .page { display: none; animation: fadeIn 0.3s; min-height: 100vh; background: var(--bg-dark); }
         .page.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+        
         .top-bar { padding: 15px; display: flex; align-items: center; background: #10142d; border-bottom: 1px solid #1f2855; justify-content: space-between; }
-        .close-btn { font-size: 24px; color: var(--red); cursor: pointer; }
+        .card { background: var(--card-bg); border-radius: 15px; padding: 15px; border: 1px solid #1f2855; margin: 15px; position: relative; }
+        .btn-main { width: 100%; background: var(--cyan); color: #000; border: none; padding: 14px; border-radius: 12px; font-weight: 900; cursor: pointer; margin-top: 10px; text-transform: uppercase; }
+        
+        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #1f2855; background: #06091b; color: white; box-sizing: border-box; }
 
         .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 15px; }
-        .game-card { background: #161d3d; border-radius: 15px; padding: 25px 15px; text-align: center; border: 1px solid #1f2855; cursor: pointer; transition: 0.3s; text-decoration: none; color: white; }
-        .card { background: var(--card-bg); border-radius: 15px; padding: 15px; border: 1px solid #1f2855; margin: 15px; }
+        .game-card { background: #161d3d; border-radius: 15px; padding: 25px 15px; text-align: center; border: 1px solid #1f2855; cursor: pointer; color: white; transition: 0.3s; }
 
-        .history-btn { background: #161d3d; padding: 15px; border-radius: 12px; margin: 10px 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1f2855; cursor: pointer; }
-        .hist-item-new { background: #10142d; padding: 12px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--text-gray); display: flex; justify-content: space-between; font-size: 13px; }
-        .status-success { border-left-color: var(--green); color: var(--green); }
-        .status-pending { border-left-color: var(--gold); color: var(--gold); }
-        .status-rejected { border-left-color: var(--red); color: var(--red); }
+        .ref-box { background: rgba(0, 255, 202, 0.1); padding: 12px; border-radius: 10px; border: 1px dashed var(--cyan); margin-top: 10px; font-size: 12px; word-break: break-all; color: var(--cyan); cursor: pointer; }
+        .task-box { background: #161d3d; padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #1f2855; }
+        .mission-btn { background: var(--cyan); color: #000; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .brand-header { text-align: center; padding: 40px 10px; background: var(--blue-gradient); border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
+        .upi-copy-box { background: #06091b; padding: 10px; border-radius: 8px; border: 1px solid var(--cyan); display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
 
         .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #10142d; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1f2855; z-index: 1000; }
         .nav-item { text-align: center; color: var(--text-gray); font-size: 11px; cursor: pointer; }
         .nav-item.active { color: var(--cyan); }
         .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
-
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #1f2855; background: #06091b; color: white; box-sizing: border-box; }
-        .btn-main { width: 100%; background: var(--cyan); color: #000; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        #notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: black; padding: 10px 20px; border-radius: 30px; display: none; z-index: 40000; font-size: 14px; font-weight: bold; }
+        
+        #notif { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: black; padding: 10px 20px; border-radius: 30px; display: none; z-index: 40000; font-weight: bold; }
+        #loader { display:none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:50000; justify-content:center; align-items:center; flex-direction:column; }
     </style>
 </head>
 <body>
 
 <div id="notif">Notification</div>
+<div id="loader">
+    <i class="fas fa-spinner fa-spin" style="font-size:40px; color:var(--cyan)"></i>
+    <p style="margin-top:10px;">Processing Request...</p>
+</div>
 
-<div class="app-container">
+<div id="auth-screen">
+    <div style="text-align:center; padding:50px 20px;">
+        <h1 style="color:var(--cyan); letter-spacing: 5px; font-weight: 900;">JALWA PRO</h1>
+        <p style="color:var(--text-gray); margin-bottom: 30px;">Premium Gaming Platform</p>
+        <input type="number" id="authPhone" placeholder="Mobile Number">
+        <input type="password" id="authPass" placeholder="Password">
+        <input type="text" id="inviteCode" placeholder="Invite Code (Optional)">
+        <button class="btn-main" onclick="handleAuth()">Access Dashboard</button>
+    </div>
+</div>
+
+<div class="app-container" id="mainDashboard">
+    
     <div id="home" class="page active">
         <div class="top-bar">
-            <div style="font-size:22px; font-weight:900; color:var(--cyan);">JALWA</div>
+            <div style="font-size:22px; font-weight:900; color:var(--cyan);">JALWA PRO</div>
             <div style="background: #161d3d; padding: 5px 15px; border-radius: 20px; border: 1px solid var(--cyan);">
                 <i class="fas fa-wallet" style="color:var(--gold)"></i> <span id="globalBalance">₹0.00</span>
             </div>
         </div>
-        <div style="margin: 15px; background: rgba(0,255,202,0.1); padding: 8px; border-radius: 5px;">
-            <marquee style="font-size: 12px; color: var(--cyan);">⚡ Withdrawals instant. | 🎁 Claim Daily Reward in Activity.</marquee>
-        </div>
         <div class="game-grid">
-            <a href="game.html" class="game-card" style="border-color:var(--cyan)">
-                <i class="fas fa-dice" style="font-size:40px; color:var(--cyan); margin-bottom:10px;"></i><br>
-                <b style="font-size:18px;">WinGo 30s</b>
-            </a>
-            <a href="aviator.html" class="game-card" style="border-color:var(--red)">
-                <i class="fas fa-paper-plane" style="font-size:40px; color:var(--red); margin-bottom:10px;"></i><br>
-                <b style="font-size:18px;">Aviator Pro</b>
-            </a>
-        </div>
-    </div>
-
-    <div id="wallet" class="page">
-        <div class="top-bar"><b>My Wallet</b><i class="fas fa-times-circle close-btn" onclick="showPage('home')"></i></div>
-        <div style="background: var(--blue-gradient); padding: 40px 20px; text-align: center;">
-            <h1 id="walBal" style="margin: 0; font-size: 45px; color:var(--cyan);">₹0.00</h1>
-            <p style="color:var(--text-gray); margin-top:5px;">Available Balance</p>
-        </div>
-        <div style="padding: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: -20px;">
-            <button class="btn-main" onclick="showPage('deposit')">DEPOSIT</button>
-            <button class="btn-main" style="background:white" onclick="showPage('withdraw')">WITHDRAW</button>
-        </div>
-        
-        <div class="history-btn" onclick="openHistory('deposits')">
-            <span><i class="fas fa-file-invoice-dollar" style="color:var(--green)"></i> Deposit History</span>
-            <i class="fas fa-chevron-right"></i>
-        </div>
-        <div class="history-btn" onclick="openHistory('withdrawals')">
-            <span><i class="fas fa-receipt" style="color:var(--red)"></i> Withdrawal History</span>
-            <i class="fas fa-chevron-right"></i>
-        </div>
-    </div>
-
-    <div id="historyPage" class="page">
-        <div class="top-bar">
-            <b id="histTitle">History</b>
-            <i class="fas fa-times-circle close-btn" onclick="showPage('wallet')"></i>
-        </div>
-        <div class="card" style="text-align: center; background: #1a237e; border:none;">
-            <small id="totalLabel" style="color:var(--text-gray)">Total Success</small>
-            <h2 id="totalHistAmt" style="margin: 5px 0; color: var(--cyan);">₹0.00</h2>
-        </div>
-        <div id="histList" style="padding:0 15px;"></div>
-    </div>
-
-    <div id="deposit" class="page">
-        <div class="top-bar"><b>Add Cash</b><i class="fas fa-times-circle close-btn" onclick="showPage('wallet')"></i></div>
-        <div class="card">
-            <p style="color:var(--red); font-weight:bold;">Minimum Recharge: ₹500</p>
-            <div style="background:#06091b; padding:12px; border-radius:8px; display:flex; justify-content:space-between; border:1px solid var(--cyan); margin-bottom:15px;">
-                <span id="upiId">d28122004@ptyes</span>
-                <i class="fas fa-copy" style="color:var(--cyan)" onclick="copyText('upiId')"></i>
+            <div class="game-card" style="border-color:var(--cyan)" onclick="location.href='game.html'">
+                <i class="fas fa-dice" style="font-size:40px; color:var(--cyan); margin-bottom:10px;"></i><br><b>WinGo 30s</b>
             </div>
-            <input type="number" id="dAmt" placeholder="Enter Amount">
-            <input type="text" id="dUTR" placeholder="12-Digit UTR Number">
-            <button class="btn-main" onclick="handleDeposit()">SUBMIT TO ADMIN</button>
-        </div>
-    </div>
-
-    <div id="withdraw" class="page">
-        <div class="top-bar"><b>Withdraw Cash</b><i class="fas fa-times-circle close-btn" onclick="showPage('wallet')"></i></div>
-        <div class="card">
-            <p style="color:var(--red); font-weight:bold;">Minimum Withdrawal: ₹550</p>
-            <input type="text" id="wUPI" placeholder="Enter UPI ID">
-            <input type="number" id="wAmt" placeholder="Withdrawal Amount">
-            <button class="btn-main" onclick="handleWithdraw()">CONFIRM WITHDRAW</button>
+            <div class="game-card" style="border-color:var(--red)" onclick="location.href='aviator.html'">
+                <i class="fas fa-paper-plane" style="font-size:40px; color:var(--red); margin-bottom:10px;"></i><br><b>Aviator Pro</b>
+            </div>
         </div>
     </div>
 
     <div id="activity" class="page">
         <div class="top-bar"><b>Promotions</b></div>
-        <div class="card" style="text-align: center; border: 1px solid var(--gold); background: #1a1e3a;">
-            <h3 style="color:var(--gold); margin-bottom: 5px;">INVITE FRIENDS</h3>
-            <p style="margin: 0 0 10px 0; font-size: 14px;">Recharge ₹500 & Get <b>₹200 Bonus</b>!</p>
-            <div style="background:#06091b; padding:10px; border-radius:8px; display:flex; justify-content:space-between; border:1px dashed var(--cyan);">
-                <span id="refLink" style="font-size:11px;">Loading link...</span>
-                <i class="fas fa-copy" style="color:var(--cyan)" onclick="copyText('refLink')"></i>
+        <div class="card" style="background:var(--blue-gradient)">
+            <h3 style="margin:0;">Referral Program</h3>
+            <p style="font-size:12px; opacity:0.8;">Get ₹200 bonus when your friend recharges ₹500 or more!</p>
+            <div class="ref-box" onclick="copyRef()">
+                <span id="refURL">Loading referral link...</span>
+                <i class="fas fa-copy" style="margin-left:10px;"></i>
             </div>
         </div>
-        <div class="card" onclick="claimDaily()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
-            <div><b>Daily Reward</b><br><small>Claim ₹20 daily</small></div>
-            <i class="fas fa-gift" style="font-size:25px; color:var(--cyan)"></i>
+
+        <div class="card">
+            <div class="task-box">
+                <div><b>Daily Check-in</b><br><small style="color:var(--text-gray)">Claim ₹20 Free Every Day</small></div>
+                <button class="mission-btn" onclick="claimDaily()">CLAIM</button>
+            </div>
+            <h4 style="margin: 20px 0 10px 0;">Recharge Missions</h4>
+            <div class="task-box">
+                <div><b>Level 1</b><br><small style="color:var(--text-gray)">Recharge ₹550 (+₹20 Bonus)</small></div>
+                <button class="mission-btn" onclick="showPage('deposit_page')">RECHARGE</button>
+            </div>
+            <div class="task-box">
+                <div><b>Level 2</b><br><small style="color:var(--text-gray)">Recharge ₹1000 (+₹50 Bonus)</small></div>
+                <button class="mission-btn" onclick="showPage('deposit_page')">RECHARGE</button>
+            </div>
+            <div class="task-box">
+                <div><b>Level 3</b><br><small style="color:var(--text-gray)">Recharge ₹2000 (+₹500 Bonus)</small></div>
+                <button class="mission-btn" onclick="showPage('deposit_page')">RECHARGE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="wallet" class="page">
+        <div class="top-bar"><b>My Wallet</b></div>
+        <div style="text-align:center; padding:40px 20px;">
+            <p style="color:var(--text-gray); margin-bottom:5px;">Total Balance</p>
+            <h1 id="walBal" style="color:var(--cyan); font-size:48px; margin:0;">₹0.00</h1>
+        </div>
+        <div style="display:flex; gap:12px; padding:0 20px;">
+            <button class="btn-main" onclick="showPage('deposit_page')">DEPOSIT</button>
+            <button class="btn-main" style="background:white" onclick="showPage('withdraw_page')">WITHDRAW</button>
+        </div>
+    </div>
+
+    <div id="deposit_page" class="page">
+        <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('wallet')"></i> <b>Deposit Funds</b></div>
+        <div class="card">
+            <div style="text-align:center; margin-bottom:20px;">
+                <p style="font-size:14px;">Transfer to UPI ID below:</p>
+                <div class="upi-copy-box">
+                    <b id="adminUPI">d28122004@ptyes</b>
+                    <i class="fas fa-copy" onclick="copyUPI()" style="color:var(--cyan); cursor:pointer;"></i>
+                </div>
+                <p style="font-size:11px; color:var(--text-gray);">Pay at least ₹500 to get bonuses.</p>
+            </div>
+            <input type="number" id="depAmt" placeholder="Deposit Amount (Min 500)">
+            <input type="text" id="depUTR" placeholder="Enter 12-Digit UTR Number">
+            <button class="btn-main" onclick="submitDeposit()">Submit Payment</button>
+        </div>
+    </div>
+
+    <div id="withdraw_page" class="page">
+        <div class="top-bar"><i class="fas fa-arrow-left" onclick="showPage('wallet')"></i> <b>Request Withdrawal</b></div>
+        <div class="card">
+            <p style="font-size:12px; color:var(--red);">* Minimum withdrawal limit is ₹550</p>
+            <input type="number" id="witAmt" placeholder="Amount (Min ₹550)">
+            <input type="text" id="witBank" placeholder="Bank Name">
+            <input type="text" id="witAcc" placeholder="Account Number">
+            <input type="text" id="witIFSC" placeholder="IFSC Code">
+            <input type="text" id="witUPI" placeholder="UPI ID">
+            <button class="btn-main" onclick="submitWithdraw()">Withdraw Now</button>
         </div>
     </div>
 
     <div id="account" class="page">
-        <div style="text-align: center; padding: 40px 15px; background: #161d3d;">
-            <div style="width:70px; height:70px; background:var(--cyan); border-radius:50%; margin: auto; border:3px solid white;"></div>
-            <h3>UID: <span id="userUIDDisplay">...</span></h3>
-            <h2 id="accBal" style="color:var(--cyan);">₹0.00</h2>
+        <div class="brand-header">
+            <h1 style="color:var(--cyan); margin:0; letter-spacing:4px; font-weight:900;">JALWA PRO</h1>
+            <p id="userUIDDisplay" style="color:rgba(255,255,255,0.7); margin-top:5px;">UID: +91 </p>
+            <h2 id="accBal" style="margin:15px 0; font-size:32px;">₹0.00</h2>
         </div>
-        <div class="card" style="padding: 0; overflow: hidden;">
-            <div style="padding: 15px; background: #1a237e; display: flex; justify-content: space-between; cursor:pointer;" onclick="toggleHistory()">
-                <span><i class="fas fa-history"></i> My Game History</span>
-                <i class="fas fa-chevron-down" id="histIcon"></i>
-            </div>
-            <div id="historyContent" style="padding: 15px; display: none; background: #06091b;">
-                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1f2855; font-size: 13px;"><span>Check Games for results</span></div>
+        
+        <div class="card">
+            <h4><i class="fas fa-history" style="color:var(--cyan); margin-right:10px;"></i>Game History</h4>
+            <div id="historyList">
+                <p style="font-size:12px; color:var(--text-gray); text-align:center; padding:10px;">No recent games played.</p>
             </div>
         </div>
-        <button class="btn-main" style="background:var(--red); color:white; width:90%; margin:20px 5%; border-radius: 30px;" onclick="location.reload()">LOG OUT</button>
+
+        <div class="card" onclick="location.href='https://t.me/Realtrademods8911'" style="cursor:pointer; display:flex; align-items:center; gap:15px; border-color:#24A1DE;">
+            <i class="fab fa-telegram" style="font-size:30px; color:#24A1DE;"></i>
+            <div><b>Customer Support</b><br><small style="color:var(--text-gray)">Click to contact on Telegram</small></div>
+        </div>
+
+        <button class="btn-main" style="background:var(--red); color:white; margin:15px; width:calc(100% - 30px)" onclick="logout()">SIGN OUT</button>
     </div>
 
     <div class="bottom-nav">
@@ -174,102 +191,105 @@
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // --- REFERRAL TRACKING (URL check) ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const referredBy = urlParams.get('ref');
 
-    let userId = localStorage.getItem('jalwa_id');
-    let isNewUser = false;
-
-    if(!userId) {
-        isNewUser = true;
-        userId = 'UID' + Math.floor(Math.random() * 900000 + 100000);
-        localStorage.setItem('jalwa_id', userId);
-        // Save referral info if available
-        if(referredBy) localStorage.setItem('referred_by', referredBy);
-    }
-    document.getElementById('userUIDDisplay').innerText = userId;
-
+    let userPhone = localStorage.getItem('jalwa_user_phone');
     let userBalance = 0;
 
-    // --- SYNC DATA ---
-    db.ref('users/' + userId).on('value', snap => {
-        const data = snap.val();
-        if(data) {
-            userBalance = data.balance || 0;
-            updateUI();
-        } else {
-            // New user init with referral tracking
-            const refID = localStorage.getItem('referred_by') || "None";
-            db.ref('users/' + userId).set({ 
-                balance: 0, 
-                totalDeposit: 0, 
-                totalWithdraw: 0,
-                referredBy: refID,
-                joinedAt: Date.now()
-            });
-        }
-    });
-
-    function updateUI() {
-        const bal = '₹' + parseFloat(userBalance).toFixed(2);
-        document.getElementById('globalBalance').innerText = bal;
-        if(document.getElementById('walBal')) document.getElementById('walBal').innerText = bal;
-        if(document.getElementById('accBal')) document.getElementById('accBal').innerText = bal;
-        
-        // Dynamic Referral Link
-        const siteUrl = window.location.href.split('?')[0];
-        document.getElementById('refLink').innerText = siteUrl + "?ref=" + userId;
-    }
-
-    // --- HANDLERS ---
-    async function handleDeposit() {
-        let amt = parseFloat(document.getElementById('dAmt').value);
-        let utr = document.getElementById('dUTR').value;
-        if(amt >= 500 && utr.length >= 10) {
-            await db.ref('requests/deposits').push({ uid: userId, amount: amt, utr: utr, status: 'pending', time: Date.now() });
-            showNotif("Deposit Request Sent!");
-            showPage('wallet');
-        } else { showNotif("Invalid Details!"); }
-    }
-
-    async function handleWithdraw() {
-        let amt = parseFloat(document.getElementById('wAmt').value);
-        let upi = document.getElementById('wUPI').value;
-        if(amt >= 550 && amt <= userBalance) {
-            await db.ref('users/' + userId).update({ balance: userBalance - amt });
-            await db.ref('requests/withdrawals').push({ uid: userId, amount: amt, upi: upi, status: 'pending', time: Date.now() });
-            showNotif("Withdrawal Requested!");
-            showPage('wallet');
-        } else { showNotif("Check Balance or Min ₹550"); }
-    }
-
-    function openHistory(type) {
-        showPage('historyPage');
-        const listDiv = document.getElementById('histList');
-        const totalDisp = document.getElementById('totalHistAmt');
-        document.getElementById('histTitle').innerText = type === 'deposits' ? "Deposit History" : "Withdrawal History";
-        document.getElementById('totalLabel').innerText = type === 'deposits' ? "Total Success Deposit" : "Total Success Withdrawal";
-        listDiv.innerHTML = "<p style='text-align:center;'>Loading...</p>";
-        db.ref('requests/' + type).orderByChild('uid').equalTo(userId).on('value', snap => {
-            let html = "", total = 0, items = [];
-            snap.forEach(c => { let d = c.val(); items.push(d); if(d.status === 'success') total += Number(d.amount); });
-            items.reverse().forEach(d => {
-                html += `<div class="hist-item-new status-${d.status}">
-                    <div><b>₹${d.amount}</b><br><small>${new Date(d.time).toLocaleDateString()}</small></div>
-                    <div style="text-align:right"><b>${d.status.toUpperCase()}</b><br><small style="font-size:10px">${d.utr || d.upi}</small></div>
-                </div>`;
-            });
-            listDiv.innerHTML = html || "<p style='text-align:center;'>No History Found</p>";
-            totalDisp.innerText = "₹" + total.toFixed(2);
-        });
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('ref')) {
+        document.getElementById('inviteCode').value = urlParams.get('ref');
     }
 
     function showPage(pId, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(pId).classList.add('active');
-        if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
+        if(el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            el.classList.add('active');
+        }
+    }
+
+    async function handleAuth() {
+        const ph = document.getElementById('authPhone').value;
+        const ps = document.getElementById('authPass').value;
+        const inv = document.getElementById('inviteCode').value || "NONE";
+        if(ph.length < 10) return showNotif("Invalid Mobile Number");
+        const snap = await db.ref('users/' + ph).once('value');
+        if(snap.exists()) {
+            if(snap.val().password === ps) login(ph);
+            else showNotif("Incorrect Password");
+        } else {
+            await db.ref('users/' + ph).set({ password: ps, balance: 0, totalDeposit: 0, joined: Date.now(), referredBy: inv });
+            login(ph);
+        }
+    }
+
+    function login(ph) { localStorage.setItem('jalwa_user_phone', ph); location.reload(); }
+
+    if(userPhone) {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('mainDashboard').style.display = 'block';
+        document.getElementById('userUIDDisplay').innerText = "UID: +91 " + userPhone;
+        document.getElementById('refURL').innerText = "https://jalwa-v7.vercel.app?ref=" + userPhone;
+
+        db.ref('users/' + userPhone).on('value', snap => {
+            const d = snap.val();
+            if(d) {
+                userBalance = d.balance || 0;
+                const formatted = "₹" + parseFloat(userBalance).toFixed(2);
+                document.getElementById('globalBalance').innerText = formatted;
+                document.getElementById('walBal').innerText = formatted;
+                document.getElementById('accBal').innerText = formatted;
+            }
+        });
+    }
+
+    function copyRef() {
+        const url = document.getElementById('refURL').innerText;
+        navigator.clipboard.writeText(url);
+        showNotif("Referral Link Copied!");
+    }
+
+    function copyUPI() {
+        const upi = document.getElementById('adminUPI').innerText;
+        navigator.clipboard.writeText(upi);
+        showNotif("UPI ID Copied!");
+    }
+
+    async function claimDaily() {
+        let today = new Date().toDateString();
+        if(localStorage.getItem('last_claim') === today) return showNotif("Already claimed today!");
+        await db.ref('users/' + userPhone).update({ balance: userBalance + 20 });
+        localStorage.setItem('last_claim', today);
+        showNotif("Daily Bonus Claimed!");
+    }
+
+    function submitDeposit() {
+        const amt = document.getElementById('depAmt').value;
+        const utr = document.getElementById('depUTR').value;
+        if(amt < 500) return showNotif("Minimum deposit is ₹500");
+        if(utr.length < 12) return showNotif("Enter valid 12-digit UTR");
+        document.getElementById('loader').style.display = 'flex';
+        db.ref('requests/deposits').push({ uid: userPhone, amount: amt, utr: utr, status: 'pending', time: Date.now() });
+        setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            showNotif("Deposit request sent for verification.");
+            showPage('wallet');
+        }, 2000);
+    }
+
+    function submitWithdraw() {
+        const amt = document.getElementById('witAmt').value;
+        if(amt < 550) return showNotif("Minimum withdrawal is ₹550");
+        if(amt > userBalance) return showNotif("Insufficient balance");
+        document.getElementById('loader').style.display = 'flex';
+        db.ref('requests/withdrawals').push({ uid: userPhone, amount: amt, status: 'pending', time: Date.now() });
+        db.ref('users/' + userPhone).update({ balance: userBalance - amt });
+        setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            showNotif("Withdrawal processing started.");
+            showPage('wallet');
+        }, 2000);
     }
 
     function showNotif(msg) {
@@ -278,24 +298,7 @@
         setTimeout(() => n.style.display = 'none', 3000);
     }
 
-    function copyText(id) {
-        const text = document.getElementById(id).innerText;
-        navigator.clipboard.writeText(text).then(() => showNotif("Copied!"));
-    }
-
-    function toggleHistory() {
-        const content = document.getElementById('historyContent');
-        content.style.display = content.style.display === 'none' ? 'block' : 'none';
-    }
-
-    async function claimDaily() {
-        let today = new Date().toDateString();
-        if(localStorage.getItem('lastClaim') === today) return showNotif("Already claimed today!");
-        await db.ref('users/' + userId).update({ balance: userBalance + 20 });
-        localStorage.setItem('lastClaim', today);
-        showNotif("₹20 Reward Added!");
-    }
+    function logout() { localStorage.clear(); location.reload(); }
 </script>
 </body>
 </html>
-
