@@ -68,6 +68,7 @@
     <div id="auth-form">
         <input type="number" id="authPhone" placeholder="Mobile Number">
         <input type="password" id="authPass" placeholder="Password">
+        <input type="text" id="referCode" placeholder="Refer Code (Optional)" readonly style="background:#0a0e23; color:var(--cyan); border:1px dashed #1f2855;">
         <button class="btn-main" id="authBtn" onclick="handleAuth()">Create Account</button>
     </div>
 </div>
@@ -102,6 +103,7 @@
                 <span id="refLink">jalwa-v7.vercel.app?ref=...</span>
                 <i class="fas fa-copy"></i>
             </div>
+            <button class="btn-main" style="height:35px; padding:5px; font-size:12px; margin-top:10px;" onclick="claimReferralBonus()">CLAIM REF REWARDS (₹200/User)</button>
         </div>
         <div class="card">
             <h4 style="margin-bottom:15px;">Daily Rewards</h4>
@@ -216,16 +218,25 @@
     let totalWitAmt = 0;
     let currentAuthMode = 'reg';
 
+    // Auto-fill Referral from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const refFromUrl = urlParams.get('ref');
+    if(refFromUrl && !userPhone) {
+        document.getElementById('referCode').value = refFromUrl;
+        toggleAuth('reg');
+    }
+
     function showToast(msg) { const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 2500); }
 
     async function handleAuth() {
         const ph = document.getElementById('authPhone').value;
         const ps = document.getElementById('authPass').value;
+        const rb = document.getElementById('referCode').value;
         if(ph.length < 10) return showToast("Invalid Phone!");
         const snap = await db.ref('users/' + ph).once('value');
         if(currentAuthMode === 'reg') {
             if(snap.exists()) return showToast("Already exists!");
-            await db.ref('users/' + ph).set({ password: ps, balance: 0, totalDeposit: 0, totalWithdraw: 0, missions: [], lastCheckin: "" });
+            await db.ref('users/' + ph).set({ password: ps, balance: 0, totalDeposit: 0, totalWithdraw: 0, missions: [], lastCheckin: "", referredBy: rb || "none" });
         } else {
             if(!snap.exists() || snap.val().password !== ps) return showToast("Wrong ID/Pass!");
         }
@@ -238,7 +249,7 @@
         document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
         document.getElementById('profileId').innerText = "ID: " + userPhone;
-        document.getElementById('refLink').innerText = "jalwa-v7.vercel.app?ref=" + userPhone;
+        document.getElementById('refLink').innerText = window.location.origin + "?ref=" + userPhone;
 
         db.ref('users/' + userPhone).on('value', snap => {
             const d = snap.val();
@@ -255,6 +266,27 @@
                 updateMissions(d.missions || []);
             }
         });
+    }
+
+    async function claimReferralBonus() {
+        const snap = await db.ref('users').orderByChild('referredBy').equalTo(userPhone).once('value');
+        let count = 0;
+        if(snap.exists()) {
+            snap.forEach(c => {
+                const d = c.val();
+                if(d.totalDeposit >= 500 && !d.refBonusClaimed) {
+                    count++;
+                    db.ref('users/' + c.key).update({ refBonusClaimed: true });
+                }
+            });
+        }
+        if(count > 0) {
+            let totalGift = count * 200;
+            await db.ref('users/' + userPhone).update({ balance: userBalance + totalGift });
+            showToast(`₹${totalGift} Referral Bonus Added!`);
+        } else {
+            showToast("No active referral found (Min. 500 Recharge)");
+        }
     }
 
     function updateMissions(mList) {
@@ -318,29 +350,4 @@
             snap.forEach(child => {
                 const d = child.val();
                 if(d.uid === userPhone) {
-                    h += `<div class="history-item"><span>₹${d.amount} <br><small>${new Date(d.time).toLocaleDateString()}</small></span><b style="color:var(--gold)">${d.status.toUpperCase()}</b></div>`;
-                }
-            });
-            document.getElementById('historyList').innerHTML = h || "No Records Found";
-        });
-    }
-
-    function showPage(pId, el) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(pId).classList.add('active');
-        if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); el.classList.add('active'); }
-    }
-    
-    function toggleAuth(mode) {
-        currentAuthMode = mode;
-        document.getElementById('tab-reg').className = mode === 'reg' ? 'active' : '';
-        document.getElementById('tab-login').className = mode === 'login' ? 'active' : '';
-        document.getElementById('authBtn').innerText = mode === 'reg' ? 'Create Account' : 'Login Now';
-    }
-    function copyUPI() { navigator.clipboard.writeText("d28122004@ptyes"); showToast("UPI Copied!"); }
-    function copyRef() { navigator.clipboard.writeText(document.getElementById('refLink').innerText); showToast("Link Copied!"); }
-    function logout() { localStorage.clear(); location.reload(); }
-</script>
-</body>
-    </html>
-    
+                    h += `<div class="history-item"><span>₹${d.amount} <br><small>${new Date(d.time).toLocaleDateString()}</small></span><b style="color:var(--gold)">${d.status.toUpperCase()}
