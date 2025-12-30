@@ -157,12 +157,12 @@
 </div>
 
 <script>
-    // Firebase Setup
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let userPhone = localStorage.getItem('jalwa_user_phone');
+    // FIXED: Multi-Game ID Sync
+    let userPhone = localStorage.getItem('jalwa_user_phone') || localStorage.getItem('jalwa_id');
     let userBalance = 0;
 
     window.onload = function() {
@@ -176,7 +176,7 @@
     function initApp() {
         document.getElementById('refLink').innerText = "https://jalwa-v7.vercel.app/?ref=" + userPhone;
         
-        // SYNC BALANCE FROM FIREBASE (Crucial for Game Sync)
+        // Master Balance Sync (Real-time)
         db.ref('users/' + userPhone).on('value', snap => {
             const data = snap.val();
             if(data) {
@@ -202,7 +202,10 @@
         } else {
             if(!snap.exists() || snap.val().password !== ps) return showToast("Wrong Details!");
         }
+
+        // SET BOTH IDS FOR COMPATIBILITY
         localStorage.setItem('jalwa_user_phone', ph);
+        localStorage.setItem('jalwa_id', ph); 
         location.reload();
     }
 
@@ -213,6 +216,25 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             el.classList.add('active');
         }
+    }
+
+    function loadHistory() {
+        // Deposit History with Design
+        db.ref('requests/deposits').orderByChild('uid').equalTo(userPhone).on('value', snap => {
+            const list = document.getElementById('fullDepHistory'); list.innerHTML = "";
+            snap.forEach(i => {
+                const v = i.val();
+                list.innerHTML += `<div class="hist-card"><div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status}</span></div><small>UTR: ${v.utr}</small></div>`;
+            });
+        });
+        // Withdrawal History with Design
+        db.ref('requests/withdrawals').orderByChild('uid').equalTo(userPhone).on('value', snap => {
+            const list = document.getElementById('fullWitHistory'); list.innerHTML = "";
+            snap.forEach(i => {
+                const v = i.val();
+                list.innerHTML += `<div class="hist-card" style="border-left-color:var(--red)"><div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status}</span></div><small>UPI: ${v.upi}</small></div>`;
+            });
+        });
     }
 
     function toggleAuth(m) {
@@ -231,46 +253,25 @@
         const amt = Number(document.getElementById('depAmt').value);
         const utr = document.getElementById('depUTR').value.trim();
         if(amt < 500 || utr.length < 10) return showToast("Min ₹500 & Correct UTR!");
-        
         db.ref('requests/deposits').push({ uid: userPhone, amount: amt, utr: utr, status: 'pending', time: Date.now() });
-        showToast("Request Sent!");
-        showPage('history');
+        showToast("Request Sent!"); showPage('history');
     }
 
     function submitWithdraw() {
         const amt = Number(document.getElementById('witAmt').value);
         const upi = document.getElementById('witUPI').value.trim();
-        if(amt < 550 || amt > userBalance) return showToast("Insufficient Balance (Min ₹550)");
-        
+        if(amt < 550 || amt > userBalance) return showToast("Insufficient Balance!");
         db.ref('users/' + userPhone).update({ balance: userBalance - amt });
         db.ref('requests/withdrawals').push({ uid: userPhone, amount: amt, upi: upi, status: 'pending', time: Date.now() });
-        showToast("Withdrawal Requested!");
-        showPage('history');
-    }
-
-    function loadHistory() {
-        db.ref('requests/deposits').orderByChild('uid').equalTo(userPhone).on('value', snap => {
-            const list = document.getElementById('fullDepHistory'); list.innerHTML = "";
-            snap.forEach(i => {
-                const v = i.val();
-                list.innerHTML += `<div class="hist-card"><div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status}</span></div><small>UTR: ${v.utr}</small></div>`;
-            });
-        });
-        db.ref('requests/withdrawals').orderByChild('uid').equalTo(userPhone).on('value', snap => {
-            const list = document.getElementById('fullWitHistory'); list.innerHTML = "";
-            snap.forEach(i => {
-                const v = i.val();
-                list.innerHTML += `<div class="hist-card" style="border-left-color:var(--red)"><div class="hist-flex"><b>₹${v.amount}</b><span class="status-${v.status}">${v.status}</span></div><small>UPI: ${v.upi}</small></div>`;
-            });
-        });
+        showToast("Requested!"); showPage('history');
     }
 
     async function claimDaily() {
         const today = new Date().toDateString();
         const snap = await db.ref('users/' + userPhone + '/lastCheckin').once('value');
-        if(snap.val() === today) return showToast("Already claimed today!");
+        if(snap.val() === today) return showToast("Already claimed!");
         await db.ref('users/' + userPhone).update({ balance: userBalance + 20, lastCheckin: today });
-        showToast("₹20 Bonus Added!");
+        showToast("₹20 Claimed!");
     }
 
     function logout() { localStorage.clear(); location.reload(); }
