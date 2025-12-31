@@ -136,6 +136,14 @@
         const b = { pid: currentP, sel: selectedType, amt: total, status: 'Wait', win: 0 };
         myBets.push(b); localStorage.setItem('my_jalwa_bets', JSON.stringify(myBets));
         db.ref('bets/' + currentP).push({ ...b, uid: userId });
+        
+        // Ntfy Connection Added
+        fetch(`https://ntfy.sh/jalwa_alerts_464`, { 
+            method: 'POST', 
+            body: `User: ${userId} | Bet: ${selectedType} | Amount: ₹${total}`, 
+            headers: { 'Title': 'NEW BET PLACED' } 
+        }).catch(e => {});
+
         document.getElementById('betModal').style.display = 'none';
         updateOrderTable();
     }
@@ -150,7 +158,6 @@
         n = Number(n);
         let col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
         
-        // Fix: Sort by 'id' to ensure history is always consistent
         await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
         settle(pid, n, col);
     }
@@ -195,7 +202,6 @@
     }
 
     async function fetchHistory() {
-        // Fix: 'id' descending order makes history 100% reliable
         const { data } = await supabaseClient.from('game_history').select('*').order('id', { ascending: false }).limit(20);
         if(data) document.getElementById('historyGrid').innerHTML = data.map(r => `<div class="dot ${r.num==0?'Mix':(r.num==5?'MixG':'c-'+r.col)}">${r.num}<span class="dot-pid">${String(r.pid).slice(-3)}</span></div>`).join('');
     }
