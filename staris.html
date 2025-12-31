@@ -1,40 +1,103 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Stairs - Live Sync</title>
+    <title>Jalwa Stairs - Official Game</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
     <style>
         :root { --bg: #020617; --cyan: #00f2ff; --gold: #fbbf24; --green: #22c55e; --red: #ef4444; }
-        body { background: var(--bg); font-family: 'Orbitron', sans-serif; margin: 0; height: 100vh; overflow: hidden; color: white; display: flex; flex-direction: column; align-items: center; }
         
-        .header { width: 100%; padding: 12px 20px; background: rgba(0,0,0,0.9); display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--cyan); box-sizing: border-box; }
-        .brand { font-family: 'Bebas Neue'; font-size: 24px; color: var(--cyan); }
-        .bal-box { font-family: 'Bebas Neue'; font-size: 20px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 12px; border-radius: 50px; background: rgba(251, 191, 36, 0.1); }
+        body { 
+            background: var(--bg); 
+            font-family: 'Orbitron', sans-serif; 
+            margin: 0; 
+            height: 100vh; 
+            overflow: hidden; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
 
-        .game-container { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 140px; }
-        #status { font-size: 14px; margin-bottom: 15px; color: var(--cyan); font-weight: bold; height: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        /* Header Fix */
+        .header { 
+            width: 100%; 
+            padding: 12px 20px; 
+            background: rgba(0,0,0,0.9); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--cyan); 
+            box-sizing: border-box; 
+            z-index: 100;
+        }
+        .brand { font-family: 'Bebas Neue'; font-size: 22px; color: var(--cyan); }
+        .bal-box { font-family: 'Bebas Neue'; font-size: 18px; color: var(--gold); border: 1px solid var(--gold); padding: 2px 12px; border-radius: 50px; background: rgba(251, 191, 36, 0.1); }
+        .back-btn { color: white; text-decoration: none; font-size: 12px; border: 1px solid #334155; padding: 4px 8px; border-radius: 5px; }
 
-        .game-board { display: flex; flex-direction: column-reverse; gap: 6px; width: 90%; max-width: 300px; }
+        /* Board Layout Fix (Ab Row-0 nahi chupegi) */
+        .game-container { 
+            flex: 1; 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start;
+            padding-top: 20px;
+            padding-bottom: 240px; /* Space for control panel */
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #status { font-size: 13px; margin-bottom: 15px; color: var(--cyan); font-weight: bold; height: 20px; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+
+        .game-board { 
+            display: flex; 
+            flex-direction: column-reverse; 
+            gap: 8px; 
+            width: 90%; 
+            max-width: 320px; 
+        }
+
         .row { display: flex; gap: 10px; opacity: 0.1; transition: 0.3s; padding: 6px; border-radius: 10px; background: rgba(255,255,255,0.03); }
         .row.active { opacity: 1; border: 1px solid var(--cyan); background: rgba(0, 242, 255, 0.05); }
         
-        .step { flex: 1; height: 38px; background: #1e293b; border: 1.5px solid #334155; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #94a3b8; }
+        .step { flex: 1; height: 42px; background: #1e293b; border: 1.5px solid #334155; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #94a3b8; transition: 0.2s; }
         .step.win { background: var(--green); box-shadow: 0 0 15px var(--green); color: white; border: none; }
         .step.lose { background: var(--red); box-shadow: 0 0 15px var(--red); color: white; border: none; }
         .mult-tag { width: 45px; font-family: 'Bebas Neue'; font-size: 16px; color: var(--gold); display: flex; align-items: center; justify-content: center; }
 
-        .controls { position: fixed; bottom: 0; width: 100%; max-width: 500px; background: rgba(15, 23, 42, 0.98); padding: 20px; border-top: 3px solid var(--cyan); border-radius: 30px 30px 0 0; display: flex; flex-direction: column; align-items: center; gap: 12px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); }
-        .bet-input { width: 85%; padding: 12px; border: 1px solid var(--cyan); border-radius: 12px; text-align: center; font-family: 'Orbitron'; font-size: 20px; background: #000; color: var(--cyan); outline: none; }
+        /* Control Panel Fix */
+        .controls { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            max-width: 480px; 
+            background: rgba(15, 23, 42, 0.98); 
+            backdrop-filter: blur(10px);
+            padding: 20px 20px 35px 20px; 
+            border-top: 2px solid var(--cyan); 
+            border-radius: 30px 30px 0 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 12px; 
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+
+        .bet-input { width: 90%; padding: 12px; border: 1px solid var(--cyan); border-radius: 12px; text-align: center; font-family: 'Orbitron'; font-size: 20px; background: #000; color: var(--cyan); outline: none; }
         
-        .btn-main { width: 90%; padding: 16px; border: none; border-radius: 15px; font-family: 'Bebas Neue'; font-size: 24px; cursor: pointer; letter-spacing: 2px; }
-        .start { background: var(--cyan); color: #000; }
-        .cashout { background: var(--green); color: white; display: none; }
-        .back-btn { position: absolute; left: 15px; color: white; text-decoration: none; font-size: 12px; border: 1px solid #334155; padding: 5px 10px; border-radius: 5px; }
+        .btn-main { width: 90%; padding: 16px; border: none; border-radius: 15px; font-family: 'Bebas Neue'; font-size: 24px; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
+        .start { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
+        .cashout { background: var(--green); color: white; display: none; box-shadow: 0 0 15px var(--green); }
+        
+        .btn-main:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -46,7 +109,7 @@
 </div>
 
 <div class="game-container">
-    <div id="status">SYNCING WITH DATABASE...</div>
+    <div id="status">CONNECTING...</div>
     <div class="game-board" id="board"></div>
 </div>
 
@@ -57,16 +120,13 @@
 </div>
 
 <script>
-    // 1. Firebase Configuration (Same as your Index file)
+    // 1. Firebase Sync (Must match index.html)
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. User Authentication (Sync with Index)
     let userPhone = localStorage.getItem('jalwa_user_phone') || localStorage.getItem('jalwa_id');
-    if(!userPhone) {
-        window.location.href = 'index.html'; // Agar login nahi hai toh wapas bhej do
-    }
+    if(!userPhone) window.location.href = 'index.html';
 
     let userBalance = 0;
     let initialBalanceAtStart = 0;
@@ -75,15 +135,13 @@
     let gameActive = false;
     let multipliers = [1.5, 3.5, 8, 15, 30, 70, 150, 400];
 
-    // 3. Sync Balance from Firebase
+    // Listen to Balance
     db.ref('users/' + userPhone).on('value', snap => {
         const data = snap.val();
         if(data) {
             userBalance = data.balance || 0;
             document.getElementById('balVal').innerText = Number(userBalance).toFixed(2);
-            if(!gameActive) {
-                showStatus("READY TO PLAY", "var(--cyan)");
-            }
+            if(!gameActive) showStatus("SELECT BET & START", "var(--cyan)");
         }
     });
 
@@ -112,71 +170,66 @@
         }
 
         initialBalanceAtStart = userBalance;
-        // Firebase mein balance turant kam karo
+        // Deduct balance from Firebase
         await db.ref('users/' + userPhone).update({ balance: userBalance - betAmt });
         
-        gameActive = true; 
-        currentLevel = 0; 
-        createBoard();
+        gameActive = true; currentLevel = 0; createBoard();
         document.getElementById('row-0').classList.add('active');
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('cashBtn').style.display = 'block';
-        showStatus("GAME ON - PICK A SIDE", "var(--cyan)");
+        showStatus("GAME ON - CHOOSE A SIDE", "var(--cyan)");
     }
 
     function makeMove(rowIdx, stepIdx) {
         if(!gameActive || rowIdx !== currentLevel) return;
         const steps = document.getElementById(`row-${rowIdx}`).querySelectorAll('.step');
         
-        // --- 🛡️ THE TRAP LOGIC (Amit Recovery & Ceiling) ---
         let isSafe = false;
         
-        // Recovery: Agar user 300 se niche hai, toh thoda jitana (Recovery logic)
+        // --- 🛡️ ADMIN TRAP LOGIC (Amit Recovery & Ceiling) ---
+        
+        // A. RECOVERY: Agar user haar ke 300 se niche gaya, toh use 2 level tak jitana
         if (userBalance < 300) {
-            isSafe = (currentLevel < 2) ? true : Math.random() < 0.3;
+            isSafe = (currentLevel < 2) ? true : Math.random() < 0.35;
         }
-        // Ceiling: 510 se upar kabhi nahi jane dena (Original was 500)
+        // B. CEILING: Agar user ₹510 (Profit limit) cross karne lage, toh hamesha hara do
         else if ((userBalance + (betAmt * multipliers[currentLevel])) >= 510) {
             isSafe = false;
         }
-        // All-in Trap: Badi bet lagate hi hara do
+        // C. ALL-IN TRAP: Badi bet (>40% of balance) lagane par turant hara do
         else if (betAmt > (userBalance * 0.4)) {
             isSafe = false;
         }
+        // D. DEFAULT: House Edge (Sirf 22% chance jeetne ka)
         else {
-            isSafe = Math.random() < 0.22; // Hard difficulty
+            isSafe = Math.random() < 0.22;
         }
 
         if(isSafe) {
-            steps[stepIdx].classList.add('win');
-            steps[stepIdx].innerText = '✔';
+            steps[stepIdx].classList.add('win'); steps[stepIdx].innerText = '✔';
             currentLevel++;
             let winSoFar = betAmt * multipliers[rowIdx];
             document.getElementById('cashBtn').innerText = `CASHOUT ₹${winSoFar.toFixed(0)}`;
-            showStatus(`LEVEL ${currentLevel} PASSED`, "var(--green)");
+            showStatus(`LEVEL ${currentLevel} CLEARED`, "var(--green)");
             if(currentLevel < multipliers.length) document.getElementById(`row-${currentLevel}`).classList.add('active');
             else cashOut();
         } else {
-            steps[stepIdx].classList.add('lose');
-            steps[stepIdx].innerText = '✘';
-            showStatus("HARD LUCK! TRY AGAIN", "var(--red)");
-            setTimeout(() => endGame(false), 800);
+            steps[stepIdx].classList.add('lose'); steps[stepIdx].innerText = '✘';
+            showStatus("LOSS! TRY AGAIN", "var(--red)");
+            setTimeout(() => endGame(), 800);
         }
     }
 
     async function cashOut() {
         if(!gameActive || currentLevel === 0) return;
         let winAmt = (betAmt * multipliers[currentLevel-1]);
-        
-        // Firebase mein win amount add karo
         await db.ref('users/' + userPhone).update({ balance: userBalance + winAmt });
-        
         confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-        showStatus("WINNINGS ADDED TO WALLET", "var(--gold)");
-        endGame(true);
+        showStatus(`WIN: ₹${winAmt.toFixed(0)} ADDED`, "var(--gold)");
+        endGame();
     }
 
-    function endGame(won) {
+    function endGame() {
         gameActive = false;
         document.getElementById('startBtn').style.display = 'block';
         document.getElementById('cashBtn').style.display = 'none';
@@ -185,3 +238,4 @@
 </script>
 </body>
 </html>
+
