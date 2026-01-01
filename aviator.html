@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator: Smart Control Pro</title>
+    <title>Aviator: Pro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -13,61 +13,58 @@
         .logo { color: #d11345; font-size: 18px; font-weight: 900; font-style: italic; }
         .wallet { color: #28a745; font-weight: bold; font-size: 14px; }
         
-        /* History Bar */
-        .history-top { display: flex; gap: 6px; padding: 8px 15px; background: #141516; overflow-x: auto; min-height: 35px; scrollbar-width: none; }
+        /* Period & History */
+        .top-info { background: #141516; padding: 5px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
+        .period-box { color: #aaa; font-size: 11px; font-weight: bold; }
+        .history-top { display: flex; gap: 6px; padding: 5px 0; overflow-x: auto; scrollbar-width: none; }
         .hist-chip { padding: 2px 10px; border-radius: 10px; font-size: 10px; background: #2c2d30; color: #9b59b6; border: 1px solid #444; flex-shrink: 0; }
         
-        /* Canvas Fix */
         .game-canvas { position: relative; width: 100%; height: 180px; background: #000; overflow: hidden; border-bottom: 2px solid #1b1c1d; }
-        #mult-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 45px; font-weight: 900; z-index: 10; transition: color 0.3s; }
+        #mult-text { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 45px; font-weight: 900; z-index: 10; }
         #dot-object { position: absolute; bottom: 20px; left: 20px; width: 12px; height: 12px; background: #ff0040; border-radius: 50%; z-index: 25; box-shadow: 0 0 15px #ff0040; }
         #trail-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; }
-        
         .loading-line { position: absolute; bottom: 0; left: 0; height: 3px; background: #d11345; width: 0%; z-index: 30; }
-        
-        /* UI Scaling for smaller screens */
-        .content-area { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; background: #000; }
-        .betting-area { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
-        .bet-card { background: #1b1c1d; border-radius: 12px; padding: 10px; border: 1px solid #333; }
-        .controls { display: flex; gap: 8px; height: 80px; }
-        .input-part { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+        .content-area { flex-grow: 1; overflow-y: auto; background: #000; padding: 8px; }
+        .bet-card { background: #1b1c1d; border-radius: 12px; padding: 10px; border: 1px solid #333; margin-bottom: 8px; }
+        .controls { display: flex; gap: 8px; height: 85px; }
+        .input-part { flex: 1.5; display: flex; flex-direction: column; gap: 6px; }
         .stepper { display: flex; align-items: center; background: #000; border-radius: 15px; padding: 4px 10px; border: 1px solid #444; justify-content: space-between; }
-        .stepper button { background: none; border: none; color: #fff; font-size: 18px; font-weight: 900; width: 25px; }
-        .stepper input { background: none; border: none; color: #fff; width: 50px; text-align: center; font-size: 14px; font-weight: bold; outline: none; }
-        .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .chips div { background: #2c2d30; padding: 6px; border-radius: 6px; font-size: 10px; text-align: center; font-weight: bold; border: 1px solid #444; }
+        .stepper button { background: none; border: none; color: #fff; font-size: 20px; width: 25px; cursor: pointer; }
+        .stepper input { background: none; border: none; color: #fff; width: 60px; text-align: center; font-size: 14px; font-weight: bold; outline: none; }
+        .chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .chips div { background: #2c2d30; padding: 6px 0; border-radius: 6px; font-size: 10px; text-align: center; font-weight: bold; border: 1px solid #444; cursor: pointer; }
         
-        .main-btn { flex: 1.2; background: #28a745; border-radius: 12px; border: none; color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .main-btn { flex: 1.2; background: #28a745; border-radius: 12px; border: none; color: #fff; font-weight: 900; font-size: 14px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s; }
         .cashout { background: #ff9800 !important; }
         .waiting-btn { background: #555 !important; }
 
-        .bottom-nav { background: #1b1c1d; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; }
-        .nav-item { color: #888; font-weight: bold; font-size: 12px; }
-        .nav-active { color: #fff; border-bottom: 2px solid #d11345; }
+        #game-popup { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 100; padding: 10px 30px; border-radius: 25px; font-weight: 900; transition: 0.3s; color: #fff; font-size: 20px; }
+        .popup-win { background: rgba(40, 167, 69, 0.9); transform: translate(-50%, -50%) scale(1) !important; }
+        .popup-loss { background: rgba(209, 19, 69, 0.9); transform: translate(-50%, -50%) scale(1) !important; }
 
-        #result-popup { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0); z-index: 100; padding: 8px 20px; border-radius: 20px; font-weight: 900; transition: 0.3s; background: rgba(40, 167, 69, 0.95); }
-        #result-popup.show { transform: translate(-50%, -50%) scale(1); }
+        .my-history { background: #1b1c1d; border-radius: 12px; padding: 10px; border: 1px solid #333; margin-top: 5px; }
+        .hist-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; margin-top: 5px; }
+        .hist-table th { color: #555; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .hist-table td { padding: 8px 0; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="logo" onclick="window.location.href='index.html'">AVIATOR</div>
+    <div class="logo">AVIATOR</div>
     <div id="walletDisplay" class="wallet">0.00 Rs</div>
 </div>
 
-<div class="history-top" id="histLine"></div>
+<div class="top-info">
+    <div class="period-box">#<span id="periodId">000000</span></div>
+    <div class="history-top" id="histLine"></div>
+</div>
 
 <div class="game-canvas">
-    <div id="result-popup">WIN!</div>
+    <div id="game-popup">WIN!</div>
     <svg id="trail-svg">
-        <defs>
-            <linearGradient id="redGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:rgba(209, 19, 69, 0.8);" />
-                <stop offset="100%" style="stop-color:transparent;" />
-            </linearGradient>
-        </defs>
-        <path id="trail-path-fill" fill="url(#redGrad)" d="" />
+        <path id="trail-path-fill" fill="rgba(209, 19, 69, 0.3)" d="" />
         <path id="trail-path-line" fill="none" stroke="#d11345" stroke-width="3" d="" />
     </svg>
     <div id="loading-line" class="loading-line"></div>
@@ -76,43 +73,59 @@
 </div>
 
 <div class="content-area">
-    <div class="betting-area" id="betArea">
+    <div class="betting-area">
         <div class="bet-card">
             <div class="controls">
                 <div class="input-part">
-                    <div class="stepper"><button onclick="step('v1',-1)">-</button><input id="v1" value="10.00" readonly><button onclick="step('v1',1)">+</button></div>
-                    <div class="chips"><div onclick="setV('v1',10)">10</div><div onclick="setV('v1',50)">50</div></div>
+                    <div class="stepper">
+                        <button onclick="window.step('v1',-1)">-</button>
+                        <input id="v1" value="10.00" readonly>
+                        <button onclick="window.step('v1',1)">+</button>
+                    </div>
+                    <div class="chips"><div onclick="window.setV('v1',10)">10</div><div onclick="window.setV('v1',20)">20</div><div onclick="window.setV('v1',50)">50</div><div onclick="window.setV('v1',100)">100</div></div>
                 </div>
-                <button id="btn1" class="main-btn" onclick="handleBet(1)"><span id="txt1">BET</span><br><span id="s1" style="font-size: 10px;">10.00 Rs</span></button>
+                <button id="btn1" class="main-btn" onclick="window.handleBet(1)"><span id="txt1">BET</span><br><span id="s1" style="font-size: 10px;">10.00 Rs</span></button>
             </div>
         </div>
         <div class="bet-card">
             <div class="controls">
                 <div class="input-part">
-                    <div class="stepper"><button onclick="step('v2',-1)">-</button><input id="v2" value="10.00" readonly><button onclick="step('v2',1)">+</button></div>
-                    <div class="chips"><div onclick="setV('v2',10)">10</div><div onclick="setV('v2',50)">50</div></div>
+                    <div class="stepper">
+                        <button onclick="window.step('v2',-1)">-</button>
+                        <input id="v2" value="10.00" readonly>
+                        <button onclick="window.step('v2',1)">+</button>
+                    </div>
+                    <div class="chips"><div onclick="window.setV('v2',10)">10</div><div onclick="window.setV('v2',20)">20</div><div onclick="window.setV('v2',50)">50</div><div onclick="window.setV('v2',100)">100</div></div>
                 </div>
-                <button id="btn2" class="main-btn" onclick="handleBet(2)"><span id="txt2">BET</span><br><span id="s2" style="font-size: 10px;">10.00 Rs</span></button>
+                <button id="btn2" class="main-btn" onclick="window.handleBet(2)"><span id="txt2">BET</span><br><span id="s2" style="font-size: 10px;">10.00 Rs</span></button>
             </div>
         </div>
     </div>
-</div>
-
-<div class="bottom-nav">
-    <div class="nav-item nav-active">GAME</div>
-    <div class="nav-item">MY BETS</div>
+    <div class="my-history">
+        <p style="font-size: 12px; color: #888; font-weight: bold;">MY BETS</p>
+        <table class="hist-table"><tbody id="myHistBody"></tbody></table>
+    </div>
 </div>
 
 <script>
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    const userId = localStorage.getItem('jalwa_user_phone') || localStorage.getItem('jalwa_id');
+    const userId = localStorage.getItem('jalwa_user_phone') || "Guest";
 
     let wallet = 0, multiplier = 1.0, gameStatus = "waiting", crashAt = 2.0;
-    let bets = { 1: { active: false, amt: 0 }, 2: { active: false, amt: 0 } };
-    let topStrip = JSON.parse(localStorage.getItem('avi_strip')) || ['1.2x', '4.5x', '1.0x', '2.2x'];
+    let bets = { 1: { active: false, amt: 0, waiting: false }, 2: { active: false, amt: 0, waiting: false } };
+    let topStrip = JSON.parse(localStorage.getItem('avi_strip')) || ['1.2x', '2.5x'];
+
+    window.setV = (id, v) => {
+        document.getElementById(id).value = parseFloat(v).toFixed(2);
+        document.getElementById('s' + id.slice(-1)).innerText = parseFloat(v).toFixed(2) + " Rs";
+    };
+
+    window.step = (id, s) => {
+        let curr = parseFloat(document.getElementById(id).value);
+        window.setV(id, s === 1 ? curr * 2 : Math.max(1, curr / 2));
+    };
 
     db.ref('users/' + userId).on('value', snap => {
         wallet = snap.val()?.balance || 0;
@@ -121,6 +134,9 @@
 
     function initGame() {
         renderTopStrip();
+        // Period ID Update
+        document.getElementById('periodId').innerText = Math.floor(Math.random() * 900000 + 100000);
+        
         gameStatus = "waiting"; multiplier = 1.0;
         document.getElementById('mult-text').innerText = "WAITING...";
         document.getElementById('mult-text').style.color = "#888";
@@ -133,7 +149,7 @@
         let t = setInterval(() => {
             let elap = Date.now() - start;
             document.getElementById('loading-line').style.width = (elap / dur * 100) + "%";
-            if(elap >= dur) { clearInterval(t); document.getElementById('loading-line').style.width = "0%"; startGame(); }
+            if(elap >= dur) { clearInterval(t); startGame(); }
         }, 30);
     }
 
@@ -141,26 +157,13 @@
         gameStatus = "running";
         document.getElementById('mult-text').style.color = "#fff";
         
-        let totalActiveBet = (bets[1].amt || 0) + (bets[2].amt || 0);
-
-        // --- 🛡️ SMART AMIT TRAP LOGIC ---
-        
-        // 1. HARD KILL: Agar Balance ₹350+ ho gaya ya Bet ₹50+ hai -> 100% Loss
-        if (wallet >= 350 || totalActiveBet >= 50) {
-            crashAt = (Math.random() * 0.4 + 1.05).toFixed(2); // 1.05x to 1.45x
-        } 
-        // 2. LALACH MODE: Choti bet par 90% chance jeetne ka
-        else if (totalActiveBet > 0 && totalActiveBet <= 30) {
-            crashAt = (Math.random() * 3.0 + 3.0).toFixed(2); // 3.0x to 6.0x
-        }
-        // 3. DEFAULT: Normal House Edge
-        else {
-            crashAt = (Math.random() * 1.5 + 1.1).toFixed(2);
-        }
+        const adminSnap = await db.ref('gameSettings/aviator').once('value');
+        const adminData = adminSnap.val();
+        crashAt = (adminData && adminData.forceActive) ? parseFloat(adminData.manualCrash) : (Math.random() * 2 + 1.1).toFixed(2);
 
         [1,2].forEach(id => {
-            if(bets[id].amt > 0) {
-                bets[id].active = true;
+            if(bets[id].waiting) {
+                bets[id].active = true; bets[id].waiting = false;
                 document.getElementById('btn'+id).className = "main-btn cashout";
                 document.getElementById('txt'+id).innerText = "CASH OUT";
             }
@@ -173,72 +176,73 @@
             multiplier += (multiplier * 0.012); 
             document.getElementById('mult-text').innerText = multiplier.toFixed(2) + "x";
 
+            // Live Bet Value Growth
             [1,2].forEach(id => {
                 if(bets[id].active) {
                     document.getElementById('s'+id).innerText = (bets[id].amt * multiplier).toFixed(2) + " Rs";
                 }
             });
 
-            // Dot & Trail Animation
-            let x = 20 + (frame * 2.5);
-            let y = 20 + (Math.pow(frame / 12, 2.2));
+            let x = 20 + (frame * 2.5), y = 20 + (Math.pow(frame / 12, 2.2));
             let dot = document.getElementById('dot-object');
-            dot.style.left = Math.min(x, 280) + "px"; 
-            dot.style.bottom = Math.min(y, 160) + "px";
-            
-            let dl = `M 20 160 Q 80 160 ${x} ${180-y}`;
-            let df = `M 20 180 Q 80 180 ${x} ${180-y} L ${x} 180 L 20 180 Z`;
-            document.getElementById('trail-path-line').setAttribute('d', dl);
-            document.getElementById('trail-path-fill').setAttribute('d', df);
+            dot.style.left = Math.min(x, 280) + "px"; dot.style.bottom = Math.min(y, 160) + "px";
+            document.getElementById('trail-path-line').setAttribute('d', `M 20 160 Q 80 160 ${x} ${180-y}`);
+            document.getElementById('trail-path-fill').setAttribute('d', `M 20 180 Q 80 180 ${x} ${180-y} L ${x} 180 Z`);
 
             if(multiplier >= crashAt) {
                 gameStatus = "flew";
                 document.getElementById('mult-text').innerText = "FLEW AWAY!";
                 document.getElementById('mult-text').style.color = "#d11345";
-                dot.style.transition = "transform 0.6s ease-in";
-                dot.style.transform = "translate(400px, -400px)";
-                [1,2].forEach(id => resetBtn(id));
+                dot.style.transition = "transform 0.6s ease-in"; dot.style.transform = "translate(400px, -400px)";
+                
+                [1,2].forEach(id => {
+                    if(bets[id].active) { showGamePopup("LOSS"); addHistory(bets[id].amt, "Loss", 0); }
+                    resetBtn(id);
+                });
                 saveStrip(multiplier.toFixed(2));
                 setTimeout(initGame, 3000);
             }
         }, 50);
     }
 
-    function handleBet(id) {
+    window.handleBet = (id) => {
         let val = parseFloat(document.getElementById('v'+id).value);
-        if(gameStatus === "waiting" && bets[id].amt === 0 && wallet >= val) {
-            wallet -= val; updateDB(); bets[id].amt = val;
+        if(gameStatus === "waiting" && !bets[id].waiting && wallet >= val) {
+            wallet -= val; db.ref('users/' + userId).update({ balance: wallet });
+            bets[id].amt = val; bets[id].waiting = true;
             document.getElementById('btn'+id).className = "main-btn waiting-btn";
             document.getElementById('txt'+id).innerText = "WAITING";
         } else if(gameStatus === "running" && bets[id].active) {
             let win = bets[id].amt * multiplier;
-            wallet += win; updateDB();
-            showPopup(`+₹${win.toFixed(2)}`);
+            wallet += win; db.ref('users/' + userId).update({ balance: wallet });
+            showGamePopup("WIN: ₹" + win.toFixed(2));
+            addHistory(bets[id].amt, multiplier.toFixed(2) + "x", win.toFixed(2));
             resetBtn(id);
         }
+    };
+
+    function showGamePopup(msg) {
+        let p = document.getElementById('game-popup');
+        p.innerText = msg;
+        p.className = msg.includes("WIN") ? "popup-win" : "popup-loss";
+        setTimeout(() => p.className = "", 2000);
     }
 
-    function updateDB() { db.ref('users/' + userId).update({ balance: wallet }); }
-    function resetBtn(id) { 
-        bets[id].active = false; bets[id].amt = 0; 
-        document.getElementById('btn'+id).className = "main-btn"; 
-        document.getElementById('txt'+id).innerText = "BET"; 
-        document.getElementById('s'+id).innerText = document.getElementById('v'+id).value + " Rs"; 
+    function resetBtn(id) {
+        bets[id].active = false; bets[id].waiting = false; bets[id].amt = 0;
+        document.getElementById('btn'+id).className = "main-btn";
+        document.getElementById('txt'+id).innerText = "BET";
+        document.getElementById('s'+id).innerText = document.getElementById('v'+id).value + " Rs";
     }
-    function saveStrip(m) { topStrip.unshift(m + 'x'); topStrip = topStrip.slice(0,15); renderTopStrip(); }
+
+    function addHistory(bet, mult, win) {
+        let row = `<tr><td>${bet}</td><td>${mult}</td><td style="color:${win>0?'#28a745':'#d11345'}">${win>0?'+'+win:'0.00'}</td></tr>`;
+        document.getElementById('myHistBody').insertAdjacentHTML('afterbegin', row);
+    }
+
     function renderTopStrip() { document.getElementById('histLine').innerHTML = topStrip.map(m => `<div class="hist-chip">${m}</div>`).join(''); }
-    function showPopup(t) { let p = document.getElementById('result-popup'); p.innerHTML = t; p.className = 'show'; setTimeout(() => p.classList.remove('show'), 2000); }
-    function step(id, s) { 
-        let el = document.getElementById(id); 
-        let nv = Math.max(10, parseFloat(el.value) + (s * 10));
-        el.value = nv.toFixed(2); setV(id, nv); 
-    }
-    function setV(id, v) { document.getElementById(id).value = v.toFixed(2); document.getElementById('s'+id.slice(-1)).innerText = v.toFixed(2) + " Rs"; }
-    
-    window.onload = function() {
-        if(!userId) window.location.href = 'index.html';
-        initGame();
-    };
+    function saveStrip(m) { topStrip.unshift(m + 'x'); topStrip = topStrip.slice(0,10); localStorage.setItem('avi_strip', JSON.stringify(topStrip)); }
+    window.onload = initGame;
 </script>
 </body>
 </html>
