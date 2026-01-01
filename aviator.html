@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro: Chaska Logic Edition</title>
+    <title>Aviator: Pure Bot Edition</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        /* CSS Same as before */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: #000; height: 100vh; overflow: hidden; color: #fff; display: flex; flex-direction: column; }
         .header { display: flex; justify-content: space-between; padding: 10px 15px; background: #1b1c1d; align-items: center; border-bottom: 1px solid #333; }
@@ -95,13 +94,12 @@
         return { period: dateStr + String(Math.floor(totalSec/20)).padStart(4,'0'), ms: (totalSec % 20) * 1000 + now.getMilliseconds() };
     }
 
-    // --- SMART CHASKA LOGIC ---
-    async function calculateSmartCrash() {
+    // --- PURE BOT LOGIC (NO ADMIN) ---
+    async function calculateBotTarget() {
         const betSnap = await db.ref('gameSettings/aviator/liveBets').once('value');
         let totalAmt = 0;
-        let highBetFound = false;
+        let highestBet = 0;
 
-        // User ki bet count check karna
         const userStats = await db.ref('users/' + userId + '/stats').once('value');
         let betCount = (userStats.val() && userStats.val().totalBets) || 0;
 
@@ -109,39 +107,37 @@
             betSnap.forEach(snap => {
                 let amt = parseFloat(snap.val().amt);
                 totalAmt += amt;
-                if (amt > 50) highBetFound = true; // Rule: 50 se upar ki bet = Instant Crash
+                if (amt > highestBet) highestBet = amt;
             });
         }
 
-        if (highBetFound || betCount >= 4) {
-            // KILL MODE: 1.01x - 1.10x (5th bet or big bet)
-            return (Math.random() * 0.09 + 1.01).toFixed(2);
-        } else if (totalAmt > 0 && totalAmt <= 50 && betCount < 4) {
-            // HONEY TRAP: 2x - 3x (First 3 bets)
-            return (Math.random() * 1.5 + 2.0).toFixed(2);
-        } else if (totalAmt === 0) {
-            // LALACH: No bets = 10x+
-            return (Math.random() * 5 + 10).toFixed(2);
+        console.log("Stats -> Total:", totalAmt, "Highest:", highestBet, "Count:", betCount);
+
+        // 1. KILL RULE: Agar total bet ₹50 se upar hai YA teri bet ₹150+ hai YA teri 4th bet se jyada hai
+        if (totalAmt > 50 || highestBet >= 150 || betCount >= 4) {
+            return (Math.random() * 0.08 + 1.01).toFixed(2); // 1.01 - 1.09 pe khatam
+        } 
+        // 2. CHUTPUT RULE: Shuruat ki choti bets (₹10-20)
+        else if (totalAmt > 0 && totalAmt <= 50 && betCount < 4) {
+            return (Math.random() * 1.0 + 2.0).toFixed(2); // 2.0 - 3.0 tak jitao
+        } 
+        // 3. LALACH RULE: Jab koi khel hi nahi raha
+        else {
+            return (Math.random() * 10 + 5).toFixed(2); // 5.0 - 15.0 tak udne do
         }
-        return 1.15;
     }
 
-    async function updateTarget() {
-        const adminSnap = await db.ref('gameSettings/aviator').once('value');
-        const admin = adminSnap.val();
-        
-        if (admin && admin.forceActive) {
-            targetCrash = parseFloat(admin.manualCrash);
-        } else {
-            targetCrash = await calculateSmartCrash();
-        }
+    async function updateNewRound() {
+        targetCrash = await calculateBotTarget();
+        console.log("Bot decided Crash at: " + targetCrash);
+        db.ref('gameSettings/aviator/liveBets').remove(); 
     }
 
     function loop() {
         const sync = getSync();
         if (currentPeriod !== sync.period) { 
             currentPeriod = sync.period; document.getElementById('periodId').innerText = currentPeriod;
-            updateTarget(); db.ref('gameSettings/aviator/liveBets').remove(); 
+            updateNewRound(); 
         }
 
         if (sync.ms < 5000) {
@@ -151,8 +147,10 @@
         } else if (sync.ms < 16000) {
             let time = (sync.ms - 5000) / 1000;
             multiplier = Math.pow(1.15, time * 1.5);
-            if (multiplier >= targetCrash) triggerCrash();
-            else {
+            
+            if (multiplier >= targetCrash) {
+                triggerCrash();
+            } else {
                 gameStatus = "running";
                 document.getElementById('mult-text').innerText = multiplier.toFixed(2) + "x";
                 [1,2].forEach(id => { 
@@ -195,9 +193,7 @@
     window.handleBet = (id) => {
         let val = parseFloat(document.getElementById('v'+id).value);
         if(gameStatus === "waiting" && !bets[id].waiting && wallet >= val) {
-            // Player ki bet history update karna
             db.ref('users/' + userId + '/stats/totalBets').transaction(c => (c || 0) + 1);
-            
             db.ref('users/'+userId).transaction(u => { if(u) u.balance -= val; return u; });
             db.ref('gameSettings/aviator/liveBets/' + userId + '_' + id).set({ amt: val });
             bets[id].amt = val; bets[id].waiting = true;
