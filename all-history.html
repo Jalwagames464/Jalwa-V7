@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jalwa Pro - All History</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { 
+            --bg: #0a0e17; 
+            --card-bg: #161d2b; 
+            --primary: #ffcc00; 
+            --text-gray: #a4b0be;
+            --success: #2ecc71;
+            --danger: #ff4757;
+            --blue: #3498db;
+        }
+
+        body { margin: 0; background: var(--bg); font-family: 'Poppins', sans-serif; color: white; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 90px; }
+
+        /* --- HEADER --- */
+        .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); position: sticky; top: 0; z-index: 100; }
+        .header b { font-size: 18px; letter-spacing: 1px; color: var(--primary); }
+
+        /* --- FILTER TABS --- */
+        .tabs { display: flex; background: #111827; margin: 15px; border-radius: 12px; padding: 5px; border: 1px solid rgba(255,255,255,0.05); }
+        .tab { flex: 1; text-align: center; padding: 10px; font-size: 12px; font-weight: bold; border-radius: 10px; cursor: pointer; color: var(--text-gray); transition: 0.3s; }
+        .tab.active { background: var(--primary); color: #000; box-shadow: 0 4px 10px rgba(255, 204, 0, 0.2); }
+
+        /* --- HISTORY LIST --- */
+        .history-list { padding: 0 15px; }
+        .hist-card { background: var(--card-bg); padding: 15px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; animation: fadeIn 0.4s ease; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .hist-left { display: flex; align-items: center; gap: 12px; }
+        .icon-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        
+        .bg-dep { background: rgba(46, 204, 113, 0.1); color: var(--success); }
+        .bg-wit { background: rgba(52, 152, 219, 0.1); color: var(--blue); }
+
+        .hist-info b { font-size: 16px; color: #fff; display: block; margin-bottom: 2px; }
+        .hist-info p { font-size: 10px; color: var(--text-gray); margin: 0; }
+        .type-tag { font-size: 9px; text-transform: uppercase; font-weight: 800; opacity: 0.6; }
+
+        .hist-right { text-align: right; }
+        .status-badge { font-size: 9px; font-weight: 800; text-transform: uppercase; padding: 3px 8px; border-radius: 5px; display: inline-block; margin-top: 5px; }
+        
+        .pending { background: rgba(255, 204, 0, 0.1); color: var(--primary); }
+        .success, .approved { background: rgba(46, 204, 113, 0.1); color: var(--success); }
+        .rejected { background: rgba(231, 76, 60, 0.1); color: var(--danger); }
+
+        .no-data { text-align: center; margin-top: 80px; color: var(--text-gray); }
+        .no-data i { font-size: 50px; display: block; margin-bottom: 15px; opacity: 0.2; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #161d2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+        .nav-item { text-align: center; color: var(--text-gray); font-size: 11px; flex: 1; text-decoration: none; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; display: block; }
+        .nav-item.active { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <!-- Header -->
+    <div class="header">
+        <i class="fas fa-arrow-left" onclick="history.back()"></i>
+        <b>ALL TRANSACTIONS</b>
+        <i class="fas fa-sync-alt" onclick="location.reload()"></i>
+    </div>
+
+    <!-- Filters -->
+    <div class="tabs">
+        <div class="tab active" onclick="filterHistory('all', this)">ALL</div>
+        <div class="tab" onclick="filterHistory('deposit', this)">DEPOSITS</div>
+        <div class="tab" onclick="filterHistory('withdraw', this)">WITHDRAWALS</div>
+    </div>
+
+    <!-- History List -->
+    <div class="history-list" id="fullHistoryContainer">
+        <div class="no-data">
+            <i class="fas fa-receipt"></i>
+            Loading history...
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-item"><i class="fas fa-home"></i>Home</a>
+        <a href="activity.html" class="nav-item"><i class="fas fa-gift"></i>Activity</a>
+        <a href="wallet.html" class="nav-item active"><i class="fas fa-wallet"></i>Wallet</a>
+        <a href="account.html" class="nav-item"><i class="fas fa-user-circle"></i>Account</a>
+    </div>
+</div>
+
+<script>
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userPhone = localStorage.getItem('jalwa_user_phone');
+    let allRecords = [];
+
+    window.onload = function() {
+        if (!userPhone) {
+            window.location.href = 'login.html';
+            return;
+        }
+        fetchAllData();
+    };
+
+    async function fetchAllData() {
+        const container = document.getElementById('fullHistoryContainer');
+        
+        try {
+            // 1. Fetch Deposits
+            const depSnap = await db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).once('value');
+            // 2. Fetch Withdrawals
+            const witSnap = await db.ref('requests/withdrawals').orderByChild('userId').equalTo(userPhone).once('value');
+
+            allRecords = [];
+
+            if (depSnap.exists()) {
+                depSnap.forEach(child => {
+                    allRecords.push({ ...child.val(), type: 'deposit' });
+                });
+            }
+
+            if (witSnap.exists()) {
+                witSnap.forEach(child => {
+                    allRecords.push({ ...child.val(), type: 'withdraw' });
+                });
+            }
+
+            // Timestamp ke hisab se sort karna (Naya pehle)
+            allRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            renderUI(allRecords);
+
+        } catch (e) {
+            container.innerHTML = "<p style='text-align:center;'>Connection Error!</p>";
+        }
+    }
+
+    function renderUI(dataList) {
+        const container = document.getElementById('fullHistoryContainer');
+        let html = "";
+
+        if (dataList.length === 0) {
+            container.innerHTML = `<div class="no-data"><i class="fas fa-receipt"></i>No records found.</div>`;
+            return;
+        }
+
+        dataList.forEach(item => {
+            const isDep = item.type === 'deposit';
+            const icon = isDep ? 'fa-arrow-down' : 'fa-university';
+            const iconClass = isDep ? 'bg-dep' : 'bg-wit';
+            const amountPrefix = isDep ? '+' : '-';
+            const amountColor = isDep ? 'var(--success)' : 'var(--danger)';
+
+            html += `
+                <div class="hist-card">
+                    <div class="hist-left">
+                        <div class="icon-circle ${iconClass}"><i class="fas ${icon}"></i></div>
+                        <div class="hist-info">
+                            <span class="type-tag">${item.type}</span>
+                            <b>₹${parseFloat(item.amount).toFixed(2)}</b>
+                            <p>${item.date || new Date(item.timestamp).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="hist-right">
+                        <div style="color: ${amountColor}; font-weight:bold; font-size:15px;">${amountPrefix}₹${parseFloat(item.amount).toFixed(0)}</div>
+                        <div class="status-badge ${item.status.toLowerCase()}">${item.status}</div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function filterHistory(type, el) {
+        // Tab UI change
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+
+        // Logic Filter
+        if (type === 'all') {
+            renderUI(allRecords);
+        } else {
+            const filtered = allRecords.filter(r => r.type === type);
+            renderUI(filtered);
+        }
+    }
+</script>
+
+</body>
+</html>
