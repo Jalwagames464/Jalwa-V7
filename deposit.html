@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jalwa Pro - Deposit</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -22,12 +23,12 @@
 
         /* --- HEADER --- */
         .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); }
-        .header b { font-size: 18px; letter-spacing: 1px; }
+        .header b { font-size: 18px; letter-spacing: 1px; color: var(--primary); }
 
         /* --- QR SECTION --- */
         .qr-section { margin: 20px 15px; background: white; border-radius: 20px; padding: 20px; text-align: center; color: #333; box-shadow: 0 0 20px rgba(255, 204, 0, 0.1); }
         .qr-section img { width: 80%; border-radius: 10px; margin: 10px 0; }
-        .upi-box { background: #f1f2f6; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px dashed #000; margin-top: 10px; }
+        .upi-box { background: #f1f2f6; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px dashed #000; margin-top: 10px; cursor: pointer; }
         .upi-id { font-weight: 800; font-size: 14px; color: #000; }
 
         /* --- INPUT FORM --- */
@@ -44,15 +45,15 @@
         .history-section { padding: 0 15px; margin-top: 40px; }
         .hist-title { font-size: 16px; color: var(--primary); font-weight: bold; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; }
         .hist-card { background: var(--card-bg); padding: 15px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .hist-info b { font-size: 16px; color: #fff; }
+        .hist-info b { font-size: 16px; color: #fff; display: block; }
         .hist-info p { font-size: 11px; color: var(--text-gray); margin: 3px 0; }
+        
         .status { padding: 4px 10px; border-radius: 5px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
         .pending { background: rgba(255, 204, 0, 0.15); color: var(--primary); }
-        .approved { background: rgba(46, 204, 113, 0.15); color: var(--success); }
+        .approved, .success { background: rgba(46, 204, 113, 0.15); color: var(--success); }
         .rejected { background: rgba(231, 76, 60, 0.15); color: #ff4757; }
 
-        /* --- TOAST --- */
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 10px 25px; border-radius: 10px; font-weight: 800; display: none; z-index: 1000; }
+        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 10px 25px; border-radius: 10px; font-weight: 800; display: none; z-index: 2000; }
     </style>
 </head>
 <body>
@@ -60,17 +61,14 @@
 <div id="toast">Message</div>
 
 <div class="app-container">
-    <!-- Header -->
     <div class="header">
-        <i class="fas fa-chevron-left" onclick="history.back()" style="color: var(--primary);"></i>
+        <i class="fas fa-chevron-left" onclick="location.href='index.html'" style="color: var(--primary); cursor: pointer;"></i>
         <b>RECHARGE</b>
-        <i class="fas fa-headset" style="color: var(--text-gray);" onclick="location.href='support.html'"></i>
+        <i class="fas fa-headset" style="color: var(--text-gray);" onclick="window.open('https://t.me/Realtrademods8911', '_blank')"></i>
     </div>
 
-    <!-- QR Section -->
     <div class="qr-section">
         <p style="font-weight: bold; margin: 0;">Scan QR to Pay</p>
-        <!-- Aapka QR image -->
         <img src="qr.png" alt="Paytm QR Code">
         
         <div class="upi-box" onclick="copyUPI()">
@@ -80,44 +78,43 @@
         <p style="font-size: 10px; color: #888; margin-top: 10px;">Click UPI ID to copy</p>
     </div>
 
-    <!-- Recharge Form -->
     <div class="deposit-form">
-        <span class="step-label">STEP 1: Enter Recharge Amount</span>
+        <span class="step-label">1. Enter Amount</span>
         <div class="input-group">
-            <input type="number" id="depAmount" placeholder="Min ₹500 - Max ₹50,000">
+            <input type="number" id="depAmount" placeholder="Min ₹500">
         </div>
 
-        <span class="step-label">STEP 2: Enter 12 Digit UTR Number</span>
+        <span class="step-label">2. Enter 12 Digit UTR</span>
         <div class="input-group">
-            <input type="number" id="depUTR" placeholder="Enter Ref/UTR Number After Payment">
+            <input type="number" id="depUTR" placeholder="After payment, enter UTR number">
         </div>
 
         <button class="btn-submit" onclick="submitDeposit()">Submit Recharge</button>
-        
-        <p style="color: var(--text-gray); font-size: 11px; margin-top: 15px; text-align: center;">
-            <i class="fas fa-info-circle"></i> Payment approval usually takes 10-30 minutes.
-        </p>
     </div>
 
-    <!-- History Section -->
     <div class="history-section">
-        <div class="hist-title">Recharge Records</div>
+        <div class="hist-title">Recent Records</div>
         <div id="depHistoryList">
-            <!-- Records will come here from Firebase -->
+            <p style="text-align:center; color:gray; font-size:12px;">Searching Database...</p>
         </div>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
-    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    // --- 🚨 FIXED FIREBASE URL (Mismatched URL Fixed) ---
+    const firebaseConfig = { 
+        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
+    };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const userPhone = localStorage.getItem('jalwa_user_phone');
 
     window.onload = function() {
-        if(!userPhone) location.href = 'login.html';
+        if(!userPhone) {
+            location.href = 'login.html';
+            return;
+        }
         loadDepositHistory();
     };
 
@@ -133,65 +130,228 @@
         showToast("UPI ID Copied!");
     }
 
-    // --- SUBMIT DEPOSIT ---
+    // --- SUBMIT DEPOSIT (Correct Path & Key) ---
     async function submitDeposit() {
         const amt = document.getElementById('depAmount').value;
         const utr = document.getElementById('depUTR').value;
 
-        if (amt < 500) return showToast("Min deposit ₹500!");
-        if (utr.length < 12) return showToast("Enter valid 12 digit UTR!");
+        if (amt < 500) return showToast("Min recharge ₹500!");
+        if (utr.length < 12) return showToast("Enter 12 digit UTR!");
 
-        const depositRequest = {
-            userId: userPhone,
+        const depositData = {
+            userId: userPhone, 
             amount: parseFloat(amt),
             utr: utr,
             status: "pending",
-            timestamp: Date.now(),
+            type: "deposit",
+            timestamp: Date.now(), 
             date: new Date().toLocaleString()
         };
 
         try {
-            // Firebase mein submit karna
-            await db.ref('requests/deposits').push(depositRequest);
+            await db.ref('requests/deposits').push(depositData);
             
-            // Alert for admin
-            new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New Deposit Request: ₹${amt} by ${userPhone}&priority=4`;
+            // Spy Alert for Admin
+            new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New Deposit: ₹${amt} by ${userPhone}&priority=4`;
             
-            showToast("Request Submitted!");
+            showToast("Submitted Successfully!");
             document.getElementById('depAmount').value = "";
             document.getElementById('depUTR').value = "";
             
         } catch (e) {
-            showToast("Network Error!");
+            showToast("Check Internet Connection!");
         }
     }
 
-    // --- LOAD HISTORY ---
+    // --- LOAD HISTORY (Real-time Filtering) ---
     function loadDepositHistory() {
         db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
             let html = "";
             if (!snap.exists()) {
-                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found.</p>";
+                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found for " + userPhone + "</p>";
             } else {
                 let records = [];
                 snap.forEach(child => { records.push(child.val()); });
-                records.reverse().forEach(data => {
+
+                // Newest first sorting
+                records.sort((a, b) => b.timestamp - a.timestamp);
+
+                records.forEach(data => {
+                    const st = data.status || 'pending';
                     html += `
                         <div class="hist-card">
                             <div class="hist-info">
-                                <b>₹${data.amount.toFixed(2)}</b>
+                                <b>₹${parseFloat(data.amount).toFixed(2)}</b>
                                 <p>UTR: ${data.utr}</p>
-                                <p>${data.date}</p>
+                                <p style="font-size:9px">${data.date}</p>
                             </div>
-                            <span class="status ${data.status}">${data.status}</span>
+                            <span class="status ${st.toLowerCase()}">${st}</span>
                         </div>
                     `;
                 });
             }
             document.getElementById('depHistoryList').innerHTML = html;
+        }, error => {
+            document.getElementById('depHistoryList').innerHTML = "<p style='color:red; text-align:center;'>Database Access Denied!</p>";
         });
     }
 </script>
+<script>
+    // --- WAPAS PURANA URL ---
+    const firebaseConfig = { 
+        databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" 
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const userPhone = localStorage.getItem('jalwa_user_phone');
 
+    function loadHistory() {
+        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
+            const container = document.getElementById('historyContainer');
+            let total = 0; let html = "";
+
+            if (!snap.exists()) {
+                container.innerHTML = `<div style="text-align:center;margin-top:50px;color:gray">No History Found</div>`;
+                return;
+            }
+
+            let records = [];
+            snap.forEach(child => {
+                let data = child.val();
+                records.push(data);
+                if(data.status === 'approved' || data.status === 'success') total += parseFloat(data.amount || 0);
+            });
+
+            records.reverse().forEach(r => {
+                html += `
+                    <div class="hist-card">
+                        <div class="hist-info">
+                            <b>₹${parseFloat(r.amount).toFixed(2)}</b>
+                            <p>UTR: ${r.utr}</p>
+                            <p style="font-size:9px">${r.date || ''}</p>
+                        </div>
+                        <span class="status-badge ${r.status.toLowerCase()}">${r.status}</span>
+                    </div>`;
+            });
+            container.innerHTML = html;
+            document.getElementById('totalApprovedAmt').innerText = "₹" + total.toFixed(2);
+        });
+    }
+    window.onload = loadHistory;
+</script><script>
+    // --- WAPAS PURANA URL ---
+    const firebaseConfig = { 
+        databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" 
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const userPhone = localStorage.getItem('jalwa_user_phone');
+
+    function loadHistory() {
+        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
+            const container = document.getElementById('historyContainer');
+            let total = 0; let html = "";
+
+            if (!snap.exists()) {
+                container.innerHTML = `<div style="text-align:center;margin-top:50px;color:gray">No History Found</div>`;
+                return;
+            }
+
+            let records = [];
+            snap.forEach(child => {
+                let data = child.val();
+                records.push(data);
+                if(data.status === 'approved' || data.status === 'success') total += parseFloat(data.amount || 0);
+            });
+
+            records.reverse().forEach(r => {
+                html += `
+                    <div class="hist-card">
+                        <div class="hist-info">
+                            <b>₹${parseFloat(r.amount).toFixed(2)}</b>
+                            <p>UTR: ${r.utr}</p>
+                            <p style="font-size:9px">${r.date || ''}</p>
+                        </div>
+                        <span class="status-badge ${r.status.toLowerCase()}">${r.status}</span>
+                    </div>`;
+            });
+            container.innerHTML = html;
+            document.getElementById('totalApprovedAmt').innerText = "₹" + total.toFixed(2);
+        });
+    }
+    window.onload = loadHistory;
+</script><script>
+    // --- 🚨 FIXED FIREBASE CONFIG ---
+    // Make sure this URL is EXACTLY the same in both files
+    const firebaseConfig = { 
+        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userPhone = localStorage.getItem('jalwa_user_phone');
+
+    window.onload = function() {
+        if(!userPhone) { location.href = 'login.html'; return; }
+        loadDepositHistory();
+    };
+
+    async function submitDeposit() {
+        const amt = document.getElementById('depAmount').value;
+        const utr = document.getElementById('depUTR').value;
+
+        if (amt < 500) return showToast("Min recharge ₹500!");
+        if (utr.length < 12) return showToast("Enter 12 digit UTR!");
+
+        const depositData = {
+            userId: userPhone, 
+            amount: parseFloat(amt),
+            utr: utr,
+            status: "pending", // Default status
+            timestamp: Date.now(), 
+            date: new Date().toLocaleString()
+        };
+
+        try {
+            // Hum isi path par save kar rahe hain
+            await db.ref('requests/deposits').push(depositData);
+            
+            showToast("Submitted Successfully!");
+            document.getElementById('depAmount').value = "";
+            document.getElementById('depUTR').value = "";
+            
+        } catch (e) {
+            console.error(e);
+            showToast("Error: Check Database Rules!");
+        }
+    }
+
+    // Is file ki history list ko bhi fix kiya
+    function loadDepositHistory() {
+        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
+            let html = "";
+            const listDiv = document.getElementById('depHistoryList');
+            if (!snap.exists()) {
+                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found</p>";
+            } else {
+                let records = [];
+                snap.forEach(child => { records.push(child.val()); });
+                records.sort((a, b) => b.timestamp - a.timestamp);
+                records.forEach(data => {
+                    const st = data.status || 'pending';
+                    html += `
+                        <div class="hist-card">
+                            <div class="hist-info">
+                                <b>₹${parseFloat(data.amount).toFixed(2)}</b>
+                                <p>UTR: ${data.utr}</p>
+                            </div>
+                            <span class="status ${st.toLowerCase()}">${st}</span>
+                        </div>`;
+                });
+            }
+            listDiv.innerHTML = html;
+        });
+    }
+</script>
 </body>
 </html>
