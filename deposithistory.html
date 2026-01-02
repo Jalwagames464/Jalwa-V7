@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jalwa Pro - Recharge History</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -14,22 +15,30 @@
         }
         body { margin: 0; background: var(--bg); font-family: 'Poppins', sans-serif; color: white; overflow-x: hidden; }
         .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 90px; }
+        
         .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); position: sticky; top: 0; z-index: 100; }
         .header b { font-size: 18px; letter-spacing: 1px; color: var(--primary); }
+
         .total-card { margin: 20px 15px; background: linear-gradient(135deg, #1e272e 0%, #161d2b 100%); border-radius: 20px; padding: 25px; text-align: center; border: 1px solid rgba(255, 204, 0, 0.1); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
         .total-card span { color: var(--text-gray); font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        .total-card h1 { font-size: 32px; color: var(--primary); margin: 10px 0 0; }
+        .total-card h1 { font-size: 32px; color: var(--primary); margin: 10px 0 0; text-shadow: 0 0 15px rgba(255, 204, 0, 0.3); }
+
         .history-list { padding: 0 15px; margin-top: 10px; }
         .hist-card { background: var(--card-bg); padding: 18px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        
         .hist-info b { font-size: 18px; color: #fff; display: block; margin-bottom: 4px; }
         .hist-info p { font-size: 11px; color: var(--text-gray); margin: 2px 0; }
         .utr-text { color: var(--primary); opacity: 0.8; font-family: monospace; font-size: 12px; }
+
         .status-badge { padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        
         .pending { background: rgba(255, 204, 0, 0.1); color: var(--primary); }
         .approved, .success { background: rgba(46, 204, 113, 0.1); color: var(--success); }
         .rejected { background: rgba(231, 76, 60, 0.1); color: var(--danger); }
+
         .no-data { text-align: center; margin-top: 100px; color: var(--text-gray); font-size: 14px; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #161d2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+        
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 480px; background: #161d2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); z-index: 1000; }
         .nav-item { text-align: center; color: var(--text-gray); font-size: 11px; flex: 1; text-decoration: none;}
         .nav-item i { font-size: 22px; margin-bottom: 4px; display: block; }
         .nav-item.active { color: var(--primary); }
@@ -45,12 +54,12 @@
     </div>
 
     <div class="total-card">
-        <span>Total Successful Recharge</span>
+        <span>Total Approved Recharge</span>
         <h1 id="totalApprovedAmt">₹0.00</h1>
     </div>
 
     <div class="history-list" id="historyContainer">
-        <div class="no-data">Loading history...</div>
+        <div class="no-data">Fetching records...</div>
     </div>
 
     <div class="bottom-nav">
@@ -62,7 +71,10 @@
 </div>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    // --- 🚨 FIXED FIREBASE URL ---
+    const firebaseConfig = { 
+        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
+    };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -77,14 +89,14 @@
     };
 
     function loadRealHistory() {
-        // userId property ke base par filter
+        // userId ke base par filter (requests/deposits)
         db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
             const container = document.getElementById('historyContainer');
             let totalApproved = 0;
             let html = "";
 
             if (!snap.exists()) {
-                container.innerHTML = `<div class="no-data">No deposit records found.</div>`;
+                container.innerHTML = `<div class="no-data"><i class="fas fa-receipt" style="font-size:40px; opacity:0.2"></i><br><br>No deposit records found.</div>`;
                 document.getElementById('totalApprovedAmt').innerText = "₹0.00";
                 return;
             }
@@ -93,12 +105,16 @@
             snap.forEach(child => {
                 const data = child.val();
                 records.push(data);
+                // Total Approved calculation
                 if (data.status === "approved" || data.status === "success") {
                     totalApproved += parseFloat(data.amount || 0);
                 }
             });
 
-            records.reverse().forEach(data => {
+            // Sabse naya recharge sabse upar (Sorting)
+            records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            records.forEach(data => {
                 const status = data.status || 'pending';
                 html += `
                     <div class="hist-card">
@@ -118,7 +134,80 @@
             document.getElementById('totalApprovedAmt').innerText = "₹" + totalApproved.toFixed(2);
         }, error => {
             console.error(error);
-            document.getElementById('historyContainer').innerHTML = `<div class="no-data">Permission Denied! Check Firebase Rules.</div>`;
+            document.getElementById('historyContainer').innerHTML = `<div class="no-data">Rule Error: Set Index in Firebase Console.</div>`;
+        });
+    }
+</script>
+<script>
+    // --- 🚨 FIXED FIREBASE CONFIG ---
+    // Make sure this URL is EXACTLY the same in both files
+    const firebaseConfig = { 
+        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userPhone = localStorage.getItem('jalwa_user_phone');
+
+    window.onload = function() {
+        if(!userPhone) { location.href = 'login.html'; return; }
+        loadDepositHistory();
+    };
+
+    async function submitDeposit() {
+        const amt = document.getElementById('depAmount').value;
+        const utr = document.getElementById('depUTR').value;
+
+        if (amt < 500) return showToast("Min recharge ₹500!");
+        if (utr.length < 12) return showToast("Enter 12 digit UTR!");
+
+        const depositData = {
+            userId: userPhone, 
+            amount: parseFloat(amt),
+            utr: utr,
+            status: "pending", // Default status
+            timestamp: Date.now(), 
+            date: new Date().toLocaleString()
+        };
+
+        try {
+            // Hum isi path par save kar rahe hain
+            await db.ref('requests/deposits').push(depositData);
+            
+            showToast("Submitted Successfully!");
+            document.getElementById('depAmount').value = "";
+            document.getElementById('depUTR').value = "";
+            
+        } catch (e) {
+            console.error(e);
+            showToast("Error: Check Database Rules!");
+        }
+    }
+
+    // Is file ki history list ko bhi fix kiya
+    function loadDepositHistory() {
+        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
+            let html = "";
+            const listDiv = document.getElementById('depHistoryList');
+            if (!snap.exists()) {
+                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found</p>";
+            } else {
+                let records = [];
+                snap.forEach(child => { records.push(child.val()); });
+                records.sort((a, b) => b.timestamp - a.timestamp);
+                records.forEach(data => {
+                    const st = data.status || 'pending';
+                    html += `
+                        <div class="hist-card">
+                            <div class="hist-info">
+                                <b>₹${parseFloat(data.amount).toFixed(2)}</b>
+                                <p>UTR: ${data.utr}</p>
+                            </div>
+                            <span class="status ${st.toLowerCase()}">${st}</span>
+                        </div>`;
+                });
+            }
+            listDiv.innerHTML = html;
         });
     }
 </script>
