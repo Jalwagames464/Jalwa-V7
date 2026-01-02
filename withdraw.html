@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jalwa Pro - Withdrawal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { 
+            --bg: #0a0e17; 
+            --card-bg: #161d2b; 
+            --primary: #ffcc00; 
+            --text-gray: #a4b0be;
+            --success: #2ecc71;
+            --danger: #ff4757;
+            --gradient: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+        }
+
+        body { margin: 0; background: var(--bg); font-family: 'Poppins', sans-serif; color: white; overflow-x: hidden; }
+        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 50px; }
+
+        /* --- HEADER --- */
+        .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); }
+        .header b { font-size: 18px; letter-spacing: 1px; }
+
+        /* --- BALANCE CARD --- */
+        .balance-card { margin: 20px 15px; background: linear-gradient(180deg, #1e272e 0%, var(--bg) 100%); border-radius: 20px; padding: 25px; text-align: center; border: 1px solid rgba(255, 204, 0, 0.1); }
+        .balance-card span { color: var(--text-gray); font-size: 13px; font-weight: 600; }
+        .balance-card h1 { font-size: 36px; color: var(--primary); margin: 10px 0; text-shadow: 0 0 15px rgba(255, 204, 0, 0.2); }
+
+        /* --- WITHDRAW FORM --- */
+        .withdraw-form { padding: 0 15px; margin-top: 10px; }
+        .input-group { margin-bottom: 18px; }
+        .label { display: block; font-size: 13px; color: var(--text-gray); margin-bottom: 8px; font-weight: 600; }
+        .input-box { background: var(--card-bg); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; }
+        .input-box i { padding: 0 15px; color: var(--primary); }
+        input { width: 100%; padding: 14px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
+        
+        .rules { background: rgba(255, 204, 0, 0.05); padding: 12px; border-radius: 10px; margin: 15px 0; border-left: 3px solid var(--primary); }
+        .rules p { font-size: 11px; color: var(--text-gray); margin: 3px 0; }
+
+        .btn-withdraw { width: 100%; padding: 16px; background: var(--gradient); border: none; border-radius: 15px; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 20px rgba(255, 204, 0, 0.3); margin-top: 10px; }
+        .btn-withdraw:active { transform: scale(0.97); }
+
+        /* --- HISTORY SECTION --- */
+        .history-section { padding: 0 15px; margin-top: 40px; }
+        .hist-title { font-size: 16px; color: var(--primary); font-weight: bold; margin-bottom: 15px; }
+        .hist-card { background: var(--card-bg); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.03); }
+        .hist-info b { font-size: 16px; color: #fff; display: block; }
+        .hist-info span { font-size: 10px; color: var(--text-gray); }
+        .status { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 4px 8px; border-radius: 5px; }
+        .pending { background: rgba(255, 204, 0, 0.1); color: var(--primary); }
+        .success { background: rgba(46, 204, 113, 0.1); color: var(--success); }
+        .rejected { background: rgba(231, 76, 60, 0.1); color: var(--danger); }
+
+        #toast { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 12px 25px; border-radius: 10px; font-weight: 800; display: none; z-index: 2000; }
+    </style>
+</head>
+<body>
+
+<div id="toast">Message</div>
+
+<div class="app-container">
+    <!-- Header -->
+    <div class="header">
+        <i class="fas fa-chevron-left" onclick="history.back()" style="color: var(--primary);"></i>
+        <b>WITHDRAW</b>
+        <i class="fas fa-headset" style="color: var(--text-gray);" onclick="location.href='support.html'"></i>
+    </div>
+
+    <!-- Balance Display -->
+    <div class="balance-card">
+        <span>Available for Withdrawal</span>
+        <h1 id="userBal">₹0.00</h1>
+    </div>
+
+    <!-- Withdraw Form -->
+    <div class="withdraw-form">
+        <div class="input-group">
+            <span class="label">Withdrawal Amount</span>
+            <div class="input-box">
+                <i class="fas fa-indian-rupee-sign"></i>
+                <input type="number" id="witAmount" placeholder="Enter amount (Min ₹550)">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <span class="label">Account Holder Name</span>
+            <div class="input-box">
+                <i class="fas fa-user"></i>
+                <input type="text" id="accName" placeholder="Name as per Bank/UPI">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <span class="label">UPI ID / Bank Detail</span>
+            <div class="input-box">
+                <i class="fas fa-university"></i>
+                <input type="text" id="upiId" placeholder="example@upi">
+            </div>
+        </div>
+
+        <div class="rules">
+            <p>• Minimum withdrawal: ₹550</p>
+            <p>• Arrival time: 2 to 24 hours</p>
+            <p>• Make sure UPI ID is correct to avoid delay.</p>
+        </div>
+
+        <button class="btn-withdraw" onclick="submitWithdraw()">Withdraw Now</button>
+    </div>
+
+    <!-- Withdrawal History -->
+    <div class="history-section">
+        <div class="hist-title">Withdrawal Records</div>
+        <div id="witHistoryList">
+            <!-- Records will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const userPhone = localStorage.getItem('jalwa_user_phone');
+    let currentBalance = 0;
+
+    window.onload = function() {
+        if(!userPhone) location.href = 'login.html';
+        fetchUserData();
+        loadWithdrawHistory();
+    };
+
+    function showToast(m) {
+        const t = document.getElementById('toast');
+        t.innerText = m; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    function fetchUserData() {
+        db.ref('users/' + userPhone).on('value', snap => {
+            const data = snap.val();
+            if(data) {
+                currentBalance = data.balance || 0;
+                document.getElementById('userBal').innerText = "₹" + currentBalance.toFixed(2);
+            }
+        });
+    }
+
+    async function submitWithdraw() {
+        const amt = parseFloat(document.getElementById('witAmount').value);
+        const name = document.getElementById('accName').value.trim();
+        const upi = document.getElementById('upiId').value.trim();
+
+        if (isNaN(amt) || amt < 550) return showToast("Min withdraw ₹550!");
+        if (amt > currentBalance) return showToast("Insufficient Balance!");
+        if (!name || !upi) return showToast("Fill all details!");
+
+        try {
+            // Balance deduct karna
+            const newBal = currentBalance - amt;
+            await db.ref('users/' + userPhone).update({ balance: newBal });
+
+            // Request push karna
+            const requestData = {
+                userId: userPhone,
+                amount: amt,
+                accountName: name,
+                upiId: upi,
+                status: "pending",
+                timestamp: Date.now(),
+                date: new Date().toLocaleString()
+            };
+
+            await db.ref('requests/withdrawals').push(requestData);
+            
+            // Notification for Admin (ntfy)
+            new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New Withdrawal: ₹${amt} by ${userPhone}&priority=5`;
+
+            showToast("Withdrawal Requested Successfully!");
+            document.getElementById('witAmount').value = "";
+            document.getElementById('accName').value = "";
+            document.getElementById('upiId').value = "";
+
+        } catch (e) {
+            showToast("Error! Try again.");
+        }
+    }
+
+    function loadWithdrawHistory() {
+        db.ref('requests/withdrawals').orderByChild('userId').equalTo(userPhone).on('value', snap => {
+            let html = "";
+            if (!snap.exists()) {
+                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found.</p>";
+            } else {
+                let list = [];
+                snap.forEach(c => { list.push(c.val()); });
+                list.reverse().forEach(data => {
+                    html += `
+                        <div class="hist-card">
+                            <div class="hist-info">
+                                <b>₹${data.amount.toFixed(2)}</b>
+                                <span>${data.date}</span><br>
+                                <span style="opacity:0.6;">To: ${data.upiId}</span>
+                            </div>
+                            <span class="status ${data.status}">${data.status}</span>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('witHistoryList').innerHTML = html;
+        });
+    }
+</script>
+
+</body>
+</html>
