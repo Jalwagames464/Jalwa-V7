@@ -9,156 +9,164 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { 
-            --bg: #060a1e; 
-            --input: #161d3d; 
-            --cyan: #00ffca; 
-            --gray: #7e87a8; 
-            --gold: #ffd700;
-            --gradient: linear-gradient(to right, #2af598, #009efd);
+            --bg: #0a0e17; /* Deep Dark like your Dashboard */
+            --input: #161d2b; 
+            --primary: #ffcc00; /* Gold/Yellow Theme */
+            --text-gray: #a4b0be;
+            --gradient: linear-gradient(135deg, #ffcc00, #ff9900);
         }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
         
-        .header { padding: 15px; display: flex; align-items: center; justify-content: space-between; background: #10142d; border-bottom: 1px solid #1f2855; }
-        .logo { font-size: 24px; font-weight: 900; letter-spacing: 2px; }
-        .logo span { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+        .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: 2px; color: white; }
+        .logo span { color: var(--primary); text-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
         
-        .container { padding: 25px 20px; max-width: 480px; margin: auto; }
-        .tab-title { text-align: center; color: var(--cyan); border-bottom: 2px solid var(--cyan); padding: 10px; margin-bottom: 30px; font-weight: bold; font-size: 18px; }
+        .container { padding: 30px 20px; max-width: 480px; margin: auto; }
+        .tab-title { text-align: center; color: var(--primary); padding: 10px; margin-bottom: 30px; font-weight: 800; font-size: 20px; text-transform: uppercase; border-bottom: 2px solid var(--primary); width: fit-content; margin-left: auto; margin-right: auto; }
         
         .input-group { margin-bottom: 20px; }
-        .label { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 10px; color: var(--gray); }
-        .label i { color: var(--cyan); font-size: 18px; }
+        .label { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 10px; color: var(--text-gray); font-weight: 600; }
+        .label i { color: var(--primary); font-size: 16px; }
         
-        .input-box { display: flex; background: var(--input); border: 1px solid #1f2855; border-radius: 12px; align-items: center; transition: 0.3s; }
-        .input-box:focus-within { border-color: var(--cyan); box-shadow: 0 0 10px rgba(0,255,202,0.2); }
+        .input-box { display: flex; background: var(--input); border: 1px solid rgba(255,255,255,0.05); border-radius: 15px; align-items: center; transition: 0.3s; }
+        .input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 15px rgba(255, 204, 0, 0.1); }
         
-        input { width: 100%; padding: 15px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
+        input { width: 100%; padding: 16px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
         input::placeholder { color: #5a658a; }
 
-        .btn-reg { width: 100%; padding: 16px; margin-top: 20px; background: var(--gradient); border: none; border-radius: 30px; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 15px rgba(0,158,253,0.3); }
-        .btn-reg:active { transform: scale(0.98); }
+        .btn-reg { width: 100%; padding: 16px; margin-top: 25px; background: var(--gradient); border: none; border-radius: 15px; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 20px rgba(255, 204, 0, 0.3); }
+        .btn-reg:active { transform: scale(0.97); }
 
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--cyan); color: black; padding: 10px 20px; border-radius: 5px; display: none; z-index: 1000; font-weight: bold; }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--primary); color: black; padding: 12px 25px; border-radius: 10px; display: none; z-index: 2000; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        .agree-box { font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-gray); }
+        .agree-box i { color: var(--primary); font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast">Message</div>
 
 <div class="header">
-    <i class="fas fa-chevron-left" onclick="location.href='login.html'"></i>
+    <i class="fas fa-arrow-left" onclick="history.back()" style="font-size: 20px; color: var(--primary);"></i>
     <div class="logo">JALWA<span>.GAME</span></div>
-    <div style="width: 20px;"></div>
+    <i class="fas fa-headset" style="font-size: 20px; color: var(--text-gray);"></i>
 </div>
 
 <div class="container">
-    <div class="tab-title"><i class="fas fa-user-plus"></i> REGISTER ACCOUNT</div>
+    <div class="tab-title">Register</div>
 
     <div class="input-group">
-        <div class="label"><i class="fas fa-mobile-alt"></i> Mobile Number</div>
+        <div class="label"><i class="fas fa-phone-alt"></i> Mobile Number</div>
         <div class="input-box">
-            <div style="padding:0 15px; border-right: 1px solid #1f2855; color: var(--cyan); font-weight: bold;">+91</div>
-            <input type="number" id="rPhone" placeholder="Enter phone number">
+            <div style="padding:0 15px; border-right: 1px solid rgba(255,255,255,0.1); color: var(--primary); font-weight: bold;">+91</div>
+            <input type="number" id="rPhone" placeholder="Enter mobile number">
         </div>
     </div>
 
     <div class="input-group">
-        <div class="label"><i class="fas fa-lock"></i> Set Password</div>
+        <div class="label"><i class="fas fa-lock"></i> Password</div>
         <div class="input-box">
-            <input type="password" id="rPass" placeholder="Enter your password">
-            <i class="far fa-eye-slash" style="padding:15px; color:var(--gray);" onclick="togglePass('rPass')"></i>
+            <input type="password" id="rPass" placeholder="Set login password">
+            <i class="far fa-eye-slash" id="eyeIcon" style="padding:15px; color:var(--text-gray);" onclick="togglePass()"></i>
         </div>
     </div>
 
     <div class="input-group">
-        <div class="label"><i class="fas fa-check-double"></i> Confirm Password</div>
+        <div class="label"><i class="fas fa-user-friends"></i> Invite Code</div>
         <div class="input-box">
-            <input type="password" id="rConfirm" placeholder="Re-enter password">
-            <i class="far fa-eye-slash" style="padding:15px; color:var(--gray);" onclick="togglePass('rConfirm')"></i>
+            <input type="text" id="rInvite" placeholder="Enter Invite Code (Optional)">
         </div>
+        <p style="font-size:10px; color: #ffcc00; margin-top: 6px; opacity: 0.8;">* Using referral code grants ₹20 welcome bonus.</p>
     </div>
 
-    <div class="input-group">
-        <div class="label"><i class="fas fa-user-friends"></i> Invite Code (Referral)</div>
-        <div class="input-box">
-            <input type="text" id="rInvite" placeholder="Enter Invite Code">
-        </div>
-        <p style="font-size:11px; color: var(--gold); margin-top: 5px;">* Get ₹20 registration bonus using invite code.</p>
-    </div>
-
-    <div style="font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-check-circle" style="color:var(--cyan);"></i> 
-        <span>I have read and agree <span style="color:var(--cyan);">[Privacy Agreement]</span></span>
+    <div class="agree-box">
+        <i class="fas fa-check-square"></i> 
+        <span>I agree to the <span style="color:var(--primary);">Terms & Conditions</span></span>
     </div>
 
     <button class="btn-reg" onclick="register()">Create Account</button>
-    <button onclick="location.href='login.html'" style="width:100%; background:none; border:none; color:white; margin-top:20px; font-size: 14px;">Already have an account? <span style="color:var(--cyan); font-weight:bold;">Login</span></button>
+    
+    <div style="text-align: center; margin-top: 25px;">
+        <span style="color: var(--text-gray); font-size: 14px;">Already have an account?</span>
+        <a href="login.html" style="color: var(--primary); font-weight: bold; text-decoration: none; margin-left: 5px;">Login</a>
+    </div>
 </div>
 
 <script>
-    // Firebase Setup
+    // --- FIREBASE INITIALIZATION ---
     const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- REFERRAL LINK LOGIC ---
+    // --- AUTO-REFERRAL LOGIC ---
     window.onload = function() {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('ref');
-        
-        // Agar Google par link dala hai toh code box mein aa jayega
-        if (code) {
-            document.getElementById('rInvite').value = code;
-            localStorage.setItem('temp_ref', code);
-        } else if (localStorage.getItem('temp_ref')) {
-            document.getElementById('rInvite').value = localStorage.getItem('temp_ref');
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref'); // Register link format: register.html?ref=9812345678
+        if (ref) {
+            document.getElementById('rInvite').value = ref;
+            document.getElementById('rInvite').readOnly = true; // Taaki user ise hatana sake
         }
     }
 
-    function showToast(msg) {
+    function showToast(m) {
         const t = document.getElementById('toast');
-        t.innerText = msg; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
+        t.innerText = m; t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2500);
     }
 
-    function togglePass(id) {
-        const x = document.getElementById(id);
-        x.type = x.type === "password" ? "text" : "password";
+    function togglePass() {
+        const p = document.getElementById('rPass');
+        const i = document.getElementById('eyeIcon');
+        if (p.type === "password") {
+            p.type = "text";
+            i.classList.replace('fa-eye-slash', 'fa-eye');
+        } else {
+            p.type = "password";
+            i.classList.replace('fa-eye', 'fa-eye-slash');
+        }
     }
 
     async function register() {
         const ph = document.getElementById('rPhone').value.trim();
         const ps = document.getElementById('rPass').value.trim();
-        const cp = document.getElementById('rConfirm').value.trim();
-        const ref = document.getElementById('rInvite').value.trim() || "none";
+        const ref = document.getElementById('rInvite').value.trim();
         
-        if (ph.length < 10) return showToast("Enter 10 digit number!");
-        if (ps.length < 4) return showToast("Password too short!");
-        if (ps !== cp) return showToast("Password mismatch!");
+        if (ph.length < 10) return showToast("Enter valid mobile number!");
+        if (ps.length < 6) return showToast("Password min 6 characters!");
 
-        // Check if user already exists
-        const check = await db.ref('users/' + ph).once('value');
-        if (check.exists()) return showToast("Mobile already registered!");
+        try {
+            const snap = await db.ref('users/' + ph).once('value');
+            if (snap.exists()) return showToast("Number already registered!");
 
-        // Create User Object
-        const userData = {
-            phone: ph,
-            password: ps,
-            balance: 0,
-            invitedBy: ref,
-            totalDeposit: 0,
-            totalWithdraw: 0,
-            lastCheckin: "",
-            regDate: new Date().toLocaleString()
-        };
+            // Referral Bonus Logic
+            let startBal = (ref && ref !== "") ? 20 : 0;
 
-        db.ref('users/' + ph).set(userData).then(() => {
+            const newUser = {
+                phone: ph,
+                password: ps,
+                balance: startBal,
+                invitedBy: ref || "none",
+                totalDeposit: 0,
+                totalWithdraw: 0,
+                regDate: Date.now(),
+                isOnline: true
+            };
+
+            await db.ref('users/' + ph).set(newUser);
+            
+            // NTFY Notification (Admin alert)
+            new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New User: ${ph}&priority=4`;
+
             localStorage.setItem('jalwa_user_phone', ph);
-            showToast("Registration Successful!");
+            showToast("Registration Success!");
+
+            // Direct Redirect to Dashboard
             setTimeout(() => { window.location.href = "index.html"; }, 1500);
-        }).catch(err => {
-            showToast("Database Error!");
-        });
+
+        } catch (e) {
+            showToast("Error! Check Connection.");
+        }
     }
 </script>
 </body>
