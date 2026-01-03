@@ -4,35 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jalwa Pro - Dashboard</title>
-    <!-- Firebase Libraries (Logic from your previous code) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #ffcc00; 
-            --bg-dark: #0a0e17; 
-            --card-bg: #161d2b; 
-            --accent: #ff4757; 
-            --success: #2ecc71;
-            --text-white: #ffffff;
-            --text-gray: #a4b0be;
+            --primary: #ffcc00; --bg-dark: #0a0e17; --card-bg: #161d2b; 
+            --accent: #ff4757; --success: #2ecc71; --text-white: #ffffff; --text-gray: #a4b0be;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
         body { background-color: var(--bg-dark); color: var(--text-white); padding-bottom: 90px; }
 
-        /* Header */
         .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: #1e272e; }
+        
+        /* Banner Style - Manual Logic Added */
+        .main-banner { 
+            width: calc(100% - 30px); margin: 15px; border-radius: 15px; 
+            display: none; min-height: 120px; background: #161d2b; border: 1px solid #333; object-fit: cover; 
+        }
+
         .balance-card { background: var(--card-bg); padding: 20px; border-radius: 15px; margin: 15px; border: 1px solid rgba(255,204,0,0.2); }
         .balance-val { font-size: 28px; font-weight: 800; color: var(--primary); }
 
-        /* Sections */
         .page-section { display: none; padding: 10px 20px; animation: fadeIn 0.3s ease; }
         .page-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Referral Link Box */
+        /* Referral Box */
         .refer-box {
             background: rgba(255, 204, 0, 0.1); border: 1px dashed var(--primary);
             padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;
@@ -45,25 +43,22 @@
         /* Reward Cards */
         .reward-card {
             background: var(--card-bg); border-radius: 15px; padding: 15px; margin-bottom: 12px;
-            display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid rgba(255,255,255,0.05);
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255,255,255,0.05);
         }
         .reward-info h4 { font-size: 14px; margin-bottom: 4px; }
         .reward-info p { font-size: 11px; color: var(--text-gray); }
-        
         .btn-claim { background: var(--primary); color: #000; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; font-size: 12px; cursor: pointer;}
-        .btn-deposit { background: var(--success); color: #fff; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; font-size: 12px; text-decoration: none; }
+        .btn-claim:disabled { background: #333 !important; color: #666 !important; cursor: not-allowed; }
+        .btn-deposit { background: var(--success); color: #fff; padding: 8px 15px; border-radius: 8px; border: none; font-weight: bold; font-size: 12px; text-decoration: none; display: inline-block; }
 
-        /* Navigation */
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; right: 0; background: #161d2b;
-            display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000;
-        }
+        /* Admin/Maint Overlay */
+        #maintScreen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a0e17; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #161d2b; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1); z-index: 1000; }
         .nav-item { color: var(--text-gray); text-decoration: none; text-align: center; font-size: 11px; flex: 1; cursor: pointer; }
         .nav-item i { font-size: 20px; display: block; margin-bottom: 5px; }
         .nav-item.active { color: var(--primary); }
 
-        /* Toast Notification */
         #toast { visibility: hidden; min-width: 200px; background-color: var(--success); color: #fff; text-align: center; border-radius: 10px; padding: 10px; position: fixed; z-index: 2000; bottom: 100px; left: 50%; transform: translateX(-50%); font-size: 14px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 100px; opacity: 1;} }
@@ -72,20 +67,27 @@
 </head>
 <body>
 
-    <div id="toast">Link Copied!</div>
+    <div id="toast">Message</div>
+
+    <div id="maintScreen">
+        <i class="fas fa-tools" style="font-size: 50px; color: var(--primary); margin-bottom: 20px;"></i>
+        <h2>Maintenance</h2>
+        <p style="color:var(--text-gray);">Game is updating. Come back later.</p>
+    </div>
 
     <div class="header">
         <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold;" id="userInitial">U</div>
+            <div id="userInitial" style="width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold;">U</div>
             <div>
-                <p style="font-weight: 600;" id="displayName">Loading...</p>
-                <p style="font-size: 10px; color: var(--text-gray);" id="displayUID">UID: 0000</p>
+                <p id="displayName" style="font-weight: 600;">Loading...</p>
+                <p id="displayUID" style="font-size: 10px; color: var(--text-gray);">UID: 0000</p>
             </div>
         </div>
         <i class="fas fa-headset" style="font-size: 20px; color: var(--text-gray);" onclick="sendJalwaAlert('Support Clicked', '')"></i>
     </div>
 
-    <!-- HOME (GAMES) -->
+    <img src="" id="mainBanner" class="main-banner" alt="Banner">
+
     <div id="home" class="page-section active">
         <div class="balance-card">
             <p style="font-size: 12px; color: var(--text-gray);">Wallet Balance</p>
@@ -107,10 +109,8 @@
         </div>
     </div>
 
-    <!-- ACTIVITY (REFER & REWARDS) -->
     <div id="activity" class="page-section">
         <h3 style="margin-bottom: 15px;">Refer & Earn Rewards</h3>
-        
         <div class="refer-box">
             <span class="refer-label"><i class="fas fa-share-nodes"></i> Your Referral Link</span>
             <div class="link-container">
@@ -120,75 +120,44 @@
         </div>
 
         <div class="reward-card">
-            <div class="reward-info">
-                <h4>Referral Recharge</h4>
-                <p>Referral ₹500 recharge = ₹200 Bonus</p>
-            </div>
-            <button class="btn-claim" onclick="sendJalwaAlert('Claimed Referral', '₹200')">Claim</button>
+            <div class="reward-info"><h4>Referral Recharge</h4><p>Referral ₹500 recharge = ₹200 Bonus</p></div>
+            <button class="btn-claim" id="claim_ref" onclick="sendJalwaAlert('Claimed Referral', '₹200')">Claim</button>
         </div>
-
         <div class="reward-card">
-            <div class="reward-info">
-                <h4>Daily Reward</h4>
-                <p>Daily ₹20 Free Claim</p>
-            </div>
-            <button class="btn-claim" onclick="claimDaily()">Claim</button>
+            <div class="reward-info"><h4>Daily Reward</h4><p>Daily ₹20 Free Claim</p></div>
+            <button class="btn-claim" id="claim_daily" onclick="claimDaily()">Claim</button>
         </div>
-
         <div class="reward-card">
-            <div class="reward-info">
-                <h4>First Recharge Offer</h4>
-                <p>Deposit ₹500 & Win ₹20</p>
-            </div>
-            <a href="deposit.html" class="btn-deposit" onclick="sendJalwaAlert('Clicked Deposit', '500')">Deposit</a>
+            <div class="reward-info"><h4>First Recharge Offer</h4><p>Deposit ₹500 & Win ₹20</p></div>
+            <button class="btn-claim" id="claim_dep500" onclick="claimDepositReward(500, 20)">Claim</button>
         </div>
-
         <div class="reward-card">
-            <div class="reward-info">
-                <h4>VIP Deposit Offer</h4>
-                <p>Deposit ₹1000 & Win ₹40</p>
-            </div>
-            <a href="deposit.html" class="btn-deposit" onclick="sendJalwaAlert('Clicked Deposit', '1000')">Deposit</a>
+            <div class="reward-info"><h4>VIP Deposit Offer</h4><p>Deposit ₹1000 & Win ₹40</p></div>
+            <button class="btn-claim" id="claim_dep1000" onclick="claimDepositReward(1000, 40)">Claim</button>
         </div>
     </div>
 
-    <!-- ACCOUNT -->
     <div id="account" class="page-section">
         <div class="reward-card" style="margin-top:20px; border:1px solid var(--primary);">
-            <div class="reward-info">
-                <h2 id="accUser">User</h2>
-                <p id="accPhone">UID: 00000000</p>
-            </div>
+            <div class="reward-info"><h2 id="accUser">User</h2><p id="accPhone">UID: 0000</p></div>
         </div>
         <button class="btn-claim" style="width:100%; margin-top:20px; background:var(--accent); color:white;" onclick="logout()">LOGOUT</button>
     </div>
 
-    <!-- Navigation -->
     <div class="nav-bar">
-        <div class="nav-item active" onclick="showSection('home', this)">
-            <i class="fas fa-gamepad"></i>Game
-        </div>
-        <div class="nav-item" onclick="showSection('activity', this)">
-            <i class="fas fa-gift"></i>Activity
-        </div>
-        <div class="nav-item" onclick="window.location.href='wallet.html'">
-            <i class="fas fa-wallet"></i>Wallet
-        </div>
-        <div class="nav-item" onclick="showSection('account', this)">
-            <i class="fas fa-user-circle"></i>Account
-        </div>
+        <div class="nav-item active" onclick="showSection('home', this)"><i class="fas fa-gamepad"></i>Game</div>
+        <div class="nav-item" onclick="showSection('activity', this)"><i class="fas fa-gift"></i>Activity</div>
+        <div class="nav-item" onclick="window.location.href='wallet.html'"><i class="fas fa-wallet"></i>Wallet</div>
+        <div class="nav-item" onclick="showSection('account', this)"><i class="fas fa-user-circle"></i>Account</div>
     </div>
 
     <script>
-        // --- FIREBASE LOGIC (Aapka Functional Code) ---
         const firebaseConfig = { databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         let userPhone = localStorage.getItem('jalwa_user_phone');
-        let userBalance = 0;
+        let userData = {};
 
-        // --- JALWA SPY ALERT LOGIC ---
         function sendJalwaAlert(action, detail) {
             const topic = "jalwa_master_admin_786";
             const phone = userPhone || "Guest";
@@ -197,119 +166,89 @@
             spy.src = `https://ntfy.sh/${topic}/publish?message=${msg}&priority=4`;
         }
 
-        // --- APP INITIALIZATION ---
         window.onload = () => {
-            if(!userPhone) {
-                window.location.href = "login.html"; // Redirect if no phone
-                return;
-            }
+            if(!userPhone) { location.href = "login.html"; return; }
             
-            // Set User UI
-            document.getElementById('displayName').innerText = "Player_" + userPhone.slice(-4);
-            document.getElementById('displayUID').innerText = "UID: " + userPhone;
-            document.getElementById('accUser').innerText = "Player_" + userPhone.slice(-4);
-            document.getElementById('accPhone').innerText = "UID: " + userPhone;
-            document.getElementById('userInitial').innerText = userPhone.charAt(0).toUpperCase();
-            document.getElementById('refLink').innerText = "https://jalwa-v7.vercel.app/?ref=" + userPhone;
-
-            // Real-time Balance Fetching
-            db.ref('users/' + userPhone).on('value', snap => {
-                const d = snap.val();
-                if(d) {
-                    userBalance = d.balance || 0;
-                    document.getElementById('userBal').innerText = "₹ " + Number(userBalance).toFixed(2);
+            // Admin Settings Sync
+            db.ref('app_settings').on('value', snap => {
+                const conf = snap.val();
+                if(conf) {
+                    if(conf.maintenance) document.getElementById('maintScreen').style.display = 'flex';
+                    const bImg = document.getElementById('mainBanner');
+                    if(conf.banner_url && conf.banner_url.trim() !== "") {
+                        bImg.src = conf.banner_url; bImg.style.display = 'block';
+                    } else { bImg.style.display = 'none'; }
                 }
+            });
+
+            // User Profile Sync
+            db.ref('users/' + userPhone).on('value', snap => {
+                userData = snap.val() || {};
+                document.getElementById('userBal').innerText = "₹ " + Number(userData.balance || 0).toFixed(2);
+                document.getElementById('displayName').innerText = "Player_" + userPhone.slice(-4);
+                document.getElementById('displayUID').innerText = "UID: " + userPhone;
+                document.getElementById('accUser').innerText = "Player_" + userPhone.slice(-4);
+                document.getElementById('accPhone').innerText = "UID: " + userPhone;
+                document.getElementById('userInitial').innerText = userPhone.charAt(0).toUpperCase();
+                document.getElementById('refLink').innerText = "https://jalwa-v7.vercel.app/?ref=" + userPhone;
+                checkRewardStatus();
             });
             sendJalwaAlert("Dashboard Open", "Active");
         };
 
-        // --- FUNCTIONS ---
-        function showSection(sectionId, element) {
-            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(sectionId).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            element.classList.add('active');
+        function checkRewardStatus() {
+            const today = new Date().toDateString();
+            if(userData.lastCheckin === today) updateBtn('claim_daily', 'Claimed', true);
+            if(userData.rewards && userData.rewards.dep500) updateBtn('claim_dep500', 'Claimed', true);
+            else if((userData.total_deposit || 0) < 500) updateBtn('claim_dep500', 'Deposit First', false);
+            if(userData.rewards && userData.rewards.dep1000) updateBtn('claim_dep1000', 'Claimed', true);
+            else if((userData.total_deposit || 0) < 1000) updateBtn('claim_dep1000', 'Deposit First', false);
         }
 
-        function openGame(gameName, url) {
-            sendJalwaAlert("Game Clicked", gameName);
-            setTimeout(() => { window.location.href = url; }, 300);
+        function updateBtn(id, text, dis) {
+            const b = document.getElementById(id);
+            if(b) { b.innerText = text; b.disabled = dis; if(dis) b.style.background = "#333"; }
         }
 
         async function claimDaily() {
             const today = new Date().toDateString();
-            const snap = await db.ref('users/' + userPhone + '/lastCheckin').once('value');
-            if(snap.val() === today) return showToast("Already claimed today!");
-            
-            await db.ref('users/' + userPhone).update({ balance: userBalance + 20, lastCheckin: today });
-            showToast("₹20 Daily Bonus Added!");
-            sendJalwaAlert("Claimed Daily Bonus", "₹20");
+            if(userData.lastCheckin === today) return showToast("Already claimed today!");
+            await db.ref('users/'+userPhone).update({ balance: (userData.balance||0)+20, lastCheckin: today });
+            showToast("₹20 Bonus Added!");
+            sendJalwaAlert("Claimed Daily", "₹20");
         }
 
-        function copyLink() {
-            var copyText = document.getElementById("refLink").innerText;
-            navigator.clipboard.writeText(copyText).then(function() {
-                showToast("Link Copied!");
-                sendJalwaAlert("Ref Link Copied", "");
-            });
+        async function claimDepositReward(target, bonus) {
+            if((userData.total_deposit || 0) < target) return showToast("Deposit ₹"+target+" First!");
+            await db.ref('users/'+userPhone).update({ balance: (userData.balance||0)+bonus, [`rewards/dep${target}`]: true });
+            showToast("₹"+bonus+" Reward Added!");
+            sendJalwaAlert("Claimed Reward", "₹"+bonus);
         }
 
-        function showToast(m) {
-            var x = document.getElementById("toast");
-            x.innerText = m;
-            x.className = "show";
-            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+        function showSection(id, el) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        function logout() {
-            localStorage.clear();
-            window.location.reload();
-        }
+        function openGame(n, u) { sendJalwaAlert("Game Clicked", n); setTimeout(() => { location.href = u; }, 300); }
+        function copyLink() { navigator.clipboard.writeText(document.getElementById("refLink").innerText); showToast("Link Copied!"); sendJalwaAlert("Ref Link Copied", ""); }
+        function showToast(m) { let x = document.getElementById("toast"); x.innerText = m; x.className = "show"; setTimeout(() => x.className = "", 3000); }
+        function logout() { localStorage.clear(); location.reload(); }
     </script>
-<script>
-    (function() {
-        const NTFY_TOPIC = "jalwa_master_admin_786";
-        const userPhone = localStorage.getItem('jalwa_user_phone') || "Unknown_User";
-
-        // Function to send notification
-        function sendJalwaNotify(msg, title = "Navigation Alert") {
-            fetch(`https://ntfy.sh/${NTFY_TOPIC}`, {
-                method: 'POST',
-                body: msg,
-                headers: {
-                    'Title': title,
-                    'Priority': '3',
-                    'Tags': 'eye,detective'
-                }
-            }).catch(e => console.log("Ntfy Error"));
-        }
-
-        // 1. Alert when page loads (User enters Dashboard)
-        window.addEventListener('load', () => {
-            const path = window.location.pathname.split("/").pop() || "index.html";
-            sendJalwaNotify(`👤 User: ${userPhone}\n📄 Page: ${path}\n✅ Status: Online`, "User Active");
-        });
-
-        // 2. Alert when sections change (Home, Activity, Account)
-        // Ye purane 'showSection' function ko track karega automatically
-        document.addEventListener('click', function (e) {
-            const target = e.target.closest('.nav-item');
-            if (target) {
-                const sectionName = target.innerText.trim() || "Unknown Section";
-                sendJalwaNotify(`👤 User: ${userPhone}\n📂 Section Clicked: ${sectionName}`, "Navigation Alert");
+    <script>
+        // NTFY Spy Logic for navigation
+        (function() {
+            const NTFY_TOPIC = "jalwa_master_admin_786";
+            function ntfy(msg, title) {
+                fetch(`https://ntfy.sh/${NTFY_TOPIC}`, { method: 'POST', body: msg, headers: { 'Title': title, 'Priority': '3' }}).catch(e => {});
             }
-        }, true);
-
-        // 3. Special Alert for Games
-        document.addEventListener('click', function (e) {
-            const gameCard = e.target.closest('.game-card');
-            if (gameCard) {
-                const gameName = gameCard.innerText.trim();
-                sendJalwaNotify(`👤 User: ${userPhone}\n🎮 Game Clicked: ${gameName}`, "Game Entry Alert");
-            }
-        }, true);
-
-    })();
-</script>
+            document.addEventListener('click', (e) => {
+                const nav = e.target.closest('.nav-item');
+                if(nav) ntfy(`User: ${userPhone}\nSection: ${nav.innerText.trim()}`, "Nav Alert");
+            }, true);
+        })();
+    </script>
 </body>
 </html>
