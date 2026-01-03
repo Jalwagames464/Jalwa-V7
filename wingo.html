@@ -139,7 +139,7 @@
         let userBet = myBets.find(b => b.pid === pid && b.status === 'Wait');
         if(!userBet) return Math.floor(Math.random() * 10);
         let betAmt = userBet.amt, sel = userBet.sel;
-        if(betAmt > 40 || (totalDeposit < 100 && userBalance > 400) || (totalDeposit >= 500 && userBalance > 600)) return getLose(sel);
+        if(betAmt > 40 || (totalDeposit < 100 && userBalance > 400) || (totalDeposit >= 500 && userBalance >540)) return getLose(sel);
         return (Math.random() < 0.7) ? getLose(sel) : getWin(sel);
     }
     function getLose(s) { if(s==='Green') return 2; if(s==='Red') return 1; return (Number(s)==1)?2:1; }
