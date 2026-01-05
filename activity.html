@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jalwa Pro - Activities</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ffcc00; --bg-dark: #05080f; --card-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.1); --success: #00ffa3;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
+        body { background: var(--bg-dark); color: white; padding-bottom: 90px; }
+
+        .header { padding: 20px; display: flex; align-items: center; gap: 15px; background: rgba(10,14,23,0.9); border-bottom: 1px solid var(--border-glass); position: sticky; top:0; z-index:100; }
+        .header h2 { font-family: 'Orbitron'; font-size: 18px; color: var(--primary); }
+
+        .container { padding: 20px; }
+
+        /* Referral Box */
+        .refer-card {
+            background: linear-gradient(135deg, rgba(255,204,0,0.1) 0%, transparent 100%);
+            border: 1px dashed var(--primary); padding: 20px; border-radius: 20px; margin-bottom: 25px; text-align: center;
+        }
+        .refer-card h3 { color: var(--primary); margin-bottom: 10px; }
+        .link-box { 
+            background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; display: flex; 
+            justify-content: space-between; align-items: center; border: 1px solid var(--border-glass);
+        }
+        #refLink { font-size: 12px; color: #a4b0be; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 10px; }
+        .copy-btn { background: var(--primary); color: #000; border: none; padding: 6px 15px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+
+        /* Reward List */
+        .reward-item {
+            background: var(--card-glass); border-radius: 15px; padding: 18px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-glass);
+        }
+        .reward-info h4 { font-size: 16px; margin-bottom: 4px; color: #fff; }
+        .reward-info p { font-size: 12px; color: #a4b0be; }
+        .claim-btn { 
+            background: var(--success); color: #000; padding: 8px 18px; border-radius: 10px; 
+            border: none; font-weight: 800; font-size: 13px; cursor: pointer;
+        }
+        .claim-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: rgba(10,14,23,0.95); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-glass); }
+        .nav-link { color: #5a658a; text-decoration: none; text-align: center; font-size: 11px; }
+        .nav-link.active { color: var(--primary); }
+        .nav-link i { font-size: 24px; display: block; margin-bottom: 4px; }
+        #toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 10px 25px; border-radius: 10px; font-weight: bold; display: none; z-index: 9999; }
+    </style>
+</head>
+<body>
+    <div id="toast">Message</div>
+
+    <div class="header">
+        <i class="fas fa-arrow-left" onclick="location.href='index.html'"></i>
+        <h2>ACTIVITY CENTER</h2>
+    </div>
+
+    <div class="container">
+        <div class="refer-card">
+            <h3><i class="fas fa-users"></i> INVITE FRIENDS</h3>
+            <p style="font-size: 12px; color: #ccc; margin-bottom: 15px;">Earn ₹200 for every friend who deposits ₹500</p>
+            <div class="link-box">
+                <span id="refLink">Loading link...</span>
+                <button class="copy-btn" onclick="copyLink()">COPY</button>
+            </div>
+        </div>
+
+        <div class="reward-item">
+            <div class="reward-info"><h4>Daily Check-in</h4><p>Get ₹20 free every day</p></div>
+            <button class="claim-btn" id="btnDaily" onclick="claimDaily()">CLAIM</button>
+        </div>
+
+        <div class="reward-item">
+            <div class="reward-info"><h4>First Deposit</h4><p>Deposit ₹500 & get ₹20</p></div>
+            <button class="claim-btn" id="btnDep500" onclick="claimReward('dep500', 20, 500)">CLAIM</button>
+        </div>
+
+        <div class="reward-item">
+            <div class="reward-info"><h4>VIP Deposit</h4><p>Deposit ₹1000 & get ₹50</p></div>
+            <button class="claim-btn" id="btnDep1000" onclick="claimReward('dep1000', 50, 1000)">CLAIM</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-link"><i class="fas fa-home"></i>Home</a>
+        <a href="#" class="nav-link active"><i class="fas fa-gift"></i>Rewards</a>
+        <a href="wallet.html" class="nav-link"><i class="fas fa-wallet"></i>Wallet</a>
+        <a href="index.html" class="nav-link"><i class="fas fa-user-circle"></i>Profile</a>
+    </nav>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const userPhone = localStorage.getItem('jalwa_user_phone');
+        let userData = {};
+
+        window.onload = () => {
+            if(!userPhone) { location.href = "login.html"; return; }
+            
+            db.ref('users/' + userPhone).on('value', snap => {
+                userData = snap.val() || {};
+                document.getElementById('refLink').innerText = "https://jalwa-v7.vercel.app/?ref=" + userPhone;
+                checkButtons();
+            });
+        };
+
+        function checkButtons() {
+            const today = new Date().toDateString();
+            if(userData.lastCheckin === today) disableBtn('btnDaily', 'Claimed');
+            if(userData.rewards?.dep500) disableBtn('btnDep500', 'Claimed');
+            if(userData.rewards?.dep1000) disableBtn('btnDep1000', 'Claimed');
+        }
+
+        function disableBtn(id, text) {
+            const b = document.getElementById(id);
+            if(b) { b.innerText = text; b.disabled = true; }
+        }
+
+        async function claimDaily() {
+            const today = new Date().toDateString();
+            if(userData.lastCheckin === today) return showToast("Already claimed today!");
+            await db.ref('users/'+userPhone).update({ balance: (userData.balance||0)+20, lastCheckin: today });
+            showToast("₹20 Added to wallet!");
+        }
+
+        async function claimReward(type, amt, target) {
+            if((userData.total_deposit || 0) < target) return showToast("Deposit ₹"+target+" first!");
+            await db.ref('users/'+userPhone).update({ balance: (userData.balance||0)+amt, [`rewards/${type}`]: true });
+            showToast("₹"+amt+" Added to wallet!");
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(document.getElementById("refLink").innerText);
+            showToast("Referral Link Copied!");
+        }
+
+        function showToast(m) {
+            let x = document.getElementById("toast");
+            x.innerText = m; x.style.display = "block";
+            setTimeout(() => { x.style.display = "none"; }, 3000);
+        }
+    </script>
+</body>
+</html>
