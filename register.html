@@ -168,6 +168,24 @@
             showToast("Error! Check Connection.");
         }
     }
+// --- AUTO-REFERRAL LOGIC (FIXED) ---
+window.onload = function() {
+    // 1. URL se 'ref' parameter check karega
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref'); 
+
+    // 2. Agar link me 'ref' hai, toh input box me daal dega
+    if (ref && ref !== "") {
+        const inviteInput = document.getElementById('rInvite');
+        if (inviteInput) {
+            inviteInput.value = ref;
+            // Taaki user aapka code hata na sake, ise readOnly kar dete hain
+            inviteInput.readOnly = true; 
+            inviteInput.style.backgroundColor = "rgba(255, 204, 0, 0.1)"; // Thoda highlight karne ke liye
+            console.log("Invite Code Applied: " + ref);
+        }
+    }
+}
 </script>
 </body>
 </html>
