@@ -19,11 +19,17 @@
         #lockOverlay { display: none; position: absolute; inset: 0; background: rgba(6,9,27,0.95); z-index: 2000; border-radius: 15px; justify-content: center; align-items: center; color: var(--red); font-weight: 800; letter-spacing: 2px; font-size: 14px; }
         .btn-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 10px 15px; }
         .btn-join { border: none; padding: 14px; color: white; font-weight: 800; border-radius: 10px; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+        
+        /* NUMBER BUTTONS KO BALLS BANANE KA CSS */
         .num-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 15px; }
-        .num-btn { width: 45px; height: 45px; background: #1a233a; border: 1px solid #242c54; font-size: 18px; font-weight: bold; border-radius: 50%; cursor: pointer; color: white; }
-        .h-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 18px 2px; padding: 15px 10px 30px; background: var(--card); margin: 0 15px; border-radius: 15px; min-height: 50px; }
-        .dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; position: relative; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-        .dot-pid { font-size: 7px; color: #555; position: absolute; bottom: -16px; width: 40px; text-align: center; }
+        .num-btn { width: 48px; height: 48px; border: 2px solid rgba(255,255,255,0.2); font-size: 18px; font-weight: 900; border-radius: 50%; cursor: pointer; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: 0.2s; }
+        .num-btn:active { transform: scale(0.9); }
+
+        /* TREND CHART 3 LINE CSS */
+        .h-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 15px 2px; padding: 15px 10px 25px; background: var(--card); margin: 0 15px; border-radius: 15px; min-height: 50px; }
+        .dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 11px; position: relative; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); }
+        .dot-pid { font-size: 7px; color: #7e87a8; position: absolute; bottom: -16px; width: 40px; text-align: center; font-weight: bold; }
+        
         .order-table { width: 100%; border-collapse: collapse; font-size: 11px; color: white; text-align: center; }
         .order-table th { padding: 10px; color: #7e87a8; border-bottom: 1px solid #1f2855; font-size: 10px; }
         .order-table td { padding: 12px 5px; border-bottom: 1px solid #1f2855; }
@@ -57,18 +63,20 @@
     <button class="btn-join" style="background:var(--violet)" onclick="openBet('Violet')">Violet</button>
     <button class="btn-join" style="background:var(--red)" onclick="openBet('Red')">Red</button>
 </div>
+
 <div class="num-grid">
-    <button class="num-btn" style="border-color:var(--violet)" onclick="openBet(0)">0</button>
-    <button class="num-btn" style="border-color:var(--green)" onclick="openBet(1)">1</button>
-    <button class="num-btn" style="border-color:var(--red)" onclick="openBet(2)">2</button>
-    <button class="num-btn" style="border-color:var(--green)" onclick="openBet(3)">3</button>
-    <button class="num-btn" style="border-color:var(--red)" onclick="openBet(4)">4</button>
-    <button class="num-btn" style="border-color:var(--violet)" onclick="openBet(5)">5</button>
-    <button class="num-btn" style="border-color:var(--red)" onclick="openBet(6)">6</button>
-    <button class="num-btn" style="border-color:var(--green)" onclick="openBet(7)">7</button>
-    <button class="num-btn" style="border-color:var(--red)" onclick="openBet(8)">8</button>
-    <button class="num-btn" style="border-color:var(--green)" onclick="openBet(9)">9</button>
+    <button class="num-btn" style="background:linear-gradient(135deg,#ff4757 50%,#9c27b0 50%)" onclick="openBet(0)">0</button>
+    <button class="num-btn" style="background:var(--green)" onclick="openBet(1)">1</button>
+    <button class="num-btn" style="background:var(--red)" onclick="openBet(2)">2</button>
+    <button class="num-btn" style="background:var(--green)" onclick="openBet(3)">3</button>
+    <button class="num-btn" style="background:var(--red)" onclick="openBet(4)">4</button>
+    <button class="num-btn" style="background:linear-gradient(135deg,#1DB954 50%,#9c27b0 50%)" onclick="openBet(5)">5</button>
+    <button class="num-btn" style="background:var(--red)" onclick="openBet(6)">6</button>
+    <button class="num-btn" style="background:var(--green)" onclick="openBet(7)">7</button>
+    <button class="num-btn" style="background:var(--red)" onclick="openBet(8)">8</button>
+    <button class="num-btn" style="background:var(--green)" onclick="openBet(9)">9</button>
 </div>
+
 <div style="padding:15px 15px 5px; font-size:12px; color:gray; font-weight:bold;">TREND CHART</div>
 <div id="historyGrid" class="h-grid"></div>
 
@@ -104,8 +112,10 @@
             <div id="tStatus" style="font-weight:bold; font-size:14px; margin-bottom:5px;">CONGRATULATIONS</div>
             <div id="tWinAmt" style="font-size:36px; font-weight:900;">₹0.00</div>
             <div class="bet-info-grid">
+                <div class="info-item"><small>Period</small><b id="tPeriod">...</b></div>
                 <div class="info-item"><small>Selection</small><b id="tSelect">...</b></div>
                 <div class="info-item"><small>Bet Amount</small><b id="tBetAmt">₹0.00</b></div>
+                <div class="info-item"><small>Bonus</small><b id="tBonus">₹0.00</b></div>
             </div>
             <button onclick="document.getElementById('ticketOverlay').style.display='none'" style="width:100%;padding:15px;border-radius:50px;background:white;color:black;font-weight:900;border:none;">AWESOME!</button>
         </div>
@@ -189,12 +199,14 @@
         h.innerText = win > 0 ? "WINNER!" : "LOST";
         h.className = "ticket-header " + (win > 0 ? "win-bg" : "lose-bg");
         const bEl = document.getElementById('tBall'); bEl.innerText = n;
-        bEl.style.background = (n==0||n==5)?'#9c27b0':(col==='Red'?'#ff4757':'#1DB954');
+        bEl.style.background = (n==0) ? "linear-gradient(135deg,#ff4757 50%,#9c27b0 50%)" : (n==5) ? "linear-gradient(135deg,#1DB954 50%,#9c27b0 50%)" : (col==='Red'?'#ff4757':'#1DB954');
         document.getElementById('tStatus').innerText = win > 0 ? "CONGRATULATIONS" : "BETTER LUCK NEXT TIME";
         document.getElementById('tWinAmt').innerText = "₹" + win.toFixed(2);
         document.getElementById('tWinAmt').style.color = win > 0 ? "#1DB954" : "#ff4757";
+        document.getElementById('tPeriod').innerText = b.pid;
         document.getElementById('tSelect').innerText = b.sel;
         document.getElementById('tBetAmt').innerText = "₹" + b.amt.toFixed(2);
+        document.getElementById('tBonus').innerText = "₹" + (win > 0 ? (win - b.amt).toFixed(2) : "0.00");
         document.getElementById('ticketOverlay').style.display='flex';
     }
 
@@ -225,10 +237,15 @@
         document.getElementById('orderBody').innerHTML = h;
     }
 
+    // TREND CHART 3 LINES (30 RESULTS)
     async function fetchHistory() {
-        const { data } = await supabaseClient.from('game_history').select('*').order('id', {ascending:false}).limit(10);
+        const { data } = await supabaseClient.from('game_history').select('*').order('id', {ascending:false}).limit(30);
         if(data) {
-            document.getElementById('historyGrid').innerHTML = data.map(r => `<div class="dot" style="background:${(r.num==0||r.num==5)?'#9c27b0':(r.col==='Red'?'#ff4757':'#1DB954')}">${r.num}<span class="dot-pid">${String(r.pid).slice(-3)}</span></div>`).join('');
+            document.getElementById('historyGrid').innerHTML = data.map(r => {
+                let n = r.num;
+                let bgStyle = (n==0) ? "linear-gradient(135deg,#ff4757 50%,#9c27b0 50%)" : (n==5) ? "linear-gradient(135deg,#1DB954 50%,#9c27b0 50%)" : (r.col==='Red'?'#ff4757':'#1DB954');
+                return `<div class="dot" style="background:${bgStyle}">${n}<span class="dot-pid">${String(r.pid).slice(-3)}</span></div>`;
+            }).join('');
         }
     }
 
