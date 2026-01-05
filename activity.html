@@ -148,5 +148,118 @@
             setTimeout(() => { x.style.display = "none"; }, 3000);
         }
     </script>
+<script>
+    const firebaseConfig = { databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const userPhone = localStorage.getItem('jalwa_user_phone');
+    let userData = {};
+
+    window.onload = () => {
+        if(!userPhone) { location.href = "login.html"; return; }
+        
+        // Use .on to keep UI updated, but we will add logic to prevent double claims
+        db.ref('users/' + userPhone).on('value', snap => {
+            userData = snap.val() || {};
+            document.getElementById('refLink').innerText = "https://jalwa-v7.vercel.app/?ref=" + userPhone;
+            checkButtons();
+        });
+    };
+
+    function checkButtons() {
+        const today = new Date().toDateString();
+        // Check Daily
+        if(userData.lastCheckin === today) {
+            disableBtn('btnDaily', 'Claimed');
+        }
+        // Check Rewards
+        if(userData.rewards) {
+            if(userData.rewards.dep500) disableBtn('btnDep500', 'Claimed');
+            if(userData.rewards.dep1000) disableBtn('btnDep1000', 'Claimed');
+        }
+    }
+
+    function disableBtn(id, text) {
+        const b = document.getElementById(id);
+        if(b) { 
+            b.innerText = text; 
+            b.disabled = true; 
+            b.style.background = "#333";
+        }
+    }
+
+    async function claimDaily() {
+        const today = new Date().toDateString();
+        
+        // CRITICAL CHECK: UI check + Data check
+        if(document.getElementById('btnDaily').disabled || userData.lastCheckin === today) {
+            return showToast("Already claimed today!");
+        }
+
+        const btn = document.getElementById('btnDaily');
+        btn.disabled = true; // Immediate disable to prevent double clicks
+
+        try {
+            await db.ref('users/' + userPhone).transaction((currentData) => {
+                if (currentData) {
+                    if (currentData.lastCheckin === today) {
+                        return; // Abort transaction if already claimed
+                    }
+                    currentData.balance = (currentData.balance || 0) + 20;
+                    currentData.lastCheckin = today;
+                }
+                return currentData;
+            });
+            showToast("₹20 Added to wallet!");
+        } catch (e) {
+            btn.disabled = false;
+            showToast("Error claiming reward.");
+        }
+    }
+
+    async function claimReward(type, amt, target) {
+        // CRITICAL CHECK: UI check + Data check
+        if(document.getElementById('btnDep' + target).disabled || (userData.rewards && userData.rewards[type])) {
+            return showToast("Already claimed!");
+        }
+
+        if((userData.total_deposit || 0) < target) {
+            return showToast("Deposit ₹" + target + " first!");
+        }
+
+        const btn = document.getElementById('btnDep' + target);
+        btn.disabled = true;
+
+        try {
+            await db.ref('users/' + userPhone).transaction((currentData) => {
+                if (currentData) {
+                    if (currentData.rewards && currentData.rewards[type]) {
+                        return; // Abort if already claimed
+                    }
+                    if (!currentData.rewards) currentData.rewards = {};
+                    
+                    currentData.balance = (currentData.balance || 0) + amt;
+                    currentData.rewards[type] = true;
+                }
+                return currentData;
+            });
+            showToast("₹" + amt + " Added to wallet!");
+        } catch (e) {
+            btn.disabled = false;
+            showToast("Error!");
+        }
+    }
+
+    function copyLink() {
+        navigator.clipboard.writeText(document.getElementById("refLink").innerText);
+        showToast("Referral Link Copied!");
+    }
+
+    function showToast(m) {
+        let x = document.getElementById("toast");
+        x.innerText = m; x.style.display = "block";
+        setTimeout(() => { x.style.display = "none"; }, 3000);
+    }
+</script>
 </body>
 </html>
