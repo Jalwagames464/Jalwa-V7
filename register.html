@@ -3,189 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa.Game - Register</title>
+    <title>Jalwa Pro - New Agent Registration</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #0a0e17; /* Deep Dark like your Dashboard */
-            --input: #161d2b; 
-            --primary: #ffcc00; /* Gold/Yellow Theme */
+        :root {
+            --primary: #ffcc00; 
+            --bg: #05080f; 
+            --input-bg: rgba(255, 255, 255, 0.03); 
             --text-gray: #a4b0be;
-            --gradient: linear-gradient(135deg, #ffcc00, #ff9900);
+            --neon-glow: 0 0 15px rgba(255, 204, 0, 0.4);
         }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Poppins', sans-serif; overflow-x: hidden; }
-        
-        .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); }
-        .logo { font-size: 24px; font-weight: 900; letter-spacing: 2px; color: white; }
-        .logo span { color: var(--primary); text-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
-        
-        .container { padding: 30px 20px; max-width: 480px; margin: auto; }
-        .tab-title { text-align: center; color: var(--primary); padding: 10px; margin-bottom: 30px; font-weight: 800; font-size: 20px; text-transform: uppercase; border-bottom: 2px solid var(--primary); width: fit-content; margin-left: auto; margin-right: auto; }
-        
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Rajdhani', sans-serif; }
+
+        body {
+            background: var(--bg); color: white;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            overflow-x: hidden; position: relative;
+        }
+
+        /* --- Cyber Background Effects --- */
+        body::before {
+            content: ""; position: absolute; width: 300px; height: 300px;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            bottom: -100px; right: -100px; opacity: 0.1; filter: blur(50px);
+        }
+
+        .register-card {
+            width: 90%; max-width: 400px; padding: 35px 25px;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px); border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            z-index: 10; animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+        .logo { 
+            font-family: 'Orbitron'; font-size: 26px; font-weight: 900; 
+            text-align: center; margin-bottom: 5px; color: white;
+            letter-spacing: 2px;
+        }
+        .logo span { color: var(--primary); text-shadow: var(--neon-glow); }
+
+        .sub-title { text-align: center; color: var(--text-gray); font-size: 13px; margin-bottom: 30px; letter-spacing: 1px; }
+
+        /* --- Input Fields --- */
         .input-group { margin-bottom: 20px; }
-        .label { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 10px; color: var(--text-gray); font-weight: 600; }
-        .label i { color: var(--primary); font-size: 16px; }
+        .input-label { font-size: 11px; color: var(--primary); font-weight: bold; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 1px; }
         
-        .input-box { display: flex; background: var(--input); border: 1px solid rgba(255,255,255,0.05); border-radius: 15px; align-items: center; transition: 0.3s; }
-        .input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 15px rgba(255, 204, 0, 0.1); }
-        
-        input { width: 100%; padding: 16px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
-        input::placeholder { color: #5a658a; }
+        .field-container {
+            display: flex; align-items: center; background: var(--input-bg);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
+            transition: 0.3s; padding: 0 15px;
+        }
+        .field-container:focus-within {
+            border-color: var(--primary); background: rgba(255, 204, 0, 0.05);
+        }
 
-        .btn-reg { width: 100%; padding: 16px; margin-top: 25px; background: var(--gradient); border: none; border-radius: 15px; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 20px rgba(255, 204, 0, 0.3); }
-        .btn-reg:active { transform: scale(0.97); }
+        .field-container i { color: #5a658a; font-size: 16px; width: 25px; }
+        .field-container input {
+            width: 100%; padding: 14px; background: transparent; border: none;
+            color: white; outline: none; font-size: 15px; font-weight: 600;
+        }
+        .field-container input:read-only { color: var(--primary); opacity: 0.8; }
 
-        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--primary); color: black; padding: 12px 25px; border-radius: 10px; display: none; z-index: 2000; font-weight: 800; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        
-        .agree-box { font-size: 12px; margin-top: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-gray); }
-        .agree-box i { color: var(--primary); font-size: 16px; }
+        /* --- Referral Badge --- */
+        .ref-bonus-tag { font-size: 10px; color: var(--primary); margin-top: 5px; font-weight: bold; display: block; }
+
+        /* --- Buttons --- */
+        .btn-register {
+            width: 100%; padding: 16px; background: var(--primary);
+            border: none; border-radius: 12px; color: #000;
+            font-size: 16px; font-weight: 800; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s; box-shadow: var(--neon-glow);
+            letter-spacing: 1px; margin-top: 15px;
+        }
+        .btn-register:active { transform: scale(0.96); }
+
+        .login-link { text-align: center; margin-top: 25px; font-size: 14px; color: var(--text-gray); }
+        .login-link a { color: var(--primary); text-decoration: none; font-weight: bold; }
+
+        #toast { 
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%); 
+            background: var(--primary); color: #000; padding: 12px 30px; 
+            border-radius: 50px; font-weight: 800; display: none; z-index: 100;
+        }
     </style>
 </head>
 <body>
 
-<div id="toast" class="toast">Message</div>
+    <div id="toast">Message</div>
 
-<div class="header">
-    <i class="fas fa-arrow-left" onclick="history.back()" style="font-size: 20px; color: var(--primary);"></i>
-    <div class="logo">JALWA<span>.GAME</span></div>
-    <i class="fas fa-headset" style="font-size: 20px; color: var(--text-gray);"></i>
-</div>
+    <div class="register-card">
+        <div class="logo">JALWA<span>PRO</span></div>
+        <p class="sub-title">ELITE AGENT ENROLLMENT</p>
 
-<div class="container">
-    <div class="tab-title">Register</div>
-
-    <div class="input-group">
-        <div class="label"><i class="fas fa-phone-alt"></i> Mobile Number</div>
-        <div class="input-box">
-            <div style="padding:0 15px; border-right: 1px solid rgba(255,255,255,0.1); color: var(--primary); font-weight: bold;">+91</div>
-            <input type="number" id="rPhone" placeholder="Enter mobile number">
+        <div class="input-group">
+            <span class="input-label">Mobile Network (ID)</span>
+            <div class="field-container">
+                <i class="fas fa-phone-alt"></i>
+                <div style="color: var(--primary); font-weight: bold; margin-right: 5px;">+91</div>
+                <input type="number" id="rPhone" placeholder="Enter number">
+            </div>
         </div>
-    </div>
 
-    <div class="input-group">
-        <div class="label"><i class="fas fa-lock"></i> Password</div>
-        <div class="input-box">
-            <input type="password" id="rPass" placeholder="Set login password">
-            <i class="far fa-eye-slash" id="eyeIcon" style="padding:15px; color:var(--text-gray);" onclick="togglePass()"></i>
+        <div class="input-group">
+            <span class="input-label">Security Password</span>
+            <div class="field-container">
+                <i class="fas fa-shield-alt"></i>
+                <input type="password" id="rPass" placeholder="Create strong key">
+                <i class="far fa-eye-slash" id="eyeIcon" style="cursor:pointer;" onclick="togglePass()"></i>
+            </div>
         </div>
-    </div>
 
-    <div class="input-group">
-        <div class="label"><i class="fas fa-user-friends"></i> Invite Code</div>
-        <div class="input-box">
-            <input type="text" id="rInvite" placeholder="Enter Invite Code (Optional)">
+        <div class="input-group">
+            <span class="input-label">Referral Protocol</span>
+            <div class="field-container">
+                <i class="fas fa-user-plus"></i>
+                <input type="text" id="rInvite" placeholder="Optional Code">
+            </div>
+            <span class="ref-bonus-tag" id="refStatus">* Using a code unlocks ₹20 Starter Bonus</span>
         </div>
-        <p style="font-size:10px; color: #ffcc00; margin-top: 6px; opacity: 0.8;">* Using referral code grants ₹20 welcome bonus.</p>
+
+        <button class="btn-register" onclick="register()">Initialize Account</button>
+
+        <p class="login-link">Already an agent? <a href="login.html">Access Portal</a></p>
     </div>
 
-    <div class="agree-box">
-        <i class="fas fa-check-square"></i> 
-        <span>I agree to the <span style="color:var(--primary);">Terms & Conditions</span></span>
-    </div>
+    <script>
+        const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-    <button class="btn-reg" onclick="register()">Create Account</button>
-    
-    <div style="text-align: center; margin-top: 25px;">
-        <span style="color: var(--text-gray); font-size: 14px;">Already have an account?</span>
-        <a href="login.html" style="color: var(--primary); font-weight: bold; text-decoration: none; margin-left: 5px;">Login</a>
-    </div>
-</div>
-
-<script>
-    // --- FIREBASE INITIALIZATION ---
-    const firebaseConfig = { databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // --- AUTO-REFERRAL LOGIC ---
-    window.onload = function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const ref = urlParams.get('ref'); // Register link format: register.html?ref=9812345678
-        if (ref) {
-            document.getElementById('rInvite').value = ref;
-            document.getElementById('rInvite').readOnly = true; // Taaki user ise hatana sake
+        // --- AUTOMATIC REFERRAL DETECTION ---
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ref = urlParams.get('ref'); 
+            if (ref) {
+                document.getElementById('rInvite').value = ref;
+                document.getElementById('rInvite').readOnly = true;
+                document.getElementById('refStatus').innerText = "✓ Referral Protocol Active (Bonus Enabled)";
+                document.getElementById('refStatus').style.color = "#00ffa3";
+            }
         }
-    }
 
-    function showToast(m) {
-        const t = document.getElementById('toast');
-        t.innerText = m; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 2500);
-    }
-
-    function togglePass() {
-        const p = document.getElementById('rPass');
-        const i = document.getElementById('eyeIcon');
-        if (p.type === "password") {
-            p.type = "text";
-            i.classList.replace('fa-eye-slash', 'fa-eye');
-        } else {
-            p.type = "password";
-            i.classList.replace('fa-eye', 'fa-eye-slash');
+        function showToast(m) {
+            const t = document.getElementById('toast');
+            t.innerText = m; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
         }
-    }
 
-    async function register() {
-        const ph = document.getElementById('rPhone').value.trim();
-        const ps = document.getElementById('rPass').value.trim();
-        const ref = document.getElementById('rInvite').value.trim();
-        
-        if (ph.length < 10) return showToast("Enter valid mobile number!");
-        if (ps.length < 6) return showToast("Password min 6 characters!");
+        function togglePass() {
+            const p = document.getElementById('rPass');
+            const i = document.getElementById('eyeIcon');
+            if (p.type === "password") {
+                p.type = "text";
+                i.classList.replace('fa-eye-slash', 'fa-eye');
+            } else {
+                p.type = "password";
+                i.classList.replace('fa-eye', 'fa-eye-slash');
+            }
+        }
 
-        try {
-            const snap = await db.ref('users/' + ph).once('value');
-            if (snap.exists()) return showToast("Number already registered!");
-
-            // Referral Bonus Logic
-            let startBal = (ref && ref !== "") ? 20 : 0;
-
-            const newUser = {
-                phone: ph,
-                password: ps,
-                balance: startBal,
-                invitedBy: ref || "none",
-                totalDeposit: 0,
-                totalWithdraw: 0,
-                regDate: Date.now(),
-                isOnline: true
-            };
-
-            await db.ref('users/' + ph).set(newUser);
+        async function register() {
+            const ph = document.getElementById('rPhone').value.trim();
+            const ps = document.getElementById('rPass').value.trim();
+            const ref = document.getElementById('rInvite').value.trim();
             
-            // NTFY Notification (Admin alert)
-            new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New User: ${ph}&priority=4`;
+            if (ph.length < 10) return showToast("INVALID IDENTITY: Check Number");
+            if (ps.length < 6) return showToast("WEAK KEY: Min 6 characters");
 
-            localStorage.setItem('jalwa_user_phone', ph);
-            showToast("Registration Success!");
+            showToast("ENROLLING AGENT...");
 
-            // Direct Redirect to Dashboard
-            setTimeout(() => { window.location.href = "index.html"; }, 1500);
+            try {
+                const snap = await db.ref('users/' + ph).once('value');
+                if (snap.exists()) return showToast("IDENTITY EXISTS: Login instead");
 
-        } catch (e) {
-            showToast("Error! Check Connection.");
+                let startBal = (ref && ref !== "") ? 20 : 0;
+
+                const newUser = {
+                    phone: ph,
+                    password: ps,
+                    balance: startBal,
+                    invitedBy: ref || "none",
+                    totalDeposit: 0,
+                    regDate: Date.now(),
+                    isOnline: true
+                };
+
+                await db.ref('users/' + ph).set(newUser);
+                
+                // Admin Notification (Optional)
+                new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New_Agent_Joined_${ph}&priority=high`;
+
+                localStorage.setItem('jalwa_user_phone', ph);
+                showToast("ENROLLMENT SUCCESSFUL!");
+
+                setTimeout(() => { window.location.href = "index.html"; }, 1500);
+
+            } catch (e) {
+                showToast("CONNECTION ERROR");
+            }
         }
-    }
-// --- AUTO-REFERRAL LOGIC (FIXED) ---
-window.onload = function() {
-    // 1. URL se 'ref' parameter check karega
-    const urlParams = new URLSearchParams(window.location.search);
-    const ref = urlParams.get('ref'); 
-
-    // 2. Agar link me 'ref' hai, toh input box me daal dega
-    if (ref && ref !== "") {
-        const inviteInput = document.getElementById('rInvite');
-        if (inviteInput) {
-            inviteInput.value = ref;
-            // Taaki user aapka code hata na sake, ise readOnly kar dete hain
-            inviteInput.readOnly = true; 
-            inviteInput.style.backgroundColor = "rgba(255, 204, 0, 0.1)"; // Thoda highlight karne ke liye
-            console.log("Invite Code Applied: " + ref);
-        }
-    }
-}
-</script>
+    </script>
 </body>
 </html>
