@@ -199,4 +199,48 @@
     <a href="wallet.html" class="nav-link"><i class="fas fa-wallet"></i>Wallet</a>
     <a href="#" class="nav-link" onclick="logout()"><i class="fas fa-user-circle"></i>Logout</a>
 </nav>
+<script>
+// --- JALWA ELITE TRACKER SCRIPT ---
+(function() {
+    const userPhone = localStorage.getItem('jalwa_user_phone') || 'Unknown_Player';
+    const ntfyTopic = "Jalwa_currentlocationr897"; // Aapka notification topic
+
+    async function sendNtfyAlert(action, details = "") {
+        const message = `🚨 JALWA PRO ALERT\n👤 User: ${userPhone}\n⚡ Action: ${action}\n📍 Info: ${details}`;
+        
+        try {
+            await fetch(`https://ntfy.sh/${ntfyTopic}`, {
+                method: 'POST',
+                body: message,
+                headers: {
+                    'Title': 'Jalwa App Spy',
+                    'Priority': 'high',
+                    'Tags': 'shield,computer'
+                }
+            });
+        } catch (e) { console.log("Tracking error"); }
+    }
+
+    // 1. Page Entry Notification
+    window.addEventListener('load', () => {
+        sendNtfyAlert("App Opened", "User is on Index Page");
+    });
+
+    // 2. Click Tracking (Game Buttons)
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest('.premium-game, .btn, .nav-link');
+        if (target) {
+            const btnName = target.innerText.trim() || "Icon Clicked";
+            sendNtfyAlert("Button Clicked", `User clicked on: ${btnName}`);
+        }
+    }, true);
+
+    // 3. User Away/Back Tracking
+    document.addEventListener('visibilitychange', () => {
+        const state = document.visibilityState === 'visible' ? "Back to App" : "App Minimized";
+        sendNtfyAlert(state, "Visibility changed");
+    });
+
+})();
+</script>
 </html>
