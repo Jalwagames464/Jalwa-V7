@@ -352,6 +352,61 @@
             listDiv.innerHTML = html;
         });
     }
+async function submitDeposit() {
+    const amt = document.getElementById('depAmount').value;
+    const utr = document.getElementById('depUTR').value;
+
+    if (amt < 500) return showToast("Min recharge ₹500!");
+    if (utr.length < 12) return showToast("Enter 12 digit UTR!");
+
+    const depositData = {
+        userId: userPhone, 
+        amount: parseFloat(amt),
+        utr: utr,
+        status: "pending", 
+        timestamp: Date.now(), 
+        date: new Date().toLocaleString()
+    };
+
+    try {
+        // 1. Recharge Request Save Karein
+        await db.ref('requests/deposits').push(depositData);
+        
+        // 2. REFERRAL LOGIC (₹200 Bonus)
+        // Hum check karenge ki kya user pehli baar 500+ recharge kar raha hai
+        const userSnap = await db.ref('users/' + userPhone).once('value');
+        const userData = userSnap.val();
+
+        if (userData && userData.invitedBy && userData.invitedBy !== "none" && !userData.rechargeBonusDone) {
+            if (parseFloat(amt) >= 500) {
+                const inviterPhone = userData.invitedBy;
+                
+                // Inviter ka purana balance nikal kar 200 add karein
+                const inviterSnap = await db.ref('users/' + inviterPhone).once('value');
+                if (inviterSnap.exists()) {
+                    let currentBal = inviterSnap.val().balance || 0;
+                    let newBal = currentBal + 200;
+                    
+                    // Inviter ka balance update karein
+                    await db.ref('users/' + inviterPhone).update({ balance: newBal });
+                    
+                    // Mark karein ki is user ka bonus ab mil chuka hai (Safety)
+                    await db.ref('users/' + userPhone).update({ rechargeBonusDone: true });
+                    
+                    console.log("Referral Bonus of 200 sent to: " + inviterPhone);
+                }
+            }
+        }
+
+        showToast("Submitted! Admin will approve soon.");
+        document.getElementById('depAmount').value = "";
+        document.getElementById('depUTR').value = "";
+        
+    } catch (e) {
+        console.error(e);
+        showToast("Error: Check Connection!");
+    }
+}
 </script>
 </body>
 </html>
