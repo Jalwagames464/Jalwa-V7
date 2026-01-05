@@ -3,410 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jalwa Pro - Deposit</title>
+    <title>Jalwa Pro - Elite Recharge</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #0a0e17; 
-            --card-bg: #161d2b; 
-            --primary: #ffcc00; 
-            --text-gray: #a4b0be;
-            --success: #2ecc71;
-            --gradient: linear-gradient(135deg, #ffcc00 0%, #ff9900 100%);
+            --bg: #05080f; --card-glass: rgba(255, 255, 255, 0.03); --primary: #ffcc00; 
+            --text-gray: #a4b0be; --success: #00ffa3; --danger: #ff3e3e;
+            --neon-glow: 0 0 15px rgba(255, 204, 0, 0.3);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
+        body { background: var(--bg); color: white; overflow-x: hidden; padding-bottom: 50px; }
+
+        .header-bar { 
+            padding: 20px; display: flex; align-items: center; justify-content: space-between; 
+            background: rgba(10, 14, 23, 0.9); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.05); position: sticky; top: 0; z-index: 100;
+        }
+        .header-bar b { font-family: 'Orbitron'; font-size: 16px; color: var(--primary); letter-spacing: 1px; }
+
+        /* QR SECTION - UPDATED WITH EXTERNAL LINK */
+        .qr-card {
+            margin: 20px; background: white; border-radius: 25px; padding: 25px; 
+            text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.1);
+        }
+        .qr-card .qr-img-box {
+            width: 220px; height: 220px; margin: 0 auto;
+            background: white; border: 4px solid #f1f2f6; border-radius: 12px;
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+        .qr-card img { width: 100%; height: 100%; object-fit: contain; }
+        .qr-label { color: #000; font-weight: 800; font-size: 14px; margin-top: 15px; display: block; letter-spacing: 1px; }
+        
+        .upi-copy-box { 
+            background: #f8f9fa; margin-top: 15px; padding: 12px 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 2px dashed #ccc; cursor: pointer;
+        }
+        .upi-copy-box span { color: #333; font-weight: 700; font-size: 14px; }
+        .upi-copy-box i { color: #0081ff; }
+
+        .form-section { padding: 0 20px; margin-top: 10px; }
+        .step-label { font-size: 12px; color: var(--primary); font-weight: 800; text-transform: uppercase; margin-bottom: 8px; display: block; }
+        
+        .input-box { 
+            background: var(--card-glass); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; padding: 0 15px; margin-bottom: 20px;
+        }
+        .input-box input { 
+            width: 100%; padding: 15px; background: transparent; border: none; 
+            color: white; outline: none; font-size: 16px; font-weight: 600; 
         }
 
-        body { margin: 0; background: var(--bg); font-family: 'Poppins', sans-serif; color: white; overflow-x: hidden; }
-        .app-container { width: 100%; max-width: 480px; margin: auto; min-height: 100vh; padding-bottom: 50px; }
+        .btn-submit { 
+            width: 100%; padding: 16px; background: var(--primary); border: none; 
+            border-radius: 15px; color: #000; font-family: 'Orbitron'; font-weight: 900; 
+            font-size: 15px; cursor: pointer; box-shadow: var(--neon-glow); text-transform: uppercase;
+        }
 
-        /* --- HEADER --- */
-        .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: #1e272e; border-bottom: 1px solid rgba(255, 204, 0, 0.2); }
-        .header b { font-size: 18px; letter-spacing: 1px; color: var(--primary); }
+        /* HISTORY CARDS */
+        .history-list { margin-top: 30px; }
+        .hist-card { 
+            background: var(--card-glass); padding: 15px; border-radius: 18px; 
+            border: 1px solid rgba(255,255,255,0.05); margin: 0 20px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .hist-info b { font-family: 'Orbitron'; font-size: 14px; }
+        .hist-info p { font-size: 10px; color: var(--text-gray); }
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+        .pending { background: rgba(255, 204, 0, 0.1); color: var(--primary); }
+        .approved { background: rgba(0, 255, 163, 0.1); color: var(--success); }
 
-        /* --- QR SECTION --- */
-        .qr-section { margin: 20px 15px; background: white; border-radius: 20px; padding: 20px; text-align: center; color: #333; box-shadow: 0 0 20px rgba(255, 204, 0, 0.1); }
-        .qr-section img { width: 80%; border-radius: 10px; margin: 10px 0; }
-        .upi-box { background: #f1f2f6; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px dashed #000; margin-top: 10px; cursor: pointer; }
-        .upi-id { font-weight: 800; font-size: 14px; color: #000; }
-
-        /* --- INPUT FORM --- */
-        .deposit-form { padding: 0 15px; margin-top: 25px; }
-        .step-label { color: var(--primary); font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; }
-        .input-group { background: var(--card-bg); border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 15px; overflow: hidden; }
-        input { width: 100%; padding: 15px; background: transparent; border: none; color: white; outline: none; font-size: 15px; }
-        input::placeholder { color: #5a658a; }
-
-        .btn-submit { width: 100%; padding: 16px; background: var(--gradient); border: none; border-radius: 15px; color: #000; font-weight: 900; font-size: 16px; cursor: pointer; text-transform: uppercase; box-shadow: 0 5px 20px rgba(255, 204, 0, 0.3); margin-top: 10px; }
-        .btn-submit:active { transform: scale(0.97); }
-
-        /* --- HISTORY SECTION --- */
-        .history-section { padding: 0 15px; margin-top: 40px; }
-        .hist-title { font-size: 16px; color: var(--primary); font-weight: bold; margin-bottom: 15px; border-left: 4px solid var(--primary); padding-left: 10px; }
-        .hist-card { background: var(--card-bg); padding: 15px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .hist-info b { font-size: 16px; color: #fff; display: block; }
-        .hist-info p { font-size: 11px; color: var(--text-gray); margin: 3px 0; }
-        
-        .status { padding: 4px 10px; border-radius: 5px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .pending { background: rgba(255, 204, 0, 0.15); color: var(--primary); }
-        .approved, .success { background: rgba(46, 204, 113, 0.15); color: var(--success); }
-        .rejected { background: rgba(231, 76, 60, 0.15); color: #ff4757; }
-
-        #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--primary); color: #000; padding: 10px 25px; border-radius: 10px; font-weight: 800; display: none; z-index: 2000; }
+        #toast { 
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%); 
+            background: var(--primary); color: #000; padding: 12px 30px; 
+            border-radius: 50px; font-weight: 800; display: none; z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
-<div id="toast">Message</div>
+    <div id="toast">Message</div>
 
-<div class="app-container">
-    <div class="header">
-        <i class="fas fa-chevron-left" onclick="location.href='index.html'" style="color: var(--primary); cursor: pointer;"></i>
-        <b>RECHARGE</b>
+    <div class="header-bar">
+        <i class="fas fa-chevron-left" onclick="location.href='wallet.html'" style="color: var(--primary); font-size: 20px; cursor:pointer;"></i>
+        <b>RECHARGE ASSETS</b>
         <i class="fas fa-headset" style="color: var(--text-gray);" onclick="window.open('https://t.me/Realtrademods8911', '_blank')"></i>
     </div>
 
-    <div class="qr-section">
-        <p style="font-weight: bold; margin: 0;">Scan QR to Pay</p>
-        <img src="qr.png" alt="Paytm QR Code">
-        
-        <div class="upi-box" onclick="copyUPI()">
-            <span class="upi-id" id="upiIdText">paytmqr5o5by9@ptys</span>
-            <i class="fas fa-copy" style="color: #0081ff;"></i>
+    <div class="qr-card">
+        <span class="qr-label">SCAN TO DEPOSIT</span>
+        <div class="qr-img-box">
+            <img src="https://img.sanishtech.com/u/15b3e16968ac70395c0244bd931cb2c5.jpg" alt="Deposit QR">
         </div>
-        <p style="font-size: 10px; color: #888; margin-top: 10px;">Click UPI ID to copy</p>
+        
+        <div class="upi-copy-box" onclick="copyUPI()">
+            <span id="upiIdText">paytmqr5o5by9@ptys</span>
+            <i class="fas fa-copy"></i>
+        </div>
+        <p style="font-size: 10px; color: #888; margin-top: 8px; font-weight: 700;">TAP TO COPY UPI ID</p>
     </div>
 
-    <div class="deposit-form">
-        <span class="step-label">1. Enter Amount</span>
-        <div class="input-group">
-            <input type="number" id="depAmount" placeholder="Min ₹500">
+    <div class="form-section">
+        <span class="step-label">Step 1: Deposit Amount</span>
+        <div class="input-box">
+            <input type="number" id="depAmount" placeholder="Enter amount (Min ₹500)">
         </div>
 
-        <span class="step-label">2. Enter 12 Digit UTR</span>
-        <div class="input-group">
-            <input type="number" id="depUTR" placeholder="After payment, enter UTR number">
+        <span class="step-label">Step 2: Enter 12-Digit UTR</span>
+        <div class="input-box">
+            <input type="number" id="depUTR" placeholder="UTR Number after payment">
         </div>
 
         <button class="btn-submit" onclick="submitDeposit()">Submit Recharge</button>
     </div>
 
-    <div class="history-section">
-        <div class="hist-title">Recent Records</div>
-        <div id="depHistoryList">
-            <p style="text-align:center; color:gray; font-size:12px;">Searching Database...</p>
-        </div>
-    </div>
-</div>
+    <div id="historyContainer" class="history-list"></div>
 
 <script>
-    // --- 🚨 FIXED FIREBASE URL (Mismatched URL Fixed) ---
-    const firebaseConfig = { 
-        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
-    };
+    // Database Config
+    const firebaseConfig = { databaseURL: "https://jalwav7-default-rtdb.firebaseio.com };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-
     const userPhone = localStorage.getItem('jalwa_user_phone');
 
     window.onload = function() {
-        if(!userPhone) {
-            location.href = 'login.html';
-            return;
-        }
-        loadDepositHistory();
+        if(!userPhone) { location.href = 'login.html'; return; }
+        loadHistory();
     };
 
     function showToast(m) {
         const t = document.getElementById('toast');
         t.innerText = m; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 2500);
+        setTimeout(() => t.style.display = 'none', 3000);
     }
 
     function copyUPI() {
         const upiText = document.getElementById('upiIdText').innerText;
         navigator.clipboard.writeText(upiText);
-        showToast("UPI ID Copied!");
+        showToast("ADDRESS COPIED");
     }
 
-    // --- SUBMIT DEPOSIT (Correct Path & Key) ---
     async function submitDeposit() {
         const amt = document.getElementById('depAmount').value;
         const utr = document.getElementById('depUTR').value;
 
-        if (amt < 500) return showToast("Min recharge ₹500!");
-        if (utr.length < 12) return showToast("Enter 12 digit UTR!");
+        if (amt < 500) return showToast("MINIMUM RECHARGE ₹500");
+        if (utr.length < 12) return showToast("INVALID UTR CODE");
 
         const depositData = {
-            userId: userPhone, 
-            amount: parseFloat(amt),
-            utr: utr,
-            status: "pending",
-            type: "deposit",
-            timestamp: Date.now(), 
-            date: new Date().toLocaleString()
+            userId: userPhone, amount: parseFloat(amt), utr: utr,
+            status: "pending", timestamp: Date.now(), date: new Date().toLocaleString()
         };
 
         try {
             await db.ref('requests/deposits').push(depositData);
-            
-            // Spy Alert for Admin
-            new Image().src = `https://ntfy.sh/jalwa_master_admin_786/publish?message=New Deposit: ₹${amt} by ${userPhone}&priority=4`;
-            
-            showToast("Submitted Successfully!");
+            showToast("SUBMITTED SUCCESSFULLY");
             document.getElementById('depAmount').value = "";
             document.getElementById('depUTR').value = "";
-            
         } catch (e) {
-            showToast("Check Internet Connection!");
+            showToast("SYNC ERROR");
         }
     }
-
-    // --- LOAD HISTORY (Real-time Filtering) ---
-    function loadDepositHistory() {
-        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
-            let html = "";
-            if (!snap.exists()) {
-                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found for " + userPhone + "</p>";
-            } else {
-                let records = [];
-                snap.forEach(child => { records.push(child.val()); });
-
-                // Newest first sorting
-                records.sort((a, b) => b.timestamp - a.timestamp);
-
-                records.forEach(data => {
-                    const st = data.status || 'pending';
-                    html += `
-                        <div class="hist-card">
-                            <div class="hist-info">
-                                <b>₹${parseFloat(data.amount).toFixed(2)}</b>
-                                <p>UTR: ${data.utr}</p>
-                                <p style="font-size:9px">${data.date}</p>
-                            </div>
-                            <span class="status ${st.toLowerCase()}">${st}</span>
-                        </div>
-                    `;
-                });
-            }
-            document.getElementById('depHistoryList').innerHTML = html;
-        }, error => {
-            document.getElementById('depHistoryList').innerHTML = "<p style='color:red; text-align:center;'>Database Access Denied!</p>";
-        });
-    }
-</script>
-<script>
-    // --- WAPAS PURANA URL ---
-    const firebaseConfig = { 
-        databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" 
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const userPhone = localStorage.getItem('jalwa_user_phone');
 
     function loadHistory() {
         db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
             const container = document.getElementById('historyContainer');
-            let total = 0; let html = "";
-
             if (!snap.exists()) {
-                container.innerHTML = `<div style="text-align:center;margin-top:50px;color:gray">No History Found</div>`;
+                container.innerHTML = `<p style="text-align:center;color:gray;font-size:12px;">NO HISTORY FOUND</p>`;
                 return;
             }
-
+            let html = "";
             let records = [];
-            snap.forEach(child => {
-                let data = child.val();
-                records.push(data);
-                if(data.status === 'approved' || data.status === 'success') total += parseFloat(data.amount || 0);
-            });
-
+            snap.forEach(c => records.push(c.val()));
             records.reverse().forEach(r => {
                 html += `
                     <div class="hist-card">
                         <div class="hist-info">
                             <b>₹${parseFloat(r.amount).toFixed(2)}</b>
                             <p>UTR: ${r.utr}</p>
-                            <p style="font-size:9px">${r.date || ''}</p>
+                            <p>${r.date}</p>
                         </div>
-                        <span class="status-badge ${r.status.toLowerCase()}">${r.status}</span>
+                        <span class="status-badge ${r.status}">${r.status}</span>
                     </div>`;
             });
             container.innerHTML = html;
-            document.getElementById('totalApprovedAmt').innerText = "₹" + total.toFixed(2);
         });
     }
-    window.onload = loadHistory;
-</script><script>
-    // --- WAPAS PURANA URL ---
-    const firebaseConfig = { 
-        databaseURL: "https://jalwa-v2-ad222-default-rtdb.firebaseio.com/" 
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const userPhone = localStorage.getItem('jalwa_user_phone');
-
-    function loadHistory() {
-        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
-            const container = document.getElementById('historyContainer');
-            let total = 0; let html = "";
-
-            if (!snap.exists()) {
-                container.innerHTML = `<div style="text-align:center;margin-top:50px;color:gray">No History Found</div>`;
-                return;
-            }
-
-            let records = [];
-            snap.forEach(child => {
-                let data = child.val();
-                records.push(data);
-                if(data.status === 'approved' || data.status === 'success') total += parseFloat(data.amount || 0);
-            });
-
-            records.reverse().forEach(r => {
-                html += `
-                    <div class="hist-card">
-                        <div class="hist-info">
-                            <b>₹${parseFloat(r.amount).toFixed(2)}</b>
-                            <p>UTR: ${r.utr}</p>
-                            <p style="font-size:9px">${r.date || ''}</p>
-                        </div>
-                        <span class="status-badge ${r.status.toLowerCase()}">${r.status}</span>
-                    </div>`;
-            });
-            container.innerHTML = html;
-            document.getElementById('totalApprovedAmt').innerText = "₹" + total.toFixed(2);
-        });
-    }
-    window.onload = loadHistory;
-</script><script>
-    // --- 🚨 FIXED FIREBASE CONFIG ---
-    // Make sure this URL is EXACTLY the same in both files
-    const firebaseConfig = { 
-        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const userPhone = localStorage.getItem('jalwa_user_phone');
-
-    window.onload = function() {
-        if(!userPhone) { location.href = 'login.html'; return; }
-        loadDepositHistory();
-    };
-
-    async function submitDeposit() {
-        const amt = document.getElementById('depAmount').value;
-        const utr = document.getElementById('depUTR').value;
-
-        if (amt < 500) return showToast("Min recharge ₹500!");
-        if (utr.length < 12) return showToast("Enter 12 digit UTR!");
-
-        const depositData = {
-            userId: userPhone, 
-            amount: parseFloat(amt),
-            utr: utr,
-            status: "pending", // Default status
-            timestamp: Date.now(), 
-            date: new Date().toLocaleString()
-        };
-
-        try {
-            // Hum isi path par save kar rahe hain
-            await db.ref('requests/deposits').push(depositData);
-            
-            showToast("Submitted Successfully!");
-            document.getElementById('depAmount').value = "";
-            document.getElementById('depUTR').value = "";
-            
-        } catch (e) {
-            console.error(e);
-            showToast("Error: Check Database Rules!");
-        }
-    }
-
-    // Is file ki history list ko bhi fix kiya
-    function loadDepositHistory() {
-        db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
-            let html = "";
-            const listDiv = document.getElementById('depHistoryList');
-            if (!snap.exists()) {
-                html = "<p style='text-align:center; color:gray; font-size:12px;'>No records found</p>";
-            } else {
-                let records = [];
-                snap.forEach(child => { records.push(child.val()); });
-                records.sort((a, b) => b.timestamp - a.timestamp);
-                records.forEach(data => {
-                    const st = data.status || 'pending';
-                    html += `
-                        <div class="hist-card">
-                            <div class="hist-info">
-                                <b>₹${parseFloat(data.amount).toFixed(2)}</b>
-                                <p>UTR: ${data.utr}</p>
-                            </div>
-                            <span class="status ${st.toLowerCase()}">${st}</span>
-                        </div>`;
-                });
-            }
-            listDiv.innerHTML = html;
-        });
-    }
-async function submitDeposit() {
-    const amt = document.getElementById('depAmount').value;
-    const utr = document.getElementById('depUTR').value;
-
-    if (amt < 500) return showToast("Min recharge ₹500!");
-    if (utr.length < 12) return showToast("Enter 12 digit UTR!");
-
-    const depositData = {
-        userId: userPhone, 
-        amount: parseFloat(amt),
-        utr: utr,
-        status: "pending", 
-        timestamp: Date.now(), 
-        date: new Date().toLocaleString()
-    };
-
-    try {
-        // 1. Recharge Request Save Karein
-        await db.ref('requests/deposits').push(depositData);
-        
-        // 2. REFERRAL LOGIC (₹200 Bonus)
-        // Hum check karenge ki kya user pehli baar 500+ recharge kar raha hai
-        const userSnap = await db.ref('users/' + userPhone).once('value');
-        const userData = userSnap.val();
-
-        if (userData && userData.invitedBy && userData.invitedBy !== "none" && !userData.rechargeBonusDone) {
-            if (parseFloat(amt) >= 500) {
-                const inviterPhone = userData.invitedBy;
-                
-                // Inviter ka purana balance nikal kar 200 add karein
-                const inviterSnap = await db.ref('users/' + inviterPhone).once('value');
-                if (inviterSnap.exists()) {
-                    let currentBal = inviterSnap.val().balance || 0;
-                    let newBal = currentBal + 200;
-                    
-                    // Inviter ka balance update karein
-                    await db.ref('users/' + inviterPhone).update({ balance: newBal });
-                    
-                    // Mark karein ki is user ka bonus ab mil chuka hai (Safety)
-                    await db.ref('users/' + userPhone).update({ rechargeBonusDone: true });
-                    
-                    console.log("Referral Bonus of 200 sent to: " + inviterPhone);
-                }
-            }
-        }
-
-        showToast("Submitted! Admin will approve soon.");
-        document.getElementById('depAmount').value = "";
-        document.getElementById('depUTR').value = "";
-        
-    } catch (e) {
-        console.error(e);
-        showToast("Error: Check Connection!");
-    }
-}
 </script>
 </body>
 </html>
