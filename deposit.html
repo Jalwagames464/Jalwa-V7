@@ -150,7 +150,7 @@
         const amt = document.getElementById('depAmount').value;
         const utr = document.getElementById('depUTR').value;
 
-        if (amt < 500) return showToast("MINIMUM RECHARGE ₹500");
+        if (amt < 500) return showToast("MINIMUM RECHARGE ₹450");
         if (utr.length < 12) return showToast("INVALID UTR CODE");
 
         const depositData = {
