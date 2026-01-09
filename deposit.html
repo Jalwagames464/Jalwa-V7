@@ -24,7 +24,6 @@
         }
         .header-bar b { font-family: 'Orbitron'; font-size: 16px; color: var(--primary); letter-spacing: 1px; }
 
-        /* QR SECTION - UPDATED WITH EXTERNAL LINK */
         .qr-card {
             margin: 20px; background: white; border-radius: 25px; padding: 25px; 
             text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.1);
@@ -88,7 +87,7 @@
     <div id="toast">Message</div>
 
     <div class="header-bar">
-        <i class="fas fa-chevron-left" onclick="location.href='wallet.html'" style="color: var(--primary); font-size: 20px; cursor:pointer;"></i>
+        <i class="fas fa-chevron-left" onclick="window.history.back()" style="color: var(--primary); font-size: 20px; cursor:pointer;"></i>
         <b>RECHARGE ASSETS</b>
         <i class="fas fa-headset" style="color: var(--text-gray);" onclick="window.open('https://t.me/Realtrademods8911', '_blank')"></i>
     </div>
@@ -123,8 +122,11 @@
     <div id="historyContainer" class="history-list"></div>
 
 <script>
-    // Database Config
-    const firebaseConfig = { databaseURL: "https://jalwav7-default-rtdb.firebaseio.com };
+    // --- DATABASE CONFIG FIXED ---
+    const firebaseConfig = { 
+        databaseURL: "https://jalwav7-default-rtdb.firebaseio.com" 
+    };
+
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const userPhone = localStorage.getItem('jalwa_user_phone');
@@ -142,7 +144,12 @@
 
     function copyUPI() {
         const upiText = document.getElementById('upiIdText').innerText;
-        navigator.clipboard.writeText(upiText);
+        const el = document.createElement('textarea');
+        el.value = upiText;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
         showToast("ADDRESS COPIED");
     }
 
@@ -150,21 +157,32 @@
         const amt = document.getElementById('depAmount').value;
         const utr = document.getElementById('depUTR').value;
 
-        if (amt < 500) return showToast("MINIMUM RECHARGE ₹450");
-        if (utr.length < 12) return showToast("INVALID UTR CODE");
+        // FIXED VALIDATION: Minimum 450 checking
+        if (!amt || parseFloat(amt) < 450) {
+            return showToast("MINIMUM RECHARGE ₹450");
+        }
+        if (!utr || utr.length < 10) {
+            return showToast("ENTER VALID 12-DIGIT UTR");
+        }
 
         const depositData = {
-            userId: userPhone, amount: parseFloat(amt), utr: utr,
-            status: "pending", timestamp: Date.now(), date: new Date().toLocaleString()
+            userId: userPhone, 
+            amount: parseFloat(amt), 
+            utr: utr,
+            status: "pending", 
+            timestamp: Date.now(), 
+            date: new Date().toLocaleString()
         };
 
         try {
+            // Push data to Firebase
             await db.ref('requests/deposits').push(depositData);
-            showToast("SUBMITTED SUCCESSFULLY");
+            showToast("SUBMITTED SUCCESSFULLY ✅");
             document.getElementById('depAmount').value = "";
             document.getElementById('depUTR').value = "";
         } catch (e) {
-            showToast("SYNC ERROR");
+            console.error(e);
+            showToast("SERVER ERROR - TRY AGAIN");
         }
     }
 
@@ -172,12 +190,14 @@
         db.ref('requests/deposits').orderByChild('userId').equalTo(userPhone).on('value', snap => {
             const container = document.getElementById('historyContainer');
             if (!snap.exists()) {
-                container.innerHTML = `<p style="text-align:center;color:gray;font-size:12px;">NO HISTORY FOUND</p>`;
+                container.innerHTML = `<p style="text-align:center;color:gray;font-size:12px;margin-top:20px;">NO HISTORY FOUND</p>`;
                 return;
             }
             let html = "";
             let records = [];
-            snap.forEach(c => records.push(c.val()));
+            snap.forEach(c => {
+                records.push(c.val());
+            });
             records.reverse().forEach(r => {
                 html += `
                     <div class="hist-card">
