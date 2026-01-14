@@ -11,7 +11,7 @@
     <style>
         :root {
             --primary: #ffcc00; --bg-dark: #05080f; --card-glass: rgba(255, 255, 255, 0.03);
-            --border-glass: rgba(255, 255, 255, 0.1); --success: #00ffa3;
+            --border-glass: rgba(255, 255, 255, 0.1); --success: #00ffa3; --danger: #ff4757;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Rajdhani', sans-serif; }
         body { background: var(--bg-dark); color: white; padding-bottom: 90px; }
@@ -44,6 +44,10 @@
             border: none; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.3s;
         }
         .claim-btn:disabled { background: #222 !important; color: #555 !important; cursor: not-allowed; opacity: 0.7; }
+
+        /* Naya Style Admin Task ke liye */
+        .hot-tag { background: var(--danger); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
 
         .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 75px; background: rgba(10,14,23,0.95); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-glass); }
         .nav-link { color: #5a658a; text-decoration: none; text-align: center; font-size: 11px; }
@@ -80,6 +84,30 @@
             <button class="claim-btn" id="btnDep500" onclick="claimReward('dep500', 20, 500)">CLAIM</button>
         </div>
 
+        <div class="reward-item" style="border-color: var(--primary);">
+            <div class="reward-info">
+                <h4>Referral Master <span class="hot-tag">HOT</span></h4>
+                <p>Refer 5 friends (Min ₹500 Deposit each)</p>
+            </div>
+            <button class="claim-btn" id="btnRef5" onclick="claimTask('ref5', 50, 5)">CLAIM ₹50</button>
+        </div>
+
+        <div class="reward-item">
+            <div class="reward-info">
+                <h4>Bet profit</h4>
+                <p>Complete 100 Rounds today to get ₹150</p>
+            </div>
+            <button class="claim-btn" id="btnRound100" onclick="claimTask('round100', 318, 100)">CLAIM</button>
+        </div>
+
+        <div class="reward-item">
+            <div class="reward-info">
+                <h4>Loss Recovery Shield</h4>
+                <p>Lose ₹1000 today & get ₹150 Instant</p>
+            </div>
+            <button class="claim-btn" id="btnLoss1000" onclick="claimTask('loss1000', 150, 1000)">CLAIM</button>
+        </div>
+
         <div class="reward-item">
             <div class="reward-info"><h4>VIP Deposit</h4><p>Deposit ₹1000 & get ₹50</p></div>
             <button class="claim-btn" id="btnDep1000" onclick="claimReward('dep1000', 50, 1000)">CLAIM</button>
@@ -101,7 +129,6 @@
         
         let userData = {};
 
-        // Real-time listener for UI state
         window.onload = () => {
             if(!userPhone) { location.href = "login.html"; return; }
             
@@ -111,15 +138,15 @@
                 
                 const today = new Date().toDateString();
                 
-                // Sync Daily Button
-                if(userData.lastCheckin === today) {
-                    disableBtn('btnDaily');
-                }
+                if(userData.lastCheckin === today) disableBtn('btnDaily');
                 
-                // Sync Deposit Buttons
                 if(userData.rewards) {
                     if(userData.rewards.dep500) disableBtn('btnDep500');
                     if(userData.rewards.dep1000) disableBtn('btnDep1000');
+                    // Sync Naye Buttons
+                    if(userData.rewards.ref5) disableBtn('btnRef5');
+                    if(userData.rewards.round100) disableBtn('btnRound100');
+                    if(userData.rewards.loss1000) disableBtn('btnLoss1000');
                 }
             });
         };
@@ -129,54 +156,66 @@
             if(b) { b.innerText = "CLAIMED"; b.disabled = true; }
         }
 
+        // 🆕 COMMON FUNCTION FOR NEW TASKS
+        async function claimTask(type, amt, target) {
+            const btn = document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1));
+            if(btn.disabled) return;
+
+            // Logics for Admin Profit
+            if(type === 'ref5' && (userData.validRefs || 0) < 5) return showToast("Need 5 valid referrals!");
+            if(type === 'round100' && (userData.dailyRounds || 0) < 100) return showToast("Complete 100 rounds first!");
+            if(type === 'loss1000' && (userData.dailyLoss || 0) < 1000) return showToast("Loss must be ₹1000+!");
+
+            btn.disabled = true;
+            db.ref('users/' + userPhone).transaction((user) => {
+                if (user) {
+                    if (!user.rewards) user.rewards = {};
+                    if (user.rewards[type]) return; 
+                    user.balance = (user.balance || 0) + amt;
+                    user.rewards[type] = true;
+                }
+                return user;
+            }, (err, commit) => {
+                if(commit) showToast("Bonus ₹"+amt+" Added!");
+                else btn.disabled = false;
+            });
+        }
+
+        // --- PURANE FUNCTIONS (UNTOUCHED) ---
         async function claimDaily() {
             const today = new Date().toDateString();
             const btn = document.getElementById('btnDaily');
-
             if(btn.disabled || userData.lastCheckin === today) return;
-
-            btn.disabled = true; // Temporary lock
-
-            // Use Transaction to prevent multi-claim
+            btn.disabled = true;
             db.ref('users/' + userPhone).transaction((user) => {
                 if (user) {
-                    if (user.lastCheckin === today) return; // Abort if already done
+                    if (user.lastCheckin === today) return;
                     user.balance = (user.balance || 0) + 20;
                     user.lastCheckin = today;
                 }
                 return user;
             }, (error, committed) => {
                 if (committed) showToast("₹20 Claimed!");
-                else {
-                    btn.disabled = false;
-                    showToast("Already claimed!");
-                }
+                else { btn.disabled = false; showToast("Already claimed!"); }
             });
         }
 
         async function claimReward(type, amt, target) {
             const btn = document.getElementById('btnDep' + target);
-            
             if(btn.disabled || (userData.rewards && userData.rewards[type])) return;
             if((userData.total_deposit || 0) < target) return showToast("Deposit ₹"+target+" first!");
-
             btn.disabled = true;
-
             db.ref('users/' + userPhone).transaction((user) => {
                 if (user) {
-                    if (user.rewards && user.rewards[type]) return; // Abort
+                    if (user.rewards && user.rewards[type]) return;
                     if (!user.rewards) user.rewards = {};
-                    
                     user.balance = (user.balance || 0) + amt;
                     user.rewards[type] = true;
                 }
                 return user;
             }, (error, committed) => {
                 if (committed) showToast("₹" + amt + " Reward Claimed!");
-                else {
-                    btn.disabled = false;
-                    showToast("Already claimed!");
-                }
+                else { btn.disabled = false; showToast("Already claimed!"); }
             });
         }
 
